@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CommandPalette } from '@/components/navigation/CommandPalette';
+import VoiceCopilotWidget from '@/components/ai/VoiceCopilotWidget';
 
 export const metadata: Metadata = {
   title: 'CapExIQ — AI Capital Budgeting Decision Platform | NovaRetail GCC',
@@ -21,6 +22,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Header />
           <CommandPalette />
+          <VoiceCopilotWidget />
           <div className="flex-1 flex flex-col md:flex-row">
             <Sidebar />
             <main className="flex-1 p-4 lg:p-6 overflow-y-auto max-w-7xl mx-auto w-full">

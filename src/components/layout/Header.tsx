@@ -7,7 +7,7 @@ import { ScenarioType, ExecutiveRole } from '@/lib/types/finance';
 import { getDecisionBadgeColor } from '@/lib/utils/formatting';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ModelHealthPanel } from '@/components/finance/ModelHealthPanel';
-import { Building2, Sliders, RotateCcw, ShieldCheck, UserCheck, AlertTriangle, Activity, Monitor, X, FolderKanban, Users, FileText } from 'lucide-react';
+import { Building2, Sliders, RotateCcw, ShieldCheck, UserCheck, AlertTriangle, Activity, Monitor, X, FolderKanban, Users, FileText, Wand2, ShieldAlert } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { selectedScenario, setScenario, selectedRole, setRole, resetAssumptions, getActiveScenarioResult, projectProfiles, activeProfileId, loadProjectProfile, duplicateProjectProfile } = useFinancialStore();
@@ -143,6 +143,22 @@ export const Header: React.FC = () => {
             className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-colors"
           >
             <FileText className="h-3.5 w-3.5" /> Board Memo
+          </Link>
+
+          {/* Scenario Studio Button */}
+          <Link
+            href="/ai-scenario-studio"
+            className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-500 dark:text-purple-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-purple-500/20 transition-colors"
+          >
+            <Wand2 className="h-3.5 w-3.5" /> Scenario Studio
+          </Link>
+
+          {/* Threat Radar Button */}
+          <Link
+            href="/ai-threat-radar"
+            className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-rose-500/20 transition-colors"
+          >
+            <ShieldAlert className="h-3.5 w-3.5" /> Threat Radar
           </Link>
 
           {/* Board Presentation Mode Button */}
