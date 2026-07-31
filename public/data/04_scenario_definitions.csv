@@ -1,0 +1,4 @@
+scenario,investment_multiplier,operating_benefit_multiplier,operating_cost_multiplier,discount_rate,description
+Optimistic,0.95,1.1,0.95,0.105,"Lower capex, stronger realised benefits, lower operating costs"
+Base,1.0,1.0,1.0,0.115,Most likely management assumptions
+Pessimistic,1.15,0.75,1.15,0.145,"Cost overrun, benefit shortfall, higher required return"

@@ -1,0 +1,174 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  /* Soft neutral blue-grey canvas for Light mode */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  /* Surfaces & Cards */
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* Form & Structure */
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #0284c7;
+
+  /* Semantic Fills */
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+
+  /* Brand Primary */
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --accent: #e0f2fe;
+  --accent-foreground: #0369a1;
+
+  /* Financial Status Colors */
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+
+  /* Interactive States */
+  --disabled: #cbd5e1;
+  --disabled-foreground: #64748b;
+  --selected: #e0f2fe;
+  --selected-foreground: #0369a1;
+
+  /* Chart Tokens */
+  --chart-1: #0284c7;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #7c3aed;
+  --chart-5: #e11d48;
+  --chart-grid: #e2e8f0;
+  --chart-axis: #64748b;
+  --chart-tooltip: #ffffff;
+  --chart-tooltip-foreground: #0f172a;
+}
+
+.dark {
+  /* Rich Executive Dark canvas */
+  --background: #090d16;
+  --foreground: #f8fafc;
+
+  /* Surfaces & Cards */
+  --surface: #0f172a;
+  --surface-elevated: #1e293b;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  /* Form & Structure */
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #06b6d4;
+
+  /* Semantic Fills */
+  --muted: #151e2e;
+  --muted-foreground: #94a3b8;
+
+  /* Brand Primary */
+  --primary: #06b6d4;
+  --primary-foreground: #090d16;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --accent: #164e63;
+  --accent-foreground: #67e8f9;
+
+  /* Financial Status Colors */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --info: #38bdf8;
+  --info-foreground: #ffffff;
+
+  /* Interactive States */
+  --disabled: #1e293b;
+  --disabled-foreground: #64748b;
+  --selected: #164e63;
+  --selected-foreground: #67e8f9;
+
+  /* Chart Tokens */
+  --chart-1: #06b6d4;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #f43f5e;
+  --chart-grid: #1e293b;
+  --chart-axis: #94a3b8;
+  --chart-tooltip: #0f172a;
+  --chart-tooltip-foreground: #f8fafc;
+}
+
+body {
+  color: var(--foreground);
+  background-color: var(--background);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  opacity: 0.6;
+  border-radius: 4px;
+}
+
+/* Reusable surface panel */
+.glass-panel {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Table light mode styling */
+.light table th,
+html:not(.dark) table th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+/* Print Mode styles */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, sidebar, nav, button, .no-print {
+    display: none !important;
+  }
+  .glass-panel {
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+}
