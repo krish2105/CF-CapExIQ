@@ -5,6 +5,56 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { BoardDebateResponse, BoardMemberStatement } from '@/app/api/ai/board-debate/route';
 import { Users, ShieldCheck, Play, RefreshCw, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react';
 
+const INITIAL_DEBATE_DATA: BoardDebateResponse = {
+  consensusDecision: 'APPROVE WITH GATES',
+  consensusSummary: 'The Board conditionally approves the AED 24M capital expenditure for NovaRetail GCC automated micro-fulfilment centre. CFO and COO vote to approve; Risk Officer requests stage-gate latency milestones.',
+  voteCount: { approve: 2, conditional: 1, defer: 1, reject: 0 },
+  stageGates: [
+    'Enforce Swisslog SLA penalty cap (1.5%/wk) in final EPC contract.',
+    'Stage-gate AED 10M capital release subject to Phase-1 WCS API latency < 50ms.',
+    'Secure 5-year fixed debt margin from Emirates NBD at 5.25%.',
+  ],
+  disclaimer: 'AI-generated executive debate simulation based on corporate hurdle rates and risk profiles.',
+  statements: [
+    {
+      role: 'CFO',
+      name: 'Tariq Al-Mansoori',
+      avatar: '👔',
+      title: 'Capital Return & Liquidity Assessment',
+      verdict: 'APPROVE',
+      statement: 'Project NPV of AED 12.08M and 26.3% IRR exceed our 11.5% hurdle rate. Payback period of 3.1 years is acceptable given cash flow stability.',
+      keyConcernOrDriver: 'Strong financial returns and rapid payback period.',
+    },
+    {
+      role: 'COO',
+      name: 'Elena Rostova',
+      avatar: '⚙️',
+      title: 'Operational Capacity & Throughput SLA',
+      verdict: 'APPROVE',
+      statement: 'Automated warehouse operations cut fulfilment lag from 24h to 2h, expanding e-commerce capacity by 3.5x across Dubai & Abu Dhabi hubs.',
+      keyConcernOrDriver: 'Critical operational bottleneck resolution.',
+    },
+    {
+      role: 'CRO',
+      name: 'Marcus Vance',
+      avatar: '🛡️',
+      title: 'Downside Exposure & Mitigation Triggers',
+      verdict: 'CONDITIONAL',
+      statement: 'Pessimistic scenario shows negative NPV (-AED 4.9M) if CapEx overruns by 15% and DEWA rates spike. We must enforce stage-gate capital releases.',
+      keyConcernOrDriver: 'Downside operational stress in pessimistic scenario.',
+    },
+    {
+      role: 'Strategy',
+      name: 'Dr. Aisha Al-Hassan',
+      avatar: '🎯',
+      title: 'Regional Market Share & Competitive Positioning',
+      verdict: 'DEFER',
+      statement: 'Recommend deferring AED 10M Phase-2 expansion until Phase-1 darkstore order volume stabilizes above 15,000 orders/day.',
+      keyConcernOrDriver: 'Phased rollout aligned with actual demand scaling.',
+    },
+  ],
+};
+
 export default function BoardDebatePanel() {
   const { getActiveAssumptions, getActiveScenarioResult, selectedScenario } = useFinancialStore();
   const assumptions = getActiveAssumptions();
@@ -12,7 +62,7 @@ export default function BoardDebatePanel() {
   const metrics = scenarioResult.metrics;
 
   const [loading, setLoading] = useState(false);
-  const [debateData, setDebateData] = useState<BoardDebateResponse | null>(null);
+  const [debateData, setDebateData] = useState<BoardDebateResponse>(INITIAL_DEBATE_DATA);
 
   const runBoardDebate = async () => {
     setLoading(true);

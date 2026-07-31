@@ -5,11 +5,35 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { GeneratedScenarioStudio } from '@/app/api/ai/scenario-studio/route';
 import { Sparkles, Wand2, Play, Sliders, CheckCircle2, RefreshCw, Activity, Layers } from 'lucide-react';
 
+const INITIAL_STUDIO_SCENARIO: GeneratedScenarioStudio = {
+  scenarioName: 'High Inflation & GCC Logistics Bottleneck Scenario',
+  narrativeDescription: 'Synthesizes elevated operational costs (+12%) alongside strong e-commerce volume demand (+15%) and a 1.25% interest rate hike.',
+  multipliers: {
+    investmentMultiplier: 1.08,
+    operatingBenefitMultiplier: 1.15,
+    operatingCostMultiplier: 1.12,
+    discountRate: 0.1275,
+  },
+  triangularDistribution: {
+    minBenefitMultiplier: 0.85,
+    modeBenefitMultiplier: 1.15,
+    maxBenefitMultiplier: 1.45,
+  },
+  keyAssumptions: [
+    'Order throughput scales to 18,500 picks/day under automated picking.',
+    'DEWA energy tariff capped via 3-year solar PPA contract.',
+  ],
+  macroRiskFactors: [
+    'GCC inflation rate spikes to 4.2% in 2026.',
+    'Swisslog AMR equipment delivery lead time extended by 4 weeks.',
+  ],
+};
+
 export default function AiScenarioStudioPage() {
   const { updateCustomScenarioSliders, setScenario } = useFinancialStore();
-  const [promptText, setPromptText] = useState('');
+  const [promptText, setPromptText] = useState('High inflation with 15% increase in picking demand and DEWA tariff hike');
   const [loading, setLoading] = useState(false);
-  const [generatedScenario, setGeneratedScenario] = useState<GeneratedScenarioStudio | null>(null);
+  const [generatedScenario, setGeneratedScenario] = useState<GeneratedScenarioStudio>(INITIAL_STUDIO_SCENARIO);
   const [applied, setApplied] = useState(false);
 
   const handleGenerate = async (e: React.FormEvent) => {

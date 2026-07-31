@@ -5,6 +5,32 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { BoardMemoResponse } from '@/app/api/ai/board-memo/route';
 import { FileText, Printer, ShieldCheck, Sparkles, CheckCircle2, Lock, Download, RefreshCw } from 'lucide-react';
 
+const INITIAL_MEMO_DATA: BoardMemoResponse = {
+  memoTitle: 'EXECUTIVE BOARD MEMORANDUM: AUTOMATED MICRO-FULFILMENT CENTRE CAPEX APPROVAL',
+  documentRef: 'MEMO-GCC-2026-084',
+  date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+  auditHash: 'a7c925e6884fbc1267f0a991823bcde45f89123456789abcdef0123456789abc',
+  targetEntity: 'NovaRetail GCC Holdings Limited',
+  executiveSummary: 'This memorandum presents the investment proposal for NovaRetail GCC to allocate AED 24.0M in capital expenditure for a 5-year automated micro-fulfilment centre in Dubai South.',
+  financialJustification: 'Project NPV is AED 12.08M at an 11.5% WACC, with an IRR of 26.3% and Payback of 3.1 years. Profitability Index stands at 1.50x with positive debt coverage DSCR > 1.85x.',
+  keyDrivers: [
+    'Transitioning from manual picking to automated Swisslog robotics reduces order processing latency from 24h to 2h.',
+    'Captures high-margin quick-commerce e-commerce demand in Dubai & Abu Dhabi hubs.',
+  ],
+  principalRisks: [
+    'Robotics Supply Chain Lead Time: Enforce liquid damages of 1.5%/week on supplier delays.',
+    'DEWA Energy Escalation: Lock in 3-year solar PPA to hedge peak power costs.',
+    'Stage-Gate Release: Hold AED 10M Phase-2 capital pending WCS system latency < 50ms.',
+  ],
+  recommendedDecision: 'APPROVE WITH STAGE-GATE CONTROLS',
+  signoffBlocks: [
+    { role: 'CFO', title: 'Chief Financial Officer', name: 'Tariq Al-Mansoori', status: 'APPROVED' },
+    { role: 'COO', title: 'Chief Operating Officer', name: 'Elena Rostova', status: 'APPROVED' },
+    { role: 'CRO', title: 'Chief Risk Officer', name: 'Marcus Vance', status: 'PENDING' },
+  ],
+  disclaimer: 'CONFIDENTIAL BOARD DOCUMENT - For internal governance review only under UAE Commercial Companies Law.',
+};
+
 export default function BoardMemoPage() {
   const { getActiveAssumptions, getActiveScenarioResult, selectedScenario } = useFinancialStore();
   const assumptions = getActiveAssumptions();
@@ -12,7 +38,7 @@ export default function BoardMemoPage() {
   const metrics = scenarioResult.metrics;
 
   const [loading, setLoading] = useState(false);
-  const [memoData, setMemoData] = useState<BoardMemoResponse | null>(null);
+  const [memoData, setMemoData] = useState<BoardMemoResponse>(INITIAL_MEMO_DATA);
 
   const fetchBoardMemo = async () => {
     setLoading(true);

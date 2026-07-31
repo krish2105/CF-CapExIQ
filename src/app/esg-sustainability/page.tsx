@@ -5,6 +5,21 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { EsgImpactResponse } from '@/app/api/ai/esg-impact/route';
 import { Leaf, Sun, Zap, Award, ShieldCheck, RefreshCw, Layers } from 'lucide-react';
 
+const INITIAL_ESG_DATA: EsgImpactResponse = {
+  esgScore: 92,
+  ratingTier: 'AAA (Prime Sustainability)',
+  co2ReductionTonsPerYear: 1240,
+  solarPanelOffsetKWh: 450000,
+  greenNpvBoost: '+AED 1.45M (Carbon Credit Tax Offset)',
+  sustainabilityHighlights: [
+    'Rooftop 500kW Solar PV Array offsets 42% of warehouse electricity demand.',
+    'All-electric AMR autonomous mobile robot fleet eliminates indoor diesel emissions.',
+    'High-density vertical tote racking compresses building footprint by 65%.',
+    'Qualifies for UAE Green Finance Framework 50 bps loan interest margin discount.',
+  ],
+  bankableGreenLoanEligibility: 'ELIGIBLE - Qualified for Emirates NBD Green Commercial Loan Framework',
+};
+
 export default function EsgSustainabilityPage() {
   const { getActiveAssumptions, getActiveScenarioResult } = useFinancialStore();
   const assumptions = getActiveAssumptions();
@@ -12,7 +27,7 @@ export default function EsgSustainabilityPage() {
   const metrics = scenarioResult.metrics;
 
   const [loading, setLoading] = useState(false);
-  const [esgData, setEsgData] = useState<EsgImpactResponse | null>(null);
+  const [esgData, setEsgData] = useState<EsgImpactResponse>(INITIAL_ESG_DATA);
 
   const fetchEsgData = async () => {
     setLoading(true);

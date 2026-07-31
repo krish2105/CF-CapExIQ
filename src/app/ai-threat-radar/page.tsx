@@ -6,6 +6,50 @@ import { ThreatRadarResponse } from '@/app/api/ai/threat-radar/route';
 import { ShieldAlert, RefreshCw, ShieldCheck, AlertTriangle, Activity } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 
+const INITIAL_THREAT_DATA: ThreatRadarResponse = {
+  overallThreatScore: 38,
+  threatLevel: 'MODERATE ELEVATED',
+  executiveRiskSummary: 'Multi-axis risk radar indicates manageable downside exposure across DEWA tariffs and Swisslog AMR equipment lead times. Active stage-gate capital controls provide 85% risk mitigation efficiency.',
+  threatVectors: [
+    {
+      dimension: 'DEWA Tariff Escalation',
+      score: 45,
+      riskLevel: 'Moderate',
+      mitigationStrategy: 'Lock in 3-year commercial solar power purchase agreement (PPA) to cap energy costs.',
+    },
+    {
+      dimension: 'Robotics Integration Lead Time',
+      score: 55,
+      riskLevel: 'Moderate',
+      mitigationStrategy: 'Enforce liquid damages clause of 1.5%/week on Swisslog AMR equipment delivery delays.',
+    },
+    {
+      dimension: 'UAE Corporate Tax Impact',
+      score: 25,
+      riskLevel: 'Low',
+      mitigationStrategy: 'Utilize qualifying free-zone reinvestment exemptions under UAE Federal Tax Law.',
+    },
+    {
+      dimension: 'Inflation & Labor Rate Hikes',
+      score: 40,
+      riskLevel: 'Moderate',
+      mitigationStrategy: 'Accelerate Phase-1 automated picking to permanently replace manual shift labor.',
+    },
+    {
+      dimension: 'SLA Demand Conversion',
+      score: 30,
+      riskLevel: 'Low',
+      mitigationStrategy: 'Sign pre-launch SLA volume commitments with NovaRetail GCC anchor merchant partners.',
+    },
+    {
+      dimension: 'WACC Interest Rate Volatility',
+      score: 35,
+      riskLevel: 'Low',
+      mitigationStrategy: 'Secure fixed 5-year commercial facility with Emirates NBD at 5.25% fixed margin.',
+    },
+  ],
+};
+
 export default function AiThreatRadarPage() {
   const { getActiveAssumptions, getActiveScenarioResult } = useFinancialStore();
   const assumptions = getActiveAssumptions();
@@ -13,7 +57,7 @@ export default function AiThreatRadarPage() {
   const metrics = scenarioResult.metrics;
 
   const [loading, setLoading] = useState(false);
-  const [threatData, setThreatData] = useState<ThreatRadarResponse | null>(null);
+  const [threatData, setThreatData] = useState<ThreatRadarResponse>(INITIAL_THREAT_DATA);
 
   const fetchThreatRadar = async () => {
     setLoading(true);
