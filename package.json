@@ -47,7 +47,8 @@
   },
   "pnpm": {
     "overrides": {
-      "debug": "4.3.4"
+      "debug": "4.3.4",
+      "postcss": "^8.4.47"
     }
   }
 }
