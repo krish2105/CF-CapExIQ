@@ -7,7 +7,8 @@ import { ScenarioType, ExecutiveRole } from '@/lib/types/finance';
 import { getDecisionBadgeColor } from '@/lib/utils/formatting';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ModelHealthPanel } from '@/components/finance/ModelHealthPanel';
-import { Building2, Sliders, RotateCcw, ShieldCheck, UserCheck, AlertTriangle, Activity, Monitor, X, FolderKanban, Users, FileText, Wand2, ShieldAlert } from 'lucide-react';
+import { Building2, Sliders, RotateCcw, ShieldCheck, UserCheck, AlertTriangle, Activity, Monitor, X, FolderKanban, Users, FileText, Wand2, ShieldAlert, Box, Leaf } from 'lucide-react';
+import { LiveMacroTicker } from '@/components/layout/LiveMacroTicker';
 
 export const Header: React.FC = () => {
   const { selectedScenario, setScenario, selectedRole, setRole, resetAssumptions, getActiveScenarioResult, projectProfiles, activeProfileId, loadProjectProfile, duplicateProjectProfile } = useFinancialStore();
@@ -17,7 +18,9 @@ export const Header: React.FC = () => {
   const [showHealthModal, setShowHealthModal] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur-md px-4 lg:px-6 py-3 transition-colors">
+    <>
+      <LiveMacroTicker />
+      <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur-md px-4 lg:px-6 py-3 transition-colors">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Company & Project Branding */}
         <div className="flex items-center gap-3">
@@ -161,6 +164,22 @@ export const Header: React.FC = () => {
             <ShieldAlert className="h-3.5 w-3.5" /> Threat Radar
           </Link>
 
+          {/* 3D Digital Twin Button */}
+          <Link
+            href="/3d-digital-twin"
+            className="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-500 dark:text-cyan-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-cyan-500/20 transition-colors"
+          >
+            <Box className="h-3.5 w-3.5" /> 3D Twin
+          </Link>
+
+          {/* ESG Sustainability Button */}
+          <Link
+            href="/esg-sustainability"
+            className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-colors"
+          >
+            <Leaf className="h-3.5 w-3.5" /> ESG Score
+          </Link>
+
           {/* Board Presentation Mode Button */}
           <Link
             href="/presentation"
@@ -188,5 +207,6 @@ export const Header: React.FC = () => {
         </div>
       )}
     </header>
+    </>
   );
 };
