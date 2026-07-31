@@ -159,12 +159,13 @@ pnpm build
 
 ---
 
-## 📄 Deliverable Files & Artifacts
+## 📄 Deliverable Files & Documentation Structure
 
-* **📄 Board PDF Investment Report:** [CapExIQ_Board_Investment_Report.pdf](CapExIQ_Board_Investment_Report.pdf)
-* **📊 15-Slide Executive PowerPoint:** [CapExIQ_Executive_Board_Presentation.pptx](CapExIQ_Executive_Board_Presentation.pptx)
-* **📄 Markdown Presentation Guide:** [CapExIQ_Executive_Board_Presentation.md](CapExIQ_Executive_Board_Presentation.md)
-* **📄 Board Investment Report (MD):** [CapExIQ_Board_Investment_Report.md](CapExIQ_Board_Investment_Report.md)
+- **📄 Board PDF Investment Report:** [`deliverables/CapExIQ_Board_Investment_Report.pdf`](deliverables/CapExIQ_Board_Investment_Report.pdf)
+- **📊 Executive Board PowerPoint:** [`deliverables/CapExIQ_Executive_Board_Presentation.pptx`](deliverables/CapExIQ_Executive_Board_Presentation.pptx)
+- **📦 CSV Dataset Pack:** [`deliverables/CapExIQ_CSV_Dataset_Pack.zip`](deliverables/CapExIQ_CSV_Dataset_Pack.zip)
+- **📊 Baseline Financial Model CSV:** [`deliverables/NovaRetail_MFC_Financial_Model_Base.csv`](deliverables/NovaRetail_MFC_Financial_Model_Base.csv)
+- **📚 System Documentation & Audits:** All 17 architectural, AI governance, security, and audit findings markdown documents are organized inside the [`docs/`](docs/) directory.
 
 ---
 
