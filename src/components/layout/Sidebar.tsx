@@ -74,6 +74,17 @@ const NAV_GROUPS = [
     ],
   },
   {
+    title: 'AI & Advanced Intelligence',
+    items: [
+      { href: '/board-debate', label: 'Board Debate Swarm', icon: Bot },
+      { href: '/board-memo', label: 'Board Memorandum', icon: BookOpen },
+      { href: '/ai-scenario-studio', label: 'AI Scenario Studio', icon: Sliders },
+      { href: '/ai-threat-radar', label: 'AI Threat Radar', icon: ShieldCheck },
+      { href: '/3d-digital-twin', label: '3D Digital Twin', icon: Cpu },
+      { href: '/esg-sustainability', label: 'ESG Sustainability', icon: Award },
+    ],
+  },
+  {
     title: 'Methodology & AI',
     items: [
       { href: '/data-sources', label: 'Data & Methodology', icon: BookOpen },

@@ -82,10 +82,10 @@ export default function VoiceCopilotWidget() {
   return (
     <>
       {/* Floating Toggle Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-8 right-8 z-[9999]">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 hover:scale-105 transition-all shadow-xl shadow-purple-500/25 flex items-center justify-center text-white border border-white/20 group"
+          className="h-14 w-14 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 hover:scale-110 transition-all shadow-2xl shadow-purple-500/50 flex items-center justify-center text-white border-2 border-white/40 group ring-4 ring-purple-500/20"
           title="Voice AI Executive Copilot"
         >
           <Sparkles className="h-6 w-6 group-hover:rotate-12 transition-transform" />
@@ -94,7 +94,7 @@ export default function VoiceCopilotWidget() {
 
       {/* Floating Widget Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-2xl shadow-2xl p-5 space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-28 right-8 z-[9999] w-80 sm:w-96 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-2xl shadow-2xl p-5 space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
