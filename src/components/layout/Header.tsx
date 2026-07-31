@@ -18,9 +18,9 @@ export const Header: React.FC = () => {
   const [showHealthModal, setShowHealthModal] = useState(false);
 
   return (
-    <>
+    <div className="sticky top-0 z-50 w-full shadow-md">
       <LiveMacroTicker />
-      <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur-md px-4 lg:px-6 py-3 transition-colors">
+      <header className="w-full border-b border-border bg-card/95 backdrop-blur-md px-4 lg:px-6 py-3 transition-colors">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Company & Project Branding */}
         <div className="flex items-center gap-3">
@@ -207,6 +207,6 @@ export const Header: React.FC = () => {
         </div>
       )}
     </header>
-    </>
+    </div>
   );
 };
