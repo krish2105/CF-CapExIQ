@@ -6,6 +6,7 @@ import { computeDataQualityReport, DataQualityReport } from '@/lib/csv/dataQuali
 import { projectAssumptionRowSchema } from '@/lib/csv/schemas';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { Download, Upload, FileText, CheckCircle2, AlertTriangle, FileSpreadsheet, Printer } from 'lucide-react';
+import VendorQuoteUploader from '@/components/csv/VendorQuoteUploader';
 import Link from 'next/link';
 
 export default function CsvManagementPage() {
@@ -109,6 +110,9 @@ export default function CsvManagementPage() {
           <Printer className="h-4 w-4" /> View Printable Report
         </Link>
       </div>
+
+      {/* Vendor Quote OCR Ingestion Engine */}
+      <VendorQuoteUploader />
 
       {/* Upload Zone & Export Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
