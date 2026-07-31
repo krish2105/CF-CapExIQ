@@ -76,6 +76,7 @@ const NAV_GROUPS = [
   {
     title: 'AI & Advanced Intelligence',
     items: [
+      { href: '/rfp-negotiator', label: 'AI RFP Negotiator', icon: Zap },
       { href: '/board-debate', label: 'Board Debate Swarm', icon: Bot },
       { href: '/board-memo', label: 'Board Memorandum', icon: BookOpen },
       { href: '/ai-scenario-studio', label: 'AI Scenario Studio', icon: Sliders },
