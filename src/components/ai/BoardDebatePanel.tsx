@@ -134,7 +134,7 @@ export default function BoardDebatePanel() {
                   </div>
 
                   <p className="text-xs text-foreground/90 leading-relaxed italic mb-3">
-                    "{stmt.statement}"
+                    &quot;{stmt.statement}&quot;
                   </p>
                 </div>
 

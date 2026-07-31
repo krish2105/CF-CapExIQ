@@ -36,6 +36,7 @@ export default function EsgSustainabilityPage() {
 
   useEffect(() => {
     fetchEsgData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -39,6 +39,7 @@ export default function BoardMemoPage() {
 
   useEffect(() => {
     fetchBoardMemo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedScenario]);
 
   const handlePrint = () => {

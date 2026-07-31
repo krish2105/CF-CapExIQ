@@ -36,6 +36,7 @@ export default function AiThreatRadarPage() {
 
   useEffect(() => {
     fetchThreatRadar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const chartData = threatData?.threatVectors.map((v) => ({
