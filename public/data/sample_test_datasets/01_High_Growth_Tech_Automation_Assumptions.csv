@@ -1,0 +1,16 @@
+Assumption ID,Category,Name,Value,Unit,Data Classification,Source Type,Notes
+CAPEX-EQUIP,Capital expenditure,Automation equipment & robotics,24000000,AED,User-entered,Vendor quote,Goods-to-person AMR fleet
+CAPEX-INSTALL,Capital expenditure,Installation & M&E integration,1500000,AED,User-entered,Vendor quote,Mechanical & Electrical
+CAPEX-SOFTWARE,Capital expenditure,Software & WCS licencing,1000000,AED,User-entered,Vendor quote,WCS & API middleware
+CAPEX-TRAIN,Capital expenditure,Staff training & launch support,500000,AED,User-entered,Internal estimate,Operations onboarding
+NWC-INITIAL,Working capital,Initial working capital allocation,2000000,AED,Forecast,Management assumption,100% recovered in Y5
+LIFE,Project,Project economic life,5,years,User-entered,Management policy,5-year planning horizon
+SAVINGS-Y1,Operating benefits,Year 1 operating savings,7200000,AED,Forecast,Logistics model,71% cost per order reduction
+SAVINGS-Y2,Operating benefits,Year 2 operating savings,7920000,AED,Forecast,Logistics model,10% annual volume growth
+SAVINGS-Y3,Operating benefits,Year 3 operating savings,8712000,AED,Forecast,Logistics model,10% annual volume growth
+SAVINGS-Y4,Operating benefits,Year 4 operating savings,9583200,AED,Forecast,Logistics model,10% annual volume growth
+SAVINGS-Y5,Operating benefits,Year 5 operating savings,10541520,AED,Forecast,Logistics model,10% annual volume growth
+MARGIN-Y1,Operating benefits,Year 1 incremental gross margin,2400000,AED,Forecast,Retail model,Faster delivery SLA conversion
+OPEX-ADDITIONAL,Operating cost,Additional annual facility OpEx,1200000,AED,User-entered,Facility budget,Maintenance & cloud server
+DISCOUNT-RATE,Finance,WACC hurdle rate,0.100,decimal,User-entered,Corporate Treasury,10.0% hurdle rate
+TAX-RATE,Tax,UAE corporate tax rate,0.09,decimal,Current external,UAE MoF,9% headline corporate tax
