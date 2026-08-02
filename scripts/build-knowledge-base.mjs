@@ -56,6 +56,38 @@ async function loadEnv() {
 // ---------------------------------------------------------------- chunking
 
 /** Split markdown on ## / ### headings, carrying the heading path forward. */
+/**
+ * Permission classification, mirroring src/lib/rag/chunkPermissions.ts.
+ *
+ * Duplicated rather than imported because this script is plain ESM run by
+ * node with no TypeScript pipeline, and adding one to read four regexes is
+ * not a trade worth making. The duplication is held honest by
+ * `tests/rag.test.ts`, which re-derives every stamp in the shipped corpus
+ * from the TypeScript module and fails if the two ever disagree.
+ */
+const PERMISSION_RULES = [
+  [/(\bMIRR\b|difference between IRR|Profitability Index|discounted payback)/i, 'metrics.advanced'],
+  [/(Free Cash Flow Reconciliation|Year-by-Year|Cash-Flow Schedule|cash flow schedule)/i, 'financials.schedule'],
+  [/(funding structure|debt (structure|tranche)|gearing|DSCR|green loan|liquidity position)/i, 'funding.view'],
+  [/(RFP|negotiat|vendor quotation|commercial terms)/i, 'vendor.negotiate'],
+];
+
+const PERMISSION_BY_HREF = {
+  '/funding': 'funding.view',
+  '/financial-model': 'financials.schedule',
+  '/rfp-negotiator': 'vendor.negotiate',
+};
+
+/** Returns `{ permission }` or `{}` — spread into the chunk. */
+function stampPermission({ source, section, href }) {
+  const subject = `${source} > ${section}`;
+  for (const [re, permission] of PERMISSION_RULES) {
+    if (re.test(subject)) return { permission };
+  }
+  if (href && PERMISSION_BY_HREF[href]) return { permission: PERMISSION_BY_HREF[href] };
+  return {};
+}
+
 function chunkMarkdown(markdown, source, kind, href) {
   const lines = markdown.split('\n');
   const chunks = [];
@@ -118,6 +150,7 @@ function chunkMarkdown(markdown, source, kind, href) {
     section: c.section,
     kind,
     href,
+    ...stampPermission({ source, section: c.section, href }),
     text: c.text.replace(/\n{3,}/g, '\n\n').trim(),
   }));
 }
@@ -153,6 +186,11 @@ async function assumptionChunks() {
       section: `${category} > ${name}`,
       kind: 'assumption',
       href: '/assumptions',
+      ...stampPermission({
+        source: 'Assumptions Register',
+        section: `${category} > ${name}`,
+        href: '/assumptions',
+      }),
       text:
         `${name} (register id ${id}) is set to ${value} ${unit}. ` +
         `Category: ${category}. Data classification: ${classification}. ` +
@@ -174,6 +212,11 @@ async function scenarioChunks() {
     section: `Scenario definitions > ${name}`,
     kind: 'scenario',
     href: '/scenarios',
+    ...stampPermission({
+      source: 'Scenario Engine',
+      section: `Scenario definitions > ${name}`,
+      href: '/scenarios',
+    }),
     text:
       `The ${name} scenario applies a capital expenditure multiplier of ${inv}x, an operating ` +
       `benefit multiplier of ${ben}x, an operating cost multiplier of ${cost}x, and a discount ` +

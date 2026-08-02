@@ -2,6 +2,8 @@ import { Bm25Index } from './bm25';
 import { embedQuery } from './embed';
 import { decodeVector, dot } from './vectors';
 import type { Citation, EmbeddedChunk, KnowledgeBaseFile, RetrievedChunk } from './types';
+import { can, type Permission } from '@/lib/auth/permissions';
+import type { ExecutiveRole } from '@/lib/types/finance';
 import knowledgeBaseJson from './knowledge-base.json';
 
 /**
@@ -54,12 +56,46 @@ export interface RetrievalResult {
   tookMs: number;
 }
 
-export async function retrieve(query: string, topK = DEFAULT_TOP_K): Promise<RetrievalResult> {
+export async function retrieve(
+  query: string,
+  role?: ExecutiveRole,
+  topK = DEFAULT_TOP_K
+): Promise<RetrievalResult> {
   const started = Date.now();
+
+  /**
+   * Permission filter, applied to candidates before fusion rather than to the
+   * final list.
+   *
+   * Filtering after ranking would silently shorten the answer: six chunks are
+   * retrieved, two are dropped, and the model composes from four without
+   * knowing anything is missing. Filtering the candidate pool first means the
+   * restricted reader gets six passages they are entitled to, and a complete
+   * answer from them.
+   *
+   * `role` is optional so the retriever stays usable from scripts and tests,
+   * but every request path passes one — asserted in tests/rag.test.ts.
+   */
+  const visible = (chunk: EmbeddedChunk): boolean => {
+    if (!chunk.permission) return true;
+    if (!role) return false;
+    return can(role, chunk.permission as Permission);
+  };
 
   // Lexical first and unconditionally — it is sub-millisecond and guarantees a
   // non-empty result even if the provider is unreachable.
-  const lexical = bm25.search(query, CANDIDATE_DEPTH);
+  //
+  // Searched deeper than CANDIDATE_DEPTH and then filtered, so that removing
+  // restricted passages does not also shrink the candidate pool: a reader
+  // without `funding.view` should still get a full set of chunks they may see,
+  // not a short one with holes where the others were.
+  const lexical = bm25
+    .search(query, CANDIDATE_DEPTH * 3)
+    .filter((r) => {
+      const chunk = chunkById.get(r.id);
+      return chunk ? visible(chunk) : false;
+    })
+    .slice(0, CANDIDATE_DEPTH);
   const lexicalRank = new Map<string, number>();
   lexical.forEach((r, i) => lexicalRank.set(r.id, i + 1));
 
@@ -69,6 +105,7 @@ export async function retrieve(query: string, topK = DEFAULT_TOP_K): Promise<Ret
   if (queryVector) {
     const sims: Array<{ id: string; sim: number }> = [];
     for (const chunk of kb.chunks) {
+      if (!visible(chunk)) continue;
       const v = vectorFor(chunk);
       if (!v) continue;
       sims.push({ id: chunk.id, sim: dot(queryVector, v) });

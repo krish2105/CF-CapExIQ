@@ -27,6 +27,13 @@ export interface KnowledgeChunk {
   kind: SourceKind;
   /** In-app route or file path a reader can open to verify the claim. */
   href?: string;
+  /**
+   * Permission a reader must hold to be shown this passage. Absent means any
+   * authenticated user. Stamped at build time by
+   * `src/lib/rag/chunkPermissions.ts` — retrieval filters on it so the
+   * assistant cannot become a way around the RBAC matrix.
+   */
+  permission?: string;
   text: string;
 }
 

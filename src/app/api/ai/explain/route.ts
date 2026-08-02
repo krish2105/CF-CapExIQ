@@ -127,7 +127,11 @@ export async function POST(req: Request) {
 
       try {
         // ---- Retrieval -------------------------------------------------
-        const result = await retrieve(userQuestion);
+        // The verified session role, not `body.role`. The client sends a role
+        // for prompt framing ("QUESTION FROM THE CFO"), and using that to
+        // decide what may be retrieved would let a caller pick their own
+        // clearance by editing a JSON field.
+        const result = await retrieve(userQuestion, auth.session.role);
         const citations = toCitations(result.chunks);
 
         // The engine's own numbers are a source in their own right, so they
