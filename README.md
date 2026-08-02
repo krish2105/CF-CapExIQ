@@ -171,5 +171,24 @@ pnpm build
 
 ## 📄 License & Attribution
 
-Developed for **NovaRetail GCC** Capital Expenditure Committee evaluation (Hypothetical Entity).  
-**Repository:** [https://github.com/krish2105/CF-CapExIQ](https://github.com/krish2105/CF-CapExIQ)
+Released under the [MIT License](LICENSE) — free to use, modify and distribute,
+with attribution and without warranty.
+
+Developed for **NovaRetail GCC** Capital Expenditure Committee evaluation.
+NovaRetail GCC is a **hypothetical entity** created for academic decision
+modelling; no figure here describes a real company, and nothing in this
+repository is investment advice.
+
+**Repositories**
+- [github.com/N33L22/CF-CapExIQ](https://github.com/N33L22/CF-CapExIQ)
+- [github.com/krish2105/CF-CapExIQ](https://github.com/krish2105/CF-CapExIQ)
+
+**Data collection:** this project performs no web scraping or crawling.
+External figures are transcribed by hand from cited public sources — see
+[docs/DATA_COLLECTION_POLICY.md](docs/DATA_COLLECTION_POLICY.md) for the policy
+and its basis in UAE law.
+
+**Authentication:** demo executive accounts and the role matrix are documented
+in [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md). The seeded passwords are
+published deliberately; they protect nothing real. Set `AUTH_SECRET` and
+replace the directory via `CAPEXIQ_USERS` before any non-demo use.
