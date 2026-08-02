@@ -1,0 +1,4 @@
+coverage_period,publication_date,file_type,download_url,source,use_in_model
+2026-01 to 2026-06,2026-07-01,XLSX,https://centralbank.ae/media/an0hfukx/eibor_2026.xlsx,Central Bank of the UAE,Benchmark for cost of debt; add a company credit spread and do not treat EIBOR alone as WACC.
+2025-01 to 2025-12,2026-01-01,Official download page,https://centralbank.ae/en/forex-eibor/eibor-rates/,Central Bank of the UAE,Benchmark for cost of debt; add a company credit spread and do not treat EIBOR alone as WACC.
+2024-01 to 2024-12,2025-01-01,Official download page,https://centralbank.ae/en/forex-eibor/eibor-rates/,Central Bank of the UAE,Benchmark for cost of debt; add a company credit spread and do not treat EIBOR alone as WACC.

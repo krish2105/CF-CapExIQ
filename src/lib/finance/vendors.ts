@@ -1,0 +1,52 @@
+import { VendorRecord } from '../types/finance';
+
+export const DEFAULT_VENDOR_CATALOG: VendorRecord[] = [
+  {
+    id: 'v-dematic',
+    vendorName: 'Dematic (KION Group)',
+    equipmentCost: 18000000,
+    installationCost: 2500000,
+    softwareCost: 1200000,
+    annualMaintenance: 850000,
+    sixYearTco: 26800000, // 21.7M capex + 5.1M maintenance
+    cybersecurityRating: 'A+',
+    deliveryWeeks: 26,
+    score: 4.6,
+  },
+  {
+    id: 'v-swisslog',
+    vendorName: 'Swisslog (KUKA Logistics)',
+    equipmentCost: 19200000,
+    installationCost: 2200000,
+    softwareCost: 1100000,
+    annualMaintenance: 780000,
+    sixYearTco: 27180000,
+    cybersecurityRating: 'A+',
+    deliveryWeeks: 28,
+    score: 4.4,
+  },
+  {
+    id: 'v-knapp',
+    vendorName: 'KNAPP Logistics Automation',
+    equipmentCost: 17500000,
+    installationCost: 2800000,
+    softwareCost: 1400000,
+    annualMaintenance: 920000,
+    sixYearTco: 27220000,
+    cybersecurityRating: 'A',
+    deliveryWeeks: 30,
+    score: 4.2,
+  },
+  {
+    id: 'v-autostore',
+    vendorName: 'AutoStore AS System',
+    equipmentCost: 16800000,
+    installationCost: 3100000,
+    softwareCost: 1500000,
+    annualMaintenance: 990000,
+    sixYearTco: 27340000,
+    cybersecurityRating: 'B+',
+    deliveryWeeks: 24,
+    score: 4.1,
+  },
+];

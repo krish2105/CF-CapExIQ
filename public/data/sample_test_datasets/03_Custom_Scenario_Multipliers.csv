@@ -1,0 +1,6 @@
+scenario,investment_multiplier,operating_benefit_multiplier,operating_cost_multiplier,discount_rate,description
+Base,1.00,1.00,1.00,0.115,Baseline NovaRetail Dubai MFC Investment Proposal
+Optimistic,0.90,1.25,0.85,0.100,Vendor discounts + 25% higher order adoption volume
+Pessimistic,1.20,0.75,1.25,0.135,Supply chain inflation + delayed labor automation implementation
+Aggressive Expansion,1.10,1.40,0.90,0.105,Full GCC market expansion with accelerated volume growth
+Global Recesssion,1.05,0.60,1.15,0.140,Reduced e-commerce demand and higher credit risk spread

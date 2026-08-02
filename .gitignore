@@ -1,0 +1,46 @@
+# Dependencies
+/node_modules
+/.pnpm-store
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Debug & Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System & IDE
+.DS_Store
+*.pem
+.vscode/
+.idea/
+
+# Build artefacts
+tsconfig.tsbuildinfo
+/test-results/
+/playwright-report/
+
+# OneDrive / FUSE orphaned lock artefacts.
+# The sync layer leaves stale full copies of every source file behind (695 of
+# them at last count). They are not source and must never be committed.
+.fuse_hidden*
+
+# Belt-and-braces: no environment file of any shape gets committed. The
+# working .env.local carries a live provider API key and the session signing
+# secret.
+.env*
+!.env.example

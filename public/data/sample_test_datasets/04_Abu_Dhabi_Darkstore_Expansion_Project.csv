@@ -1,0 +1,16 @@
+Assumption ID,Category,Name,Value,Unit,Data Classification,Source Type,Notes
+CAPEX-EQUIP,Capital expenditure,Automation equipment & robotics,12000000,AED,User-entered,Vendor quote,Compact darkstore sorting line
+CAPEX-INSTALL,Capital expenditure,Installation & M&E integration,1500000,AED,User-entered,Vendor quote,Site retrofit & cabling
+CAPEX-SOFTWARE,Capital expenditure,Software & WCS licencing,1000000,AED,User-entered,Vendor quote,Site licencing add-on
+CAPEX-TRAIN,Capital expenditure,Staff training & launch support,500000,AED,User-entered,Internal estimate,Local staff training
+NWC-INITIAL,Working capital,Initial working capital allocation,1000000,AED,Forecast,Management assumption,Recovered in final year
+LIFE,Project,Project economic life,5,years,User-entered,Management policy,5-year planning horizon
+SAVINGS-Y1,Operating benefits,Year 1 operating savings,4500000,AED,Forecast,Logistics model,Abu Dhabi SLA reduction to 1.5 hrs
+SAVINGS-Y2,Operating benefits,Year 2 operating savings,5000000,AED,Forecast,Logistics model,Volume scaling
+SAVINGS-Y3,Operating benefits,Year 3 operating savings,5500000,AED,Forecast,Logistics model,Volume scaling
+SAVINGS-Y4,Operating benefits,Year 4 operating savings,6000000,AED,Forecast,Logistics model,Volume scaling
+SAVINGS-Y5,Operating benefits,Year 5 operating savings,6500000,AED,Forecast,Logistics model,Volume scaling
+MARGIN-Y1,Operating benefits,Year 1 incremental gross margin,1500000,AED,Forecast,Retail model,Market share gain in Abu Dhabi
+OPEX-ADDITIONAL,Operating cost,Additional annual facility OpEx,800000,AED,User-entered,Facility budget,Rent & utilities in Mussafah
+DISCOUNT-RATE,Finance,WACC hurdle rate,0.110,decimal,User-entered,Corporate Treasury,11.0% hurdle rate
+TAX-RATE,Tax,UAE corporate tax rate,0.09,decimal,Current external,UAE MoF,9% corporate tax
