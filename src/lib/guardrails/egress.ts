@@ -42,9 +42,69 @@ function providerHost(): AllowedHost | null {
   }
 }
 
+/**
+ * Backup destination, if one is configured.
+ *
+ * Shipping snapshots off-box is outbound traffic, so it has to be named here
+ * or `guardedFetch` refuses it — which is the chokepoint working as intended.
+ * A backup target is a first-party store under the operator's control, not a
+ * third-party site being harvested, so it is a legitimate allowlist entry
+ * rather than an exception to the scraping policy.
+ */
+function backupHost(): AllowedHost | null {
+  const remote = process.env.CAPEXIQ_BACKUP_REMOTE;
+  if (!remote || remote.startsWith('file:')) return null;
+
+  try {
+    return {
+      host: new URL(remote).host.toLowerCase(),
+      reason: 'Configured backup destination — first-party storage under the operator\'s control.',
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Hosts explicitly pinned by the operator.
+ *
+ * WHY THIS EXISTS
+ *
+ * Every other entry is *derived* from the variable that names it, which means
+ * the allowlist cannot protect against that variable being wrong. Point
+ * `OPENAI_BASE_URL` at an attacker's host and `checkEgress` cheerfully
+ * approves it, because the policy and the target come from the same place —
+ * and the prompt carries the capital model. This was noted as a real
+ * limitation when the SDK was first routed through the allowlist.
+ *
+ * `CAPEXIQ_EGRESS_ALLOWLIST` closes it: a comma-separated list of hosts that
+ * every derived destination must ALSO appear in. Unset, behaviour is
+ * unchanged (derive-only), so this is opt-in and nothing breaks by default.
+ * Set, it becomes the outer bound — a poisoned base URL no longer authorises
+ * itself.
+ */
+function pinnedHosts(): Set<string> | null {
+  const raw = process.env.CAPEXIQ_EGRESS_ALLOWLIST;
+  if (!raw?.trim()) return null;
+
+  const hosts = raw
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean);
+
+  return hosts.length ? new Set(hosts) : null;
+}
+
 export function allowedHosts(): AllowedHost[] {
-  const provider = providerHost();
-  return provider ? [provider] : [];
+  const derived = [providerHost(), backupHost()].filter((h): h is AllowedHost => h !== null);
+
+  const pinned = pinnedHosts();
+  if (!pinned) return derived;
+
+  // Intersection, not union: the pin is a ceiling on what configuration may
+  // authorise, so a host that is only pinned is not thereby reachable, and a
+  // host that is only derived is refused.
+  return derived.filter((h) => pinned.has(h.host));
 }
 
 export class EgressBlockedError extends Error {

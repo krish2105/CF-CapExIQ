@@ -91,6 +91,47 @@ function human(bytes) {
     : `${(bytes / 1024).toFixed(0)} KB`;
 }
 
+/**
+ * Copy a verified snapshot to the configured off-box destination.
+ *
+ * Only `file:` is handled in this script. The network backends live in
+ * `src/lib/db/remote/` and need TypeScript, which a maintenance script that
+ * must run when the application will not should not depend on. For s3: and
+ * https: this prints the command to run instead of pretending to have shipped
+ * — a backup tool that reports success it did not achieve is worse than one
+ * that refuses.
+ */
+function shipOffBox(localFile, remote) {
+  const url = new URL(remote);
+
+  if (url.protocol !== 'file:') {
+    throw new Error(
+      `${url.protocol} uploads run inside the application (src/lib/db/remote), not this ` +
+        `script — it is plain ESM so that it works when the app does not, and the ` +
+        `S3/Azure backends are TypeScript. Either point CAPEXIQ_BACKUP_REMOTE at a ` +
+        `file: destination on a mounted volume, or drive the upload from the app. ` +
+        `See docs/BACKUP_AND_RECOVERY.md.`
+    );
+  }
+
+  const dir = fileURLToPath(url);
+  fs.mkdirSync(dir, { recursive: true });
+  const target = path.join(dir, path.basename(localFile));
+
+  if (fs.existsSync(target)) throw new Error(`Refusing to overwrite ${target}`);
+  fs.copyFileSync(localFile, target);
+
+  // Verified at the destination, not just copied. A truncated write across a
+  // network mount produces a file of the right name and the wrong contents.
+  const check = verify(target);
+  if (!check.ok) {
+    fs.unlinkSync(target);
+    throw new Error(`copy landed but failed verification (${check.reason}); removed`);
+  }
+
+  return `${target}  (verified)`;
+}
+
 function backup() {
   if (!fs.existsSync(DB)) {
     console.error(`No database at ${DB}. Nothing to back up.`);
@@ -124,6 +165,29 @@ function backup() {
   console.log(
     `Contents        ${TABLES.map((t) => `${t}=${expected[t]}`).join('  ')}`
   );
+
+  // Ship off-box before rotating. A snapshot that exists only on this disk is
+  // a rollback point, not a backup, and rotation is what eventually removes
+  // it — so the copy has to leave first.
+  const remote = process.env.CAPEXIQ_BACKUP_REMOTE?.trim();
+  if (!remote) {
+    console.warn(
+      'Off-box        NOT CONFIGURED — snapshots exist only on this disk.\n' +
+        '               Set CAPEXIQ_BACKUP_REMOTE (see docs/BACKUP_AND_RECOVERY.md).'
+    );
+  } else {
+    try {
+      const shipped = shipOffBox(target, remote);
+      console.log(`Off-box        ${shipped}`);
+    } catch (err) {
+      // Non-fatal for the local snapshot, which is already written and
+      // verified — but a non-zero exit, because a backup that never left the
+      // box is precisely the failure this step exists to prevent and must not
+      // be reported as success to a scheduler.
+      console.error(`Off-box        FAILED: ${err.message}`);
+      process.exitCode = 1;
+    }
+  }
 
   // Rotate only after a good snapshot exists.
   const keep = Number(flag('--keep') ?? 7);

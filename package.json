@@ -15,7 +15,8 @@
     "db:backup": "node scripts/db-backup.mjs",
     "db:backups": "node scripts/db-backup.mjs --list",
     "db:verify": "node scripts/db-backup.mjs --verify",
-    "db:restore": "node scripts/db-backup.mjs --restore"
+    "db:restore": "node scripts/db-backup.mjs --restore",
+    "db:backup:offbox": "node scripts/db-backup.mjs --keep 30"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

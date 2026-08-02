@@ -92,28 +92,76 @@ Always take one before a migration or a deploy:
 pnpm db:backup --label pre-deploy
 ```
 
-## What this does NOT cover
+## Off-box copies
 
-**These snapshots sit on the same disk as the database.** They protect against
-a bad migration, an accidental delete, or a corrupted write. They do **not**
-protect against losing the disk, the host, or the region.
+A snapshot on the same disk as the database protects against a bad migration
+or an accidental delete, and against nothing else. Set a destination:
 
-Until snapshots are shipped off-box, this is a **rollback mechanism, not
-disaster recovery**, and should not be described as the latter in any
-governance document.
+```bash
+# A mounted volume, NAS or UNC share — no credentials needed
+CAPEXIQ_BACKUP_REMOTE="file:///mnt/backup-volume"
 
-Getting there needs one of:
+# S3 (or any S3-compatible endpoint via CAPEXIQ_S3_ENDPOINT)
+CAPEXIQ_BACKUP_REMOTE="s3://my-bucket/capexiq/nightly?region=eu-west-1"
+CAPEXIQ_S3_ACCESS_KEY_ID="..."
+CAPEXIQ_S3_SECRET_ACCESS_KEY="..."
 
-- an object-store upload (S3/Azure Blob) after each successful backup, with
-  lifecycle rules and its own retention;
-- a managed Postgres with point-in-time recovery — the direction already
-  planned, at which point this script is replaced by the provider's tooling
-  rather than adapted.
+# Azure Blob, or any presigned PUT endpoint
+CAPEXIQ_BACKUP_REMOTE="https://acct.blob.core.windows.net/container?<sas-token>"
+```
 
-There is also **no restore rehearsal on a schedule**. The restore path is
-covered by `tests/backup.test.ts` and has been exercised manually, but an
+The copy is shipped **before** rotation — rotation is what eventually deletes
+the local snapshot, so it must not run first — and is **verified at the
+destination**, because a truncated write across a network mount produces a
+file with the right name and the wrong contents.
+
+If no destination is set, the backup still succeeds and prints a warning. If
+one is set and the upload fails, the command **exits non-zero** even though the
+local snapshot is fine: a backup that never left the box is exactly the failure
+this step exists to prevent, and must not be reported to a scheduler as success.
+
+`file:` destinations are handled by the backup script itself. `s3:` and
+`https:` uploads run inside the application (`src/lib/db/remote/`) — the script
+is deliberately plain ESM so it works when the app does not.
+
+### Egress
+
+Uploads go through the same allowlist as the model provider. The backup host is
+allowed because it is first-party storage under your control, but it still has
+to be named — an unnamed host is refused.
+
+Every other allowlist entry is *derived* from the variable that names it, so a
+poisoned `OPENAI_BASE_URL` or `CAPEXIQ_BACKUP_REMOTE` would authorise itself.
+Pin the outer bound to close that:
+
+```bash
+CAPEXIQ_EGRESS_ALLOWLIST="backups.corp.internal,integrate.api.nvidia.com"
+```
+
+This is an **intersection**, not a grant: a host must be both derived *and*
+pinned. Unset, behaviour is unchanged, so it is opt-in.
+
+## What this still does NOT cover
+
+**Untested against real S3.** The SigV4 signer is verified against AWS's own
+published test vectors (`tests/sigv4.test.ts`) and the upload path against a
+local HTTP server, but no request has been made to a real bucket. **Smoke-test
+against a throwaway bucket before relying on it.**
+
+**No scheduled restore rehearsal.** The restore path is covered by
+`tests/backup.test.ts` and has been exercised manually end to end, but an
 untested restore drifts toward being untrue. A quarterly drill against a copy
 of production data is the standard practice this project has not yet adopted.
+
+**No remote retention for object stores.** `list`/`prune` are implemented for
+`file:` only. On S3 or Azure, retention belongs in a bucket lifecycle rule,
+which survives this application being down and cannot delete the wrong thing
+because of a bug here.
+
+**Encryption in transit only, plus requested SSE.** S3 uploads ask for
+`AES256` server-side encryption; the snapshots are not encrypted by this
+application before they leave. For anything beyond an internal pilot, encrypt
+client-side so the storage provider never holds readable password hashes.
 
 ## Handling
 
