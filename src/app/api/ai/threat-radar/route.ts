@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guardRequestBody } from '@/lib/guardrails/aiGuardrails';
 import OpenAI from 'openai';
 
 export interface ThreatVector {
@@ -62,6 +63,12 @@ const DEFAULT_FALLBACK_THREATS: ThreatRadarResponse = {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    // Screen the payload before any of it reaches a billed provider: bounds the
+    // body size and rejects instruction-override or scraping text in any field.
+    const bodyGuard = guardRequestBody(body);
+    if (!bodyGuard.ok) {
+      return NextResponse.json({ error: bodyGuard.message }, { status: 400 });
+    }
     const { assumptions, metrics } = body;
 
     const fallbackResponse: ThreatRadarResponse = DEFAULT_FALLBACK_THREATS;
@@ -96,7 +103,8 @@ Return ONLY a JSON object matching this schema:
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-    });
+      max_tokens: 900,
+    }, { signal: AbortSignal.timeout(30000) });
 
     const content = completion.choices[0]?.message?.content;
     if (content) {

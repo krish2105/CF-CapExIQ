@@ -143,11 +143,26 @@ export function sanitizeContext(text: string): string {
 /**
  * Fixed-window rate limit, per process.
  *
- * Deliberately in-memory: this is a single-instance academic deployment, and
- * a Redis dependency would be more operational surface than the risk warrants.
- * It bounds accidental cost — a held-down Enter key, a runaway retry loop —
- * rather than a distributed attacker, and that limitation is the reason it is
- * documented here rather than presented as a security control.
+ * The default backend is per-process memory. On a single long-lived server
+ * that is correct, and it bounds accidental cost — a held-down Enter key, a
+ * runaway retry loop — rather than a distributed attacker.
+ *
+ * DEPLOYMENT BOUNDARY — READ BEFORE SHIPPING
+ * On serverless or multi-instance hosting the in-memory backend does not limit
+ * anything meaningful: every instance keeps its own counters and a cold start
+ * resets them, so the effective limit is (instances x window) rather than the
+ * number configured here. Install a shared backend with `setRateLimitBackend`
+ * before running this anywhere that autoscales. The interface is a single
+ * method precisely so a Redis or Upstash adapter is a few lines:
+ *
+ *   setRateLimitBackend({
+ *     hit: async (key, windowMs, max) => {
+ *       const count = await redis.incr(key);
+ *       if (count === 1) await redis.pexpire(key, windowMs);
+ *       const ttl = await redis.pttl(key);
+ *       return { count, resetAt: Date.now() + ttl };
+ *     },
+ *   });
  */
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 20;
@@ -159,32 +174,91 @@ export interface RateLimitResult {
   retryAfterSeconds: number;
 }
 
-export function checkRateLimit(key: string, now = Date.now()): RateLimitResult {
-  const bucket = buckets.get(key);
+/** Count for a key within its current window, and when that window ends. */
+export interface RateLimitHit {
+  count: number;
+  resetAt: number;
+}
 
-  if (!bucket || now >= bucket.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    // Opportunistic sweep so abandoned keys cannot grow the map unbounded.
-    if (buckets.size > 5000) {
-      for (const [k, v] of buckets) if (now >= v.resetAt) buckets.delete(k);
+export interface RateLimitBackend {
+  /**
+   * Record a request against `key` and return the resulting window state.
+   *
+   * `now` is supplied by the caller rather than read from the clock inside the
+   * backend, so a virtual clock can be injected in tests to assert that a
+   * window actually expires. A backend that calls `Date.now()` itself silently
+   * ignores that and makes window-expiry untestable.
+   */
+  hit(
+    key: string,
+    windowMs: number,
+    max: number,
+    now: number
+  ): RateLimitHit | Promise<RateLimitHit>;
+}
+
+/** Per-process backend. Correct on one instance, ineffective across many. */
+const memoryBackend: RateLimitBackend = {
+  hit(key, windowMs, _max, now) {
+    const bucket = buckets.get(key);
+
+    if (!bucket || now >= bucket.resetAt) {
+      const fresh = { count: 1, resetAt: now + windowMs };
+      buckets.set(key, fresh);
+      // Opportunistic sweep so abandoned keys cannot grow the map unbounded.
+      if (buckets.size > 5000) {
+        for (const [k, v] of buckets) if (now >= v.resetAt) buckets.delete(k);
+      }
+      return fresh;
     }
-    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, retryAfterSeconds: 0 };
-  }
 
-  if (bucket.count >= MAX_REQUESTS_PER_WINDOW) {
+    bucket.count += 1;
+    return bucket;
+  },
+};
+
+let backend: RateLimitBackend = memoryBackend;
+
+/** Install a shared backend. Call once at startup in any multi-instance deploy. */
+export function setRateLimitBackend(next: RateLimitBackend) {
+  backend = next;
+}
+
+/** Whether a shared backend is installed — surfaced so a health check can say. */
+export function isRateLimitDistributed(): boolean {
+  return backend !== memoryBackend;
+}
+
+function decide(hit: RateLimitHit, max: number, now: number): RateLimitResult {
+  if (hit.count > max) {
     return {
       allowed: false,
       remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+      retryAfterSeconds: Math.max(1, Math.ceil((hit.resetAt - now) / 1000)),
     };
   }
+  return { allowed: true, remaining: Math.max(0, max - hit.count), retryAfterSeconds: 0 };
+}
 
-  bucket.count += 1;
-  return {
-    allowed: true,
-    remaining: MAX_REQUESTS_PER_WINDOW - bucket.count,
-    retryAfterSeconds: 0,
-  };
+/**
+ * Synchronous check against the in-memory backend.
+ *
+ * Retained because the existing call sites are synchronous. It ignores an
+ * installed async backend by design rather than silently awaiting nothing —
+ * use `checkRateLimitAsync` once a shared backend is configured.
+ */
+export function checkRateLimit(key: string, now = Date.now()): RateLimitResult {
+  const hit = memoryBackend.hit(key, WINDOW_MS, MAX_REQUESTS_PER_WINDOW, now) as RateLimitHit;
+  return decide(hit, MAX_REQUESTS_PER_WINDOW, now);
+}
+
+/** Backend-aware check. Prefer this in any deployment that autoscales. */
+export async function checkRateLimitAsync(
+  key: string,
+  now = Date.now()
+): Promise<RateLimitResult> {
+  const hit = await backend.hit(key, WINDOW_MS, MAX_REQUESTS_PER_WINDOW, now);
+  return decide(hit, MAX_REQUESTS_PER_WINDOW, now);
 }
 
 /** Best-effort client key. Behind a proxy this is the forwarded address. */
@@ -197,4 +271,86 @@ export function clientKey(req: Request): string {
 /** Reset between tests. */
 export function __resetRateLimits() {
   buckets.clear();
+}
+
+
+/** Largest request body forwarded to a model provider, serialised. */
+export const MAX_BODY_BYTES = 16_384;
+
+export interface BodyGuardResult {
+  ok: boolean;
+  code?: 'not-object' | 'too-large' | 'injection';
+  message?: string;
+}
+
+/**
+ * Structural guard for route bodies that are passed through to a provider.
+ *
+ * Several routes accept a loosely-shaped object and interpolate its fields
+ * straight into a prompt. Without a schema per route — which would couple each
+ * handler to its caller's exact payload — the two exposures that matter are
+ * still addressable generically: an unbounded body (cost) and hostile text in
+ * any string field (injection). This walks the object once and applies the
+ * same screening `guardInput` performs on a single question.
+ *
+ * It is a floor, not a substitute for a schema. A route with a known shape
+ * should still validate it; this exists so that the routes which do not cannot
+ * be the weakest link.
+ */
+export function guardRequestBody(raw: unknown): BodyGuardResult {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, code: 'not-object', message: 'Request body must be a JSON object.' };
+  }
+
+  let serialised: string;
+  try {
+    serialised = JSON.stringify(raw);
+  } catch {
+    return { ok: false, code: 'not-object', message: 'Request body is not serialisable.' };
+  }
+
+  if (serialised.length > MAX_BODY_BYTES) {
+    return {
+      ok: false,
+      code: 'too-large',
+      message: `Request body exceeds the ${MAX_BODY_BYTES}-byte limit.`,
+    };
+  }
+
+  // Walk every string the body carries, at any depth, and screen the short ones.
+  //
+  // SCOPE, AND WHY IT IS NARROW
+  // Injection screening is applied only to strings under SCREEN_MAX_CHARS. An
+  // override attempt is short and imperative; a long field is document content
+  // the user pasted, and screening it produces false refusals on legitimate
+  // input — a vendor quotation containing the line "System: AutoStore B-1450"
+  // matches the role-prefix pattern, and one containing a supplier URL matches
+  // the scraping pattern. Refusing a real quotation to block a hypothetical
+  // injection is the wrong trade when the size cap already bounds the cost and
+  // the system prompt already delimits untrusted text.
+  //
+  // Scraping patterns are deliberately not applied here at all: they match any
+  // bare URL, which appears legitimately in pasted source material. The
+  // dedicated `guardInput` still applies them to free-text questions, which is
+  // where "go and fetch this" actually arrives.
+  const SCREEN_MAX_CHARS = 500;
+  const stack: unknown[] = [raw];
+  let visited = 0;
+  while (stack.length) {
+    const node = stack.pop();
+    if (++visited > 2000) break; // pathological nesting; the size cap bounds real payloads
+
+    if (typeof node === 'string') {
+      if (node.length > SCREEN_MAX_CHARS) continue;
+      for (const { re, label } of INJECTION_PATTERNS) {
+        if (re.test(node)) {
+          return { ok: false, code: 'injection', message: `Blocked: ${label}.` };
+        }
+      }
+    } else if (node && typeof node === 'object') {
+      for (const value of Object.values(node as Record<string, unknown>)) stack.push(value);
+    }
+  }
+
+  return { ok: true };
 }

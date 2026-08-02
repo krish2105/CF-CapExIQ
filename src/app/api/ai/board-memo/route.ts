@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guardRequestBody } from '@/lib/guardrails/aiGuardrails';
 import OpenAI from 'openai';
 import crypto from 'crypto';
 
@@ -50,6 +51,12 @@ const DEFAULT_FALLBACK_MEMO: BoardMemoResponse = {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    // Screen the payload before any of it reaches a billed provider: bounds the
+    // body size and rejects instruction-override or scraping text in any field.
+    const bodyGuard = guardRequestBody(body);
+    if (!bodyGuard.ok) {
+      return NextResponse.json({ error: bodyGuard.message }, { status: 400 });
+    }
     const { assumptions, metrics, selectedScenario } = body;
 
     // Generate SHA-256 audit hash derived from model state
@@ -111,7 +118,8 @@ Return ONLY a JSON object matching this schema:
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-    });
+      max_tokens: 1500,
+    }, { signal: AbortSignal.timeout(30000) });
 
     const content = completion.choices[0]?.message?.content;
     if (content) {

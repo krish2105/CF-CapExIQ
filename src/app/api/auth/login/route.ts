@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findByEmail, verifyPassword } from '@/lib/auth/users';
 import { signSession, SESSION_COOKIE, SESSION_TTL_SECONDS } from '@/lib/auth/session';
-import { checkRateLimit, clientKey } from '@/lib/guardrails/aiGuardrails';
+import { checkRateLimitAsync, clientKey } from '@/lib/guardrails/aiGuardrails';
 import { roleLabel } from '@/lib/auth/permissions';
 
 export const runtime = 'nodejs';
@@ -20,7 +20,9 @@ export const runtime = 'nodejs';
  *    faster and reintroduces the same oracle through timing.
  */
 export async function POST(req: Request) {
-  const limit = checkRateLimit(`login:${clientKey(req)}`);
+  // Backend-aware: honours a shared store once one is installed, so the
+  // limit still means something behind more than one instance.
+  const limit = await checkRateLimitAsync(`login:${clientKey(req)}`);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: 'Too many sign-in attempts. Try again shortly.' },

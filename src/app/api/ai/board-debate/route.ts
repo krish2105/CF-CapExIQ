@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guardRequestBody } from '@/lib/guardrails/aiGuardrails';
 import OpenAI from 'openai';
 
 export interface BoardMemberStatement {
@@ -78,6 +79,12 @@ const DEFAULT_FALLBACK_DEBATE: BoardDebateResponse = {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    // Screen the payload before any of it reaches a billed provider: bounds the
+    // body size and rejects instruction-override or scraping text in any field.
+    const bodyGuard = guardRequestBody(body);
+    if (!bodyGuard.ok) {
+      return NextResponse.json({ error: bodyGuard.message }, { status: 400 });
+    }
     const { assumptions, metrics, selectedScenario } = body;
 
     const npv = metrics?.npv ? `AED ${(metrics.npv / 1000000).toFixed(2)}M` : 'AED 12.08M';
@@ -146,7 +153,8 @@ Simulate the executive board debate and output structured JSON.`;
       ],
       response_format: { type: 'json_object' },
       temperature: 0.3,
-    });
+      max_tokens: 1200,
+    }, { signal: AbortSignal.timeout(30000) });
 
     const content = completion.choices[0]?.message?.content;
     if (content) {

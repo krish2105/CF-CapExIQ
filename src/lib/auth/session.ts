@@ -26,6 +26,12 @@ export const SESSION_TTL_SECONDS = 8 * 60 * 60;
 export interface SessionPayload {
   /** User id. */
   sub: string;
+  /**
+   * Token id. Optional so a cookie minted before revocation existed still
+   * verifies rather than logging everyone out on deploy; such tokens simply
+   * cannot be revoked and age out within the TTL.
+   */
+  jti?: string;
   name: string;
   role: ExecutiveRole;
   /** Issued-at, epoch seconds. */
@@ -78,10 +84,13 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 export async function signSession(
-  payload: Omit<SessionPayload, 'iat' | 'exp'>
+  payload: Omit<SessionPayload, 'iat' | 'exp' | 'jti'>
 ): Promise<string> {
   const iat = Math.floor(Date.now() / 1000);
-  const full: SessionPayload = { ...payload, iat, exp: iat + SESSION_TTL_SECONDS };
+  // Random id so this specific token can be revoked on sign-out. crypto.randomUUID
+  // is available in both the Node and Edge runtimes this module targets.
+  const jti = crypto.randomUUID();
+  const full: SessionPayload = { ...payload, jti, iat, exp: iat + SESSION_TTL_SECONDS };
   const body = base64UrlEncode(encoder.encode(JSON.stringify(full)));
   const sig = await crypto.subtle.sign('HMAC', await key(), encoder.encode(body));
   return `${body}.${base64UrlEncode(new Uint8Array(sig))}`;

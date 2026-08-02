@@ -51,3 +51,59 @@ for an academic demonstrator and would not be acceptable for real capital-projec
 CI (`.github/workflows/ci.yml`) installs with `--frozen-lockfile` and runs typecheck, lint, unit tests
 and a production build on every push and pull request to `main`. Automated dependency vulnerability
 scanning is **not** configured.
+
+---
+
+## Deployment boundaries (added with the P0 hardening pass)
+
+Three controls are correct on a single long-lived instance and **ineffective on
+serverless or multi-instance hosting**. Each is written against an interface so
+the swap is small, and each is listed here rather than discovered in production.
+
+| Control | Default | Required before autoscaling |
+|---|---|---|
+| Rate limiting | Per-process `Map` | `setRateLimitBackend({ hit })` backed by Redis or Upstash |
+| Session revocation | Per-process `Map` | `setRevocationStore({ revoke, isRevoked })` backed by Redis or a table |
+| AI usage metering | None | Required before any free tier is offered |
+
+Why it matters: with the in-memory backends, every instance keeps its own
+counters and every cold start forgets them, so the effective limit becomes
+*(instances × configured limit)* rather than the configured limit. A revocation
+recorded on one instance is invisible to the others, which means a signed-out
+token may still be honoured by a sibling process.
+
+`isRateLimitDistributed()` reports whether a shared backend is installed, so a
+health check can assert it in production rather than assuming.
+
+## AI cost controls
+
+Every route that calls the model bounds its own cost:
+
+- **`max_tokens`** sized per route, from 300 (voice intent) to 1,500 (board memorandum)
+- **`AbortSignal.timeout(30s)`** so a hung provider cannot hold a connection open
+- **`guardRequestBody`** caps the payload at 16 KB and screens short string
+  fields for instruction-override patterns before anything is forwarded
+
+`tests/aiCostControls.test.ts` walks the route directory rather than listing
+routes by name, so a new route shipped without a cap fails the build.
+
+### What the body guard deliberately does not do
+
+Injection screening is applied only to strings under 500 characters, and the
+scraping patterns are not applied to request bodies at all. A long field is
+pasted source material, and screening it produces false refusals on legitimate
+input — a real vendor quotation contains lines such as `System: AutoStore
+B-1450` and a supplier URL, each of which a naive screen would reject. Refusing
+a genuine quotation to block a hypothetical injection is the wrong trade when
+the size cap already bounds the cost and the system prompt already delimits
+untrusted text. Free-text questions still pass through `guardInput`, which is
+where a "go and fetch this" request actually arrives.
+
+## Session revocation
+
+Sessions carry a `jti`. Signing out records that id on a denylist until the
+token would have expired anyway, and the middleware consults it before any page
+renders — so clearing the cookie now means the token is dead rather than merely
+absent from that browser. Tokens minted before the field existed carry no id and
+are treated as live, so deploying this does not sign every active user out; they
+age out within the eight-hour TTL.

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth/session';
 import { PUBLIC_ROUTES, permissionsForRoute } from '@/lib/auth/routePermissions';
 import { canAny } from '@/lib/auth/permissions';
+import { isSessionRevoked } from '@/lib/auth/revocation';
 
 /**
  * Authentication and route authorisation at the edge.
@@ -23,7 +24,10 @@ const ALWAYS_ALLOWED = new Set(['/login', '/forbidden']);
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
+  const verified = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
+  // A validly-signed token that has been signed out must not be honoured.
+  // Checked here rather than per-route so no future page can forget to ask.
+  const session = verified && !(await isSessionRevoked(verified.jti)) ? verified : null;
 
   // ---- Unauthenticated ------------------------------------------------
   if (!session) {

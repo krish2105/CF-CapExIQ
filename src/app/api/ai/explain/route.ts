@@ -207,7 +207,8 @@ QUESTION FROM THE ${String(role ?? 'CFO').toUpperCase()}: ${userQuestion}`;
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user', content: userPrompt },
           ],
-        });
+          max_tokens: 800,
+        }, { signal: AbortSignal.timeout(30000) });
 
         let emitted = false;
         for await (const part of completion) {

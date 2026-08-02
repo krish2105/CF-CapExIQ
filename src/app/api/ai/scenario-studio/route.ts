@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guardRequestBody } from '@/lib/guardrails/aiGuardrails';
 import OpenAI from 'openai';
 
 export interface GeneratedScenarioStudio {
@@ -106,6 +107,12 @@ function normalizeScenario(raw: unknown, fallback: GeneratedScenarioStudio): Gen
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
+    // Screen the payload before any of it reaches a billed provider: bounds the
+    // body size and rejects instruction-override or scraping text in any field.
+    const bodyGuard = guardRequestBody(body);
+    if (!bodyGuard.ok) {
+      return NextResponse.json({ error: bodyGuard.message }, { status: 400 });
+    }
     const { userPrompt } = (body ?? {}) as { userPrompt?: unknown };
 
     const promptText =
@@ -157,7 +164,8 @@ Return ONLY a JSON object matching this schema:
       ],
       response_format: { type: 'json_object' },
       temperature: 0.4,
-    });
+      max_tokens: 900,
+    }, { signal: AbortSignal.timeout(30000) });
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
