@@ -4,6 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppChrome } from '@/components/layout/AppChrome';
 import { ChartGradients } from '@/components/ui/charts';
+import { StoreHydration } from '@/components/StoreHydration';
 
 /**
  * Type system — serif/sans collision.
@@ -62,6 +63,9 @@ export default function RootLayout({
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
           <ChartGradients />
         </svg>
+        {/* Applies the persisted store after hydration. See the component for
+            why the store defers rehydration rather than doing it inline. */}
+        <StoreHydration />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AppChrome>{children}</AppChrome>
         </ThemeProvider>

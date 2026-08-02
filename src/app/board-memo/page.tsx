@@ -8,7 +8,11 @@ import { FileText, Printer, ShieldCheck, Sparkles, CheckCircle2, Lock, Download,
 const INITIAL_MEMO_DATA: BoardMemoResponse = {
   memoTitle: 'EXECUTIVE BOARD MEMORANDUM: AUTOMATED MICRO-FULFILMENT CENTRE CAPEX APPROVAL',
   documentRef: 'MEMO-GCC-2026-084',
-  date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+  // Left blank on purpose. Formatting today's date here evaluates once when the
+  // module loads, separately on the server and in the browser, so the two
+  // renders disagree whenever their locale or timezone puts them on different
+  // days. The date is filled in after mount instead.
+  date: '',
   auditHash: 'a7c925e6884fbc1267f0a991823bcde45f89123456789abcdef0123456789abc',
   targetEntity: 'NovaRetail GCC Holdings Limited',
   executiveSummary: 'This memorandum presents the investment proposal for NovaRetail GCC to allocate AED 24.0M in capital expenditure for a 5-year automated micro-fulfilment centre in Dubai South.',
@@ -39,6 +43,22 @@ export default function BoardMemoPage() {
 
   const [loading, setLoading] = useState(false);
   const [memoData, setMemoData] = useState<BoardMemoResponse>(INITIAL_MEMO_DATA);
+
+  // Stamped client-side after hydration so server and client markup match.
+  useEffect(() => {
+    setMemoData((prev) =>
+      prev.date
+        ? prev
+        : {
+            ...prev,
+            date: new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+          }
+    );
+  }, []);
 
   const fetchBoardMemo = async () => {
     setLoading(true);

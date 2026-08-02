@@ -310,6 +310,22 @@ const financialStorePersistOptions: PersistOptions<FinancialStoreState, Persiste
   storage: createJSONStorage(() => localStorage),
   version: FINANCIAL_STORE_VERSION,
   migrate: migrateFinancialStore,
+  /**
+   * Rehydrate on demand rather than at module evaluation.
+   *
+   * With automatic rehydration the store reads localStorage while the module
+   * is first evaluated. On the server that storage does not exist, so the HTML
+   * is rendered from the defaults; in the browser the same render reads a
+   * saved profile and produces different text. React then reports a hydration
+   * mismatch and throws away the server markup, which showed up as the WACC
+   * rendering "11.50%" on the server and "12.75%" on the client.
+   *
+   * Skipping it makes the server render and the first client render identical
+   * by construction, because both use the defaults. `StoreHydration` calls
+   * rehydrate() in an effect after mount, so the saved profile is applied on
+   * the next commit, which React handles as an ordinary state update.
+   */
+  skipHydration: true,
   partialize: (state) => ({
     assumptions: state.assumptions,
     archetype: state.archetype,
