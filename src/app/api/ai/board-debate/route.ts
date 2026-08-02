@@ -92,13 +92,13 @@ export async function POST(req: Request) {
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
       return NextResponse.json(fallbackResponse);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are an Executive Board Debate Simulation Swarm for NovaRetail GCC evaluating a AED 24.0M automated micro-fulfilment centre.
 Simulate a debate between 4 board members:

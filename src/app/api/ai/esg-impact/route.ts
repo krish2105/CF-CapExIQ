@@ -34,13 +34,13 @@ export async function POST(req: Request) {
     const fallbackResponse: EsgImpactResponse = DEFAULT_FALLBACK_ESG;
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
       return NextResponse.json(fallbackResponse);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are a Chief Sustainability & ESG Officer AI for NovaRetail GCC.
 Calculate ESG sustainability metrics for an automated micro-fulfilment centre.

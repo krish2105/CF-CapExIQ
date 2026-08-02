@@ -22,28 +22,59 @@ export function formatNumber(value: number, decimals: number = 2): string {
   }).format(value);
 }
 
-export function getDecisionBadgeColor(status: 'Approve' | 'Phased Implementation' | 'Delay Pending Evidence' | 'Reject'): string {
+/**
+ * Status colouring for the "Midnight Vault" palette.
+ *
+ * These map onto the semantic tokens rather than raw Tailwind palette classes,
+ * so they follow both themes automatically and stay inside the desaturated
+ * sage/copper/rust family instead of reintroducing saturated brand colours.
+ *
+ * Colour is never the sole signal — every consumer pairs these with an icon
+ * and a text label, which is what keeps the encoding WCAG 1.4.1 compliant.
+ */
+export function getDecisionBadgeColor(
+  status: 'Approve' | 'Phased Implementation' | 'Delay Pending Evidence' | 'Reject'
+): string {
   switch (status) {
     case 'Approve':
-      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-bold';
+      return 'bg-success-soft text-success border-success/40 font-semibold';
     case 'Phased Implementation':
-      return 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/40 font-bold';
+      return 'bg-accent text-primary border-primary/40 font-semibold';
     case 'Delay Pending Evidence':
-      return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 font-bold';
+      return 'bg-warning-soft text-warning border-warning/40 font-semibold';
     case 'Reject':
-      return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40 font-bold';
+      return 'bg-destructive-soft text-destructive border-destructive/40 font-semibold';
   }
 }
 
-export function getRiskSeverityBadgeColor(severity: 'Critical' | 'High' | 'Medium' | 'Low'): string {
+export function getRiskSeverityBadgeColor(
+  severity: 'Critical' | 'High' | 'Medium' | 'Low'
+): string {
   switch (severity) {
     case 'Critical':
-      return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40 font-bold';
+      return 'bg-destructive-soft text-destructive border-destructive/40 font-semibold';
     case 'High':
-      return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 font-bold';
+      return 'bg-warning-soft text-warning border-warning/40 font-semibold';
     case 'Medium':
-      return 'bg-yellow-500/15 text-yellow-800 dark:text-yellow-300 border-yellow-500/40 font-bold';
+      return 'bg-accent text-primary border-primary/40 font-semibold';
     case 'Low':
-      return 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/40 font-bold';
+      return 'bg-muted text-muted-foreground border-border-strong font-semibold';
   }
+}
+
+/** Compact AED for chart axes and dense cells: AED 12.1M, AED 840K. */
+export function formatAEDCompact(value: number, decimals = 1): string {
+  if (!Number.isFinite(value)) return 'AED 0';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1_000_000_000) return `${sign}AED ${(abs / 1_000_000_000).toFixed(decimals)}B`;
+  if (abs >= 1_000_000) return `${sign}AED ${(abs / 1_000_000).toFixed(decimals)}M`;
+  if (abs >= 1_000) return `${sign}AED ${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}AED ${abs.toFixed(0)}`;
+}
+
+/** Millions, unlabelled — for axis ticks where the unit sits in the title. */
+export function formatMillions(value: number, decimals = 1): string {
+  if (!Number.isFinite(value)) return '0';
+  return `${value.toFixed(decimals)}`;
 }

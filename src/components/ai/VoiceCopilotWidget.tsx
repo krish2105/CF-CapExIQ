@@ -85,7 +85,7 @@ export default function VoiceCopilotWidget() {
       <div className="fixed bottom-8 right-8 z-[9999]">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 hover:scale-110 transition-all shadow-2xl shadow-purple-500/50 flex items-center justify-center text-white border-2 border-white/40 group ring-4 ring-purple-500/20"
+          className="h-14 w-14 rounded-pill bg-surface hover:scale-110 transition-all flex items-center justify-center text-foreground border-2 border-border-strong group ring-4 ring-info/20"
           title="Voice AI Executive Copilot"
         >
           <Sparkles className="h-6 w-6 group-hover:rotate-12 transition-transform" />
@@ -94,10 +94,10 @@ export default function VoiceCopilotWidget() {
 
       {/* Floating Widget Panel */}
       {isOpen && (
-        <div className="fixed bottom-28 right-8 z-[9999] w-80 sm:w-96 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-2xl shadow-2xl p-5 space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-28 right-8 z-[9999] w-80 sm:w-96 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-card p-5 space-y-4 animate-slide-down">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+              <div className="h-7 w-7 rounded-card bg-primary/20 flex items-center justify-center text-primary">
                 <Sparkles className="h-4 w-4" />
               </div>
               <div>
@@ -105,19 +105,19 @@ export default function VoiceCopilotWidget() {
                 <p className="text-[10px] text-muted-foreground">Hands-free Conversational Control</p>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="p-1 text-muted-foreground hover:text-foreground rounded-lg">
+            <button onClick={() => setIsOpen(false)} className="p-1 text-muted-foreground hover:text-foreground rounded-card">
               <X className="h-4 w-4" />
             </button>
           </div>
 
           {/* Voice Wave Visualizer */}
-          <div className="bg-background/60 border border-border rounded-xl p-4 text-center space-y-3">
+          <div className="bg-background/60 border border-border rounded-card p-4 text-center space-y-3">
             <div className="flex items-center justify-center gap-1.5 h-8">
               {[...Array(7)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-1.5 rounded-full bg-primary transition-all duration-300 ${
-                    isListening ? 'animate-pulse bg-purple-500 h-6' : 'h-3 opacity-40'
+                  className={`w-1.5 rounded-pill bg-primary transition-all duration-300 ${
+                    isListening ? 'animate-pulse bg-info h-6' : 'h-3 opacity-40'
                   }`}
                   style={{ animationDelay: `${i * 100}ms` }}
                 />
@@ -127,9 +127,9 @@ export default function VoiceCopilotWidget() {
             <button
               onClick={startListening}
               disabled={isListening || loading}
-              className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md ${
+              className={`w-full py-2.5 px-4 rounded-card font-bold text-xs flex items-center justify-center gap-2 transition-all ${
                 isListening
-                  ? 'bg-rose-500 text-white animate-pulse'
+                  ? 'bg-destructive text-primary-foreground animate-pulse'
                   : 'bg-primary text-primary-foreground hover:opacity-90'
               }`}
             >
@@ -162,12 +162,12 @@ export default function VoiceCopilotWidget() {
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               placeholder="e.g. Set discount rate to 10%..."
-              className="flex-1 bg-background text-xs px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 bg-background text-xs px-3 py-2 rounded-card border border-border focus:outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               type="submit"
               disabled={loading || !transcript.trim()}
-              className="px-3 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="px-3 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-card hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               Send
             </button>
@@ -175,7 +175,7 @@ export default function VoiceCopilotWidget() {
 
           {/* AI Response Box */}
           {response && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-xs space-y-1.5">
+            <div className="bg-primary/5 border border-primary/20 rounded-card p-3 text-xs space-y-1.5">
               <div className="flex items-center justify-between text-[10px] font-bold text-primary uppercase">
                 <span>AI Executive Feedback</span>
                 <button onClick={() => speakText(response.spokenSummary)} className="hover:opacity-80" title="Replay voice readout">
@@ -184,7 +184,7 @@ export default function VoiceCopilotWidget() {
               </div>
               <p className="text-foreground text-[11px] leading-relaxed">{response.spokenSummary}</p>
               {response.actionTaken && (
-                <span className="inline-block text-[10px] font-mono text-emerald-500 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded">
+                <span className="inline-block text-[10px] font-mono text-success font-semibold bg-success/10 px-2 py-0.5 rounded">
                   ✓ {response.actionTaken}
                 </span>
               )}

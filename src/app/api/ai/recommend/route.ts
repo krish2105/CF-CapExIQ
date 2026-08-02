@@ -216,13 +216,13 @@ export async function POST(req: Request) {
     const fallbackResponse = buildFallbackResponse(metrics, assumptions);
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey) {
       return NextResponse.json({ ...fallbackResponse, isFallback: true });
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are a Chief Financial Officer Adviser for NovaRetail GCC evaluating an automated micro-fulfilment centre.
 

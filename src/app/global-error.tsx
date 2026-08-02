@@ -11,15 +11,15 @@ export default function GlobalError({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
+      <body className="min-h-screen bg-surface text-white flex flex-col items-center justify-center p-6 text-center">
         <div className="space-y-4 max-w-md">
-          <h2 className="text-xl font-bold text-rose-400">System Recoverable Error</h2>
-          <p className="text-xs text-slate-300">
+          <h2 className="text-xl font-bold text-destructive">System Recoverable Error</h2>
+          <p className="text-xs text-card-foreground">
             {error?.message || 'A global error occurred.'}
           </p>
           <button
             onClick={() => reset()}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+            className="px-4 py-2 rounded-card bg-info hover:bg-info text-white text-xs font-bold transition-all"
           >
             Reload CapExIQ Session
           </button>

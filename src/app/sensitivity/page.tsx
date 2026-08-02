@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import {
   calculateOneWaySensitivity,
@@ -322,14 +323,18 @@ const NpvHeatmap: React.FC<HeatmapProps> = ({
 /* ------------------------------------- Page ------------------------------------- */
 
 export default function SensitivityPage() {
-  const { getActiveAssumptions, getActiveScenarioResult } = useFinancialStore();
-  const activeAssumptions = getActiveAssumptions();
-  const scenarioResult = getActiveScenarioResult();
-  const metrics = scenarioResult.metrics;
+  const activeAssumptions = useFinancialStore(useShallow((s) => s.getActiveAssumptions()));
+  const metrics = useFinancialStore((s) => s.getActiveScenarioResult().metrics);
   const colors = useThemeChartColors();
 
   const [activeTab, setActiveTab] = useState<'tornado' | 'heatmap' | 'oneway'>('tornado');
 
+  /**
+   * ~8ms of matrix work across the three calls, previously re-run on every
+   * render — including a tab switch between views that share the same inputs,
+   * and any unrelated store write. Keyed on the assumptions object, which is
+   * the only thing they read.
+   */
   const oneWayResults = useMemo(
     () => calculateOneWaySensitivity(activeAssumptions),
     [activeAssumptions]
@@ -338,27 +343,24 @@ export default function SensitivityPage() {
     () => calculateTwoWaySensitivity(activeAssumptions),
     [activeAssumptions]
   );
-
-  const baseNpv = metrics.npv;
-  const tornadoRows = useMemo(
-    () => buildTornadoRows(activeAssumptions, baseNpv),
-    [activeAssumptions, baseNpv]
+  const formattedTornado = useMemo(
+    () =>
+      generateTornadoChartData(activeAssumptions).map((item) => ({
+        name: item.variableName,
+        lowNpv: item.npvLow / 1000000,
+        highNpv: item.npvHigh / 1000000,
+        baseNpv: item.baseNpv / 1000000,
+        spread: item.spread / 1000000,
+      })),
+    [activeAssumptions]
   );
-
-  const topDriver = tornadoRows[0];
-  const runnerUp = tornadoRows[1];
-  const maxDelta = Math.max(
-    ...tornadoRows.map((r) => Math.max(Math.abs(r.lowDelta), Math.abs(r.highDelta))),
-    1
-  );
-  const axisBound = maxDelta * 1.15;
 
   return (
     <div className="space-y-6">
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-primary" /> Sensitivity Analysis & Break-Even Tolerances
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -367,12 +369,12 @@ export default function SensitivityPage() {
         </div>
 
         {/* View Switcher Pills */}
-        <div className="flex items-center bg-muted p-1 rounded-xl border border-border text-xs">
+        <div className="flex items-center bg-muted p-1 rounded-card border border-border text-xs">
           <button
             onClick={() => setActiveTab('tornado')}
-            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1 rounded-card font-semibold transition-all ${
               activeTab === 'tornado'
-                ? 'bg-card text-foreground font-bold shadow-sm'
+                ? 'bg-card text-foreground font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -380,9 +382,9 @@ export default function SensitivityPage() {
           </button>
           <button
             onClick={() => setActiveTab('heatmap')}
-            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1 rounded-card font-semibold transition-all ${
               activeTab === 'heatmap'
-                ? 'bg-card text-foreground font-bold shadow-sm'
+                ? 'bg-card text-foreground font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -390,9 +392,9 @@ export default function SensitivityPage() {
           </button>
           <button
             onClick={() => setActiveTab('oneway')}
-            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1 rounded-card font-semibold transition-all ${
               activeTab === 'oneway'
-                ? 'bg-card text-foreground font-bold shadow-sm'
+                ? 'bg-card text-foreground font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -403,7 +405,7 @@ export default function SensitivityPage() {
 
       {/* Break-Even Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="glass-panel p-4 rounded-xl border border-border">
+        <div className="glass-panel p-4">
           <span className="text-[11px] text-muted-foreground font-medium">Break-Even Annual Benefit</span>
           <p className="text-lg font-bold text-primary mt-1">
             {metrics.breakEvenAnnualOperatingBenefit !== null &&
@@ -413,7 +415,7 @@ export default function SensitivityPage() {
           </p>
           <span className="text-[10px] text-muted-foreground font-mono">Min Operating Benefits/Yr</span>
         </div>
-        <div className="glass-panel p-4 rounded-xl border border-border">
+        <div className="glass-panel p-4">
           <span className="text-[11px] text-muted-foreground font-medium">Max Initial Outlay Limit</span>
           <p
             className={`text-lg font-bold mt-1 ${
@@ -426,17 +428,17 @@ export default function SensitivityPage() {
           </p>
           <span className="text-[10px] text-muted-foreground font-mono">Max Capex Outlay (NPV=0)</span>
         </div>
-        <div className="glass-panel p-4 rounded-xl border border-border">
+        <div className="glass-panel p-4">
           <span className="text-[11px] text-muted-foreground font-medium">Max Investment Overrun %</span>
-          <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">
-            {formatSignedPct(metrics.maxInvestmentCostOverrunPct)}
+          <p className="text-lg font-bold text-warning mt-1">
+            {metrics.maxInvestmentCostOverrunPct >= 0 ? '+' : ''}{metrics.maxInvestmentCostOverrunPct.toFixed(1)}%
           </p>
           <span className="text-[10px] text-muted-foreground font-mono">Tolerable Overrun Ceiling</span>
         </div>
-        <div className="glass-panel p-4 rounded-xl border border-border">
+        <div className="glass-panel p-4">
           <span className="text-[11px] text-muted-foreground font-medium">Max Benefit Shortfall %</span>
-          <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">
-            {formatDownsideTolerancePct(metrics.maxOperatingBenefitShortfallPct)}
+          <p className="text-lg font-bold text-info mt-1">
+            {metrics.maxOperatingBenefitShortfallPct > 0 ? '-' : ''}{Math.abs(metrics.maxOperatingBenefitShortfallPct).toFixed(1)}%
           </p>
           <span className="text-[10px] text-muted-foreground font-mono">Max Benefit Drop Tolerance</span>
         </div>
@@ -444,124 +446,76 @@ export default function SensitivityPage() {
 
       {/* Active Tab View */}
       {activeTab === 'tornado' && (
-        <div className="space-y-4">
-          <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                <BarChart2 className="h-4 w-4 text-primary" /> Tornado Chart — NPV Deviation from Base Case
-              </h3>
-              <span className="text-[11px] text-muted-foreground font-mono">
-                Baseline NPV: {formatAED(baseNpv)} • Every driver flexed ±{(TORNADO_FLEX * 100).toFixed(0)}%
-              </span>
-            </div>
-
-            <div className="h-96 w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={tornadoRows}
-                  layout="vertical"
-                  stackOffset="sign"
-                  margin={{ top: 10, right: 30, left: 130, bottom: 10 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
-                  <XAxis
-                    type="number"
-                    domain={[-axisBound, axisBound]}
-                    stroke={colors.axis}
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(v: number) => toMillions(baseNpv + v)}
-                    label={{
-                      value: 'Resulting NPV (AED Millions)',
-                      position: 'insideBottom',
-                      offset: -5,
-                      fill: colors.axis,
-                      fontSize: 10,
-                    }}
-                  />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    stroke={colors.axis}
-                    tick={{ fontSize: 11 }}
-                    width={130}
-                  />
-                  <Tooltip content={<TornadoTooltip />} cursor={{ fill: 'rgba(148,163,184,0.12)' }} />
-                  <ReferenceLine
-                    x={0}
-                    stroke={colors.primary}
-                    strokeWidth={2}
-                    label={{
-                      value: `Base NPV ${formatAED(baseNpv)}`,
-                      fill: colors.primary,
-                      fontSize: 10,
-                      position: 'top',
-                    }}
-                  />
-                  <Bar
-                    dataKey="lowDelta"
-                    stackId="tornado"
-                    name={`Low flex (-${(TORNADO_FLEX * 100).toFixed(0)}%)`}
-                    fill={colors.danger}
-                  />
-                  <Bar
-                    dataKey="highDelta"
-                    stackId="tornado"
-                    name={`High flex (+${(TORNADO_FLEX * 100).toFixed(0)}%)`}
-                    fill={colors.success}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: colors.danger }} />
-                Driver at -{(TORNADO_FLEX * 100).toFixed(0)}%
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: colors.success }} />
-                Driver at +{(TORNADO_FLEX * 100).toFixed(0)}%
-              </span>
-              <span>Bars extend left/right of the base-case NPV centre line; drivers are ranked by total swing.</span>
-            </div>
+        <div className="glass-panel p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-primary" /> Tornado Chart — Value Driver Impact Ranking (AED Millions)
+            </h3>
+            <span className="text-[11px] text-muted-foreground font-mono">Baseline NPV: {formatAED(metrics.npv)}</span>
           </div>
 
-          {/* Ranked driver table */}
-          <div className="glass-panel p-5 rounded-2xl border border-border space-y-2">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Driver Ranking (identical ±{(TORNADO_FLEX * 100).toFixed(0)}% relative flex)
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[11px] font-mono border-collapse">
+          <div className="h-80 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={formattedTornado} layout="vertical" margin={{ top: 10, right: 30, left: 120, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 6" vertical={false} stroke={colors.grid} />
+                <XAxis type="number" stroke={colors.axis} tick={{ fontSize: 11 }} />
+                <YAxis dataKey="name" type="category" stroke={colors.axis} tick={{ fontSize: 11 }} width={120} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, borderRadius: "10px", fontSize: '12px', color: colors.tooltipText }}
+                  formatter={(val: number) => [`AED ${val.toFixed(2)}M`, 'NPV Impact']}
+                />
+                <ReferenceLine x={metrics.npv / 1000000} stroke={colors.primary} strokeDasharray="4 4" label={{ value: 'Baseline NPV', fill: colors.primary, fontSize: 10 }} />
+                <Bar dataKey="spread" fill={colors.primary} radius={[0, 3, 3, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'heatmap' && (
+        <div className="space-y-6">
+          {/* Heatmap 1: Discount Rate vs Benefits */}
+          <div className="glass-panel p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] flex items-center gap-2">
+                <Grid className="h-4 w-4 text-primary" /> 2-Way Matrix 1: Discount Rate (WACC) vs. Operating Benefits Multiplier
+              </h3>
+              <span className="text-[11px] text-muted-foreground font-mono">NPV Values (AED Millions)</span>
+            </div>
+
+            <div className="overflow-x-auto pt-2">
+              <table className="ledger-table text-center">
                 <thead>
-                  <tr className="bg-muted text-foreground border-b border-border">
-                    <th className="py-2 px-3">#</th>
-                    <th className="py-2 px-3">Driver</th>
-                    <th className="py-2 px-3 text-right">NPV at -{(TORNADO_FLEX * 100).toFixed(0)}%</th>
-                    <th className="py-2 px-3 text-right">NPV at +{(TORNADO_FLEX * 100).toFixed(0)}%</th>
-                    <th className="py-2 px-3 text-right">Swing</th>
+                  <tr>
+                    <th className="py-2.5 px-3 font-bold text-left border border-border">WACC \ Benefits</th>
+                    {rateVsBenefitMatrix.colValues.map((bMult) => (
+                      <th key={bMult} className="py-2.5 px-3 font-bold border border-border">
+                        {Math.round(bMult * 100)}%
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
-                  {tornadoRows.map((row, idx) => (
-                    <tr key={row.key} className="hover:bg-muted/40">
-                      <td className="py-2 px-3 text-muted-foreground">{idx + 1}</td>
-                      <td className="py-2 px-3 font-bold text-foreground font-sans">{row.name}</td>
-                      <td
-                        className={`py-2 px-3 text-right font-bold ${
-                          row.lowNpv >= 0 ? 'text-success' : 'text-destructive'
-                        }`}
-                      >
-                        {formatAED(row.lowNpv)}
+                <tbody>
+                  {rateVsBenefitMatrix.matrix.map((row, rIdx) => (
+                    <tr key={rIdx}>
+                      <td className="py-2.5 px-3 text-left font-bold text-foreground bg-muted border border-border">
+                        {(rateVsBenefitMatrix.rowValues[rIdx] * 100).toFixed(1)}%
                       </td>
-                      <td
-                        className={`py-2 px-3 text-right font-bold ${
-                          row.highNpv >= 0 ? 'text-success' : 'text-destructive'
-                        }`}
-                      >
-                        {formatAED(row.highNpv)}
-                      </td>
-                      <td className="py-2 px-3 text-right text-primary font-bold">AED {toMillions(row.swing)}</td>
+                      {row.map((cell, cIdx) => {
+                        const isPos = cell.npv >= 0;
+                        return (
+                          <td
+                            key={cIdx}
+                            className={`py-2.5 px-3 font-bold border border-border transition-colors ${
+                              isPos
+                                ? 'bg-success/15 text-success font-semibold'
+                                : 'bg-destructive/15 text-destructive font-semibold'
+                            }`}
+                          >
+                            {(cell.npv / 1000000).toFixed(2)}M
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
@@ -569,87 +523,61 @@ export default function SensitivityPage() {
             </div>
           </div>
 
-          {/* Generated narrative */}
-          <div className="glass-panel p-5 rounded-2xl border border-border space-y-2">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-              <Info className="h-4 w-4 text-primary" /> Sensitivity Narrative — Greatest Impact & Decision Switch Points
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Under an identical ±{(TORNADO_FLEX * 100).toFixed(0)}% flex applied to every driver,{' '}
-              <strong className="text-foreground">{topDriver.name}</strong> has the greatest impact on value: it moves
-              NPV by <strong className="text-foreground">AED {toMillions(topDriver.swing)}</strong>, from{' '}
-              {formatAED(topDriver.lowNpv)} on the downside to {formatAED(topDriver.highNpv)} on the upside, against a
-              base-case NPV of {formatAED(baseNpv)}.{' '}
-              {runnerUp && (
-                <>
-                  That is {(topDriver.swing / Math.max(runnerUp.swing, 1)).toFixed(1)}× the swing of the next-ranked
-                  driver, <strong className="text-foreground">{runnerUp.name}</strong> (AED {toMillions(runnerUp.swing)}
-                  ).{' '}
-                </>
-              )}
-              Management attention and contractual protection should therefore concentrate on {topDriver.name.toLowerCase()}.
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              The recommendation changes — NPV falls to zero and the project stops creating value — under any one of
-              three conditions.{' '}
-              <strong className="text-foreground">One:</strong> annual operating benefits fall by more than{' '}
-              <strong className="text-foreground">
-                {metrics.maxOperatingBenefitShortfallPct !== null
-                  ? `${Math.abs(metrics.maxOperatingBenefitShortfallPct).toFixed(2)}%`
-                  : 'N/A'}
-              </strong>
-              {metrics.breakEvenAnnualOperatingBenefit !== null && (
-                <> (i.e. below {formatAED(metrics.breakEvenAnnualOperatingBenefit)} per year)</>
-              )}
-              . <strong className="text-foreground">Two:</strong> the total initial outlay overruns by more than{' '}
-              <strong className="text-foreground">
-                {metrics.maxInvestmentCostOverrunPct.toFixed(1)}%
-              </strong>{' '}
-              (a ceiling of {formatAED(metrics.breakEvenInitialInvestment)} against the current{' '}
-              {formatAED(metrics.totalInitialOutlay)}). <strong className="text-foreground">Three:</strong> the discount
-              rate rises to <strong className="text-foreground">{formatPercent(metrics.irr)}</strong>, the project&apos;s
-              IRR, at which point NPV = 0 by definition — {formatPercent(metrics.irr)} sits{' '}
-              {metrics.irr !== null
-                ? `${((metrics.irr - activeAssumptions.discountRate) * 100).toFixed(2)} points`
-                : 'N/A'}{' '}
-              above the {formatPercent(activeAssumptions.discountRate)} hurdle rate in force.
-            </p>
+          {/* Heatmap 2: Capex vs Benefits */}
+          <div className="glass-panel p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] flex items-center gap-2">
+                <Grid className="h-4 w-4 text-primary" /> 2-Way Matrix 2: Initial Capex Multiplier vs. Operating Benefits Multiplier
+              </h3>
+              <span className="text-[11px] text-muted-foreground font-mono">NPV Values (AED Millions)</span>
+            </div>
+
+            <div className="overflow-x-auto pt-2">
+              <table className="ledger-table text-center">
+                <thead>
+                  <tr>
+                    <th className="py-2.5 px-3 font-bold text-left border border-border">Capex \ Benefits</th>
+                    {capexVsBenefitMatrix.colValues.map((bMult) => (
+                      <th key={bMult} className="py-2.5 px-3 font-bold border border-border">
+                        {Math.round(bMult * 100)}%
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {capexVsBenefitMatrix.matrix.map((row, rIdx) => (
+                    <tr key={rIdx}>
+                      <td className="py-2.5 px-3 text-left font-bold text-foreground bg-muted border border-border">
+                        {Math.round(capexVsBenefitMatrix.rowValues[rIdx] * 100)}%
+                      </td>
+                      {row.map((cell, cIdx) => {
+                        const isPos = cell.npv >= 0;
+                        return (
+                          <td
+                            key={cIdx}
+                            className={`py-2.5 px-3 font-bold border border-border transition-colors ${
+                              isPos
+                                ? 'bg-success/15 text-success font-semibold'
+                                : 'bg-destructive/15 text-destructive font-semibold'
+                            }`}
+                          >
+                            {(cell.npv / 1000000).toFixed(2)}M
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
-
-      {activeTab === 'heatmap' && (
-        <div className="space-y-6">
-          <NpvHeatmap
-            title="2-Way Matrix 1: Discount Rate (WACC) vs. Operating Benefits Multiplier"
-            cornerLabel="WACC \ Benefits"
-            matrix={rateVsBenefitMatrix}
-            formatRow={(v) => `${(v * 100).toFixed(1)}%`}
-            formatCol={(v) => `${Math.round(v * 100)}%`}
-            rowUnitLabel="WACC"
-            colUnitLabel="Benefits"
-            baseRowValue={activeAssumptions.discountRate}
-            baseColValue={1}
-          />
-
-          <NpvHeatmap
-            title="2-Way Matrix 2: Initial Capex Multiplier vs. Operating Benefits Multiplier"
-            cornerLabel="Capex \ Benefits"
-            matrix={capexVsBenefitMatrix}
-            formatRow={(v) => `${Math.round(v * 100)}%`}
-            formatCol={(v) => `${Math.round(v * 100)}%`}
-            rowUnitLabel="Capex"
-            colUnitLabel="Benefits"
-            baseRowValue={1}
-            baseColValue={1}
-          />
         </div>
       )}
 
       {activeTab === 'oneway' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {oneWayResults.map((item) => (
-            <div key={item.variableKey} className="glass-panel p-4 rounded-xl border border-border space-y-2">
+            <div key={item.variableKey} className="glass-panel p-4 space-y-2">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-xs font-bold text-foreground">{item.displayName}</span>
                 <span className="text-[10px] text-primary font-mono font-bold">

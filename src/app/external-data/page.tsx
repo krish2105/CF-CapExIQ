@@ -51,7 +51,7 @@ export default function ExternalDataPage() {
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <Landmark className="h-6 w-6 text-primary" /> UAE External Data, Tax & WACC Debt Calculator
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -60,10 +60,10 @@ export default function ExternalDataPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center bg-muted p-1 rounded-xl border border-border text-xs">
+        <div className="flex items-center bg-muted p-1 rounded-card border border-border text-xs">
           <button
             onClick={() => setActiveTab('wacc')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-card font-semibold transition-all ${
               activeTab === 'wacc'
                 ? 'bg-primary/20 text-primary border border-primary/40'
                 : 'text-muted-foreground hover:text-foreground'
@@ -73,7 +73,7 @@ export default function ExternalDataPage() {
           </button>
           <button
             onClick={() => setActiveTab('tax')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-card font-semibold transition-all ${
               activeTab === 'tax'
                 ? 'bg-primary/20 text-primary border border-primary/40'
                 : 'text-muted-foreground hover:text-foreground'
@@ -83,7 +83,7 @@ export default function ExternalDataPage() {
           </button>
           <button
             onClick={() => setActiveTab('eibor')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-card font-semibold transition-all ${
               activeTab === 'eibor'
                 ? 'bg-primary/20 text-primary border border-primary/40'
                 : 'text-muted-foreground hover:text-foreground'
@@ -95,21 +95,21 @@ export default function ExternalDataPage() {
       </div>
 
       {appliedNotice && (
-        <div className="p-3 rounded-xl bg-success/15 border border-success/30 text-success text-xs flex items-center gap-2">
+        <div className="p-3 rounded-card bg-success/15 border border-success/30 text-success text-xs flex items-center gap-2">
           <Check className="h-4 w-4" /> Calculated WACC ({formatPercent(waccResult.calculatedWacc)}) applied to model hurdle rate!
         </div>
       )}
 
       {activeTab === 'wacc' && (
         <div className="space-y-6">
-          <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2 flex items-center gap-2">
+          <div className="glass-panel p-5 space-y-4">
+            <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2 flex items-center gap-2">
               <Calculator className="h-4 w-4 text-primary" /> Weighted Average Cost of Capital (WACC) & CAPM Estimator
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Cost of Equity (CAPM) */}
-              <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-3">
+              <div className="p-4 rounded-card bg-muted/60 border border-border space-y-3">
                 <span className="text-xs font-bold text-foreground flex items-center gap-1">
                   1. Cost of Equity ($r_e = R_f + \beta \cdot ERP + CRP + EXEC$)
                 </span>
@@ -177,7 +177,7 @@ export default function ExternalDataPage() {
               </div>
 
               {/* Cost of Debt */}
-              <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-3">
+              <div className="p-4 rounded-card bg-muted/60 border border-border space-y-3">
                 <span className="text-xs font-bold text-foreground flex items-center gap-1">
                   2. Cost of Debt ($r_d = EIBOR + Spread$)
                 </span>
@@ -212,17 +212,14 @@ export default function ExternalDataPage() {
                       className="w-full bg-card border border-border rounded px-2.5 py-1 text-xs text-foreground mt-0.5"
                     />
                   </div>
-                  <div className="pt-1 text-xs font-mono text-muted-foreground">
-                    Pre-Tax Cost of Debt: {formatPercent(waccResult.preTaxCostOfDebt)}
-                  </div>
-                  <div className="text-xs font-mono font-bold text-emerald-400">
+                  <div className="pt-1 text-xs font-mono font-bold text-success">
                     After-Tax Cost of Debt: {formatPercent(waccResult.afterTaxCostOfDebt)}
                   </div>
                 </div>
               </div>
 
               {/* WACC Result Card */}
-              <div className="glass-panel p-4 rounded-xl border border-primary/30 flex flex-col justify-between">
+              <div className="glass-panel p-4 border border-primary/30 flex flex-col justify-between">
                 <div>
                   <span className="text-xs font-bold text-foreground">Calculated Project WACC</span>
                   <p className="text-2xl font-bold text-primary mt-2">{formatPercent(waccResult.calculatedWacc)}</p>
@@ -233,7 +230,7 @@ export default function ExternalDataPage() {
 
                 <button
                   onClick={handleApplyWaccToModel}
-                  className="w-full mt-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-colors"
+                  className="w-full mt-4 py-2 rounded-card bg-primary hover:opacity-90/90 text-primary-foreground text-xs font-bold transition-colors"
                 >
                   Apply WACC to Model Hurdle Rate
                 </button>
@@ -245,19 +242,19 @@ export default function ExternalDataPage() {
 
       {activeTab === 'tax' && (
         <div className="space-y-6">
-          <div className="glass-panel p-5 rounded-2xl border border-border space-y-3">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2">
+          <div className="glass-panel p-5 space-y-3">
+            <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2">
               Official UAE Corporate Tax Bands (Federal Decree-Law No. 47 of 2022)
             </h3>
-            <table className="w-full text-left text-xs font-mono border-collapse">
+            <table className="ledger-table">
               <thead>
-                <tr className="bg-muted text-foreground text-[11px] border-b border-border">
+                <tr>
                   <th className="py-2.5 px-3">Taxable Income Threshold (AED)</th>
                   <th className="py-2.5 px-3">Statutory Tax Rate</th>
                   <th className="py-2.5 px-3">Authority Source</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border text-foreground">
+              <tbody>
                 <tr>
                   <td className="py-2.5 px-3">AED 0 – AED 375,000</td>
                   <td className="py-2.5 px-3 font-bold text-success">0.0%</td>
@@ -265,7 +262,7 @@ export default function ExternalDataPage() {
                 </tr>
                 <tr>
                   <td className="py-2.5 px-3">Above AED 375,000</td>
-                  <td className="py-2.5 px-3 font-bold text-purple-400">9.0%</td>
+                  <td className="py-2.5 px-3 font-bold text-info">9.0%</td>
                   <td className="py-2.5 px-3 text-primary">UAE Ministry of Finance</td>
                 </tr>
               </tbody>
@@ -275,19 +272,19 @@ export default function ExternalDataPage() {
       )}
 
       {activeTab === 'eibor' && (
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-3">
-          <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2">
+        <div className="glass-panel p-5 space-y-3">
+          <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2">
             Central Bank of the UAE (CBUAE) Official EIBOR Catalog
           </h3>
-          <table className="w-full text-left text-xs font-mono border-collapse">
+          <table className="ledger-table">
             <thead>
-              <tr className="bg-muted text-foreground text-[11px] border-b border-border">
+              <tr>
                 <th className="py-2.5 px-3">Coverage Period</th>
                 <th className="py-2.5 px-3">Publication Date</th>
                 <th className="py-2.5 px-3">Official Download URL</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-foreground">
+            <tbody>
               <tr>
                 <td className="py-2.5 px-3">2026-01 to 2026-06</td>
                 <td className="py-2.5 px-3">2026-07-01</td>

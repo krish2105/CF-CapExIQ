@@ -1,14 +1,44 @@
 import type { Metadata } from 'next';
+import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { CommandPalette } from '@/components/navigation/CommandPalette';
-import VoiceCopilotWidget from '@/components/ai/VoiceCopilotWidget';
+import { AppChrome } from '@/components/layout/AppChrome';
+import { ChartGradients } from '@/components/ui/charts';
+
+/**
+ * Type system — serif/sans collision.
+ *
+ * The Slash reference specifies Ivy Presto for display type. Ivy Presto is a
+ * commercial IvyType licence and cannot be bundled, so we use Playfair
+ * Display — the substitute named in the reference itself. Both are
+ * high-contrast didones, so the serif/sans collision that defines the brand
+ * survives the swap.
+ */
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'CapExIQ — AI Capital Budgeting Decision Platform | NovaRetail GCC',
-  description: 'AI-Assisted Capital Expenditure Decision Platform for Micro-Fulfilment Centre evaluation by NovaRetail GCC.',
+  description:
+    'AI-Assisted Capital Expenditure Decision Platform for Micro-Fulfilment Centre evaluation by NovaRetail GCC.',
 };
 
 export default function RootLayout({
@@ -17,18 +47,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen antialiased flex flex-col bg-background text-foreground transition-colors duration-200">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Header />
-          <CommandPalette />
-          <VoiceCopilotWidget />
-          <div className="flex-1 flex flex-col md:flex-row">
-            <Sidebar />
-            <main className="flex-1 p-4 lg:p-6 overflow-y-auto max-w-7xl mx-auto w-full">
-              {children}
-            </main>
-          </div>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${playfair.variable} ${inter.variable} ${jetbrains.variable}`}
+    >
+      <body className="min-h-screen antialiased flex flex-col bg-background text-foreground">
+        {/* Recharts drops any child whose `type` isn't a literal SVG tag
+            string, so a per-chart <ChartGradients/> component never reaches
+            the DOM (see src/components/ui/charts.tsx). Mounting the defs
+            once here, in a plain (non-Recharts) SVG, makes every gradient
+            resolvable by every chart via its #id — url() references work
+            across sibling <svg> elements in the same document. */}
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+          <ChartGradients />
+        </svg>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <AppChrome>{children}</AppChrome>
         </ThemeProvider>
       </body>
     </html>

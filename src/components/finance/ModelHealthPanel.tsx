@@ -159,17 +159,17 @@ export const ModelHealthPanel: React.FC = () => {
   };
 
   return (
-    <div className="glass-panel p-4 rounded-2xl border border-border space-y-3 text-xs">
+    <div className="glass-panel p-4 space-y-3 text-xs">
       <div className="flex items-center justify-between border-b border-border pb-2">
         <div className="flex items-center gap-2 font-bold text-foreground">
           <Activity className="h-4 w-4 text-primary" /> Model Diagnostics & Financial Health
         </div>
         <span
-          className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold ${
+          className={`px-2.5 py-0.5 rounded-pill font-mono text-[10px] font-bold ${
             overallHealth === 'Healthy'
               ? 'bg-success/20 text-success border border-success/30'
               : overallHealth === 'Warning'
-              ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
+              ? 'bg-warning/20 text-warning border border-warning/30'
               : 'bg-destructive/20 text-destructive border border-destructive/30'
           }`}
         >
@@ -179,13 +179,10 @@ export const ModelHealthPanel: React.FC = () => {
 
       <div className="space-y-2 font-mono">
         {checks.map((check) => (
-          <div
-            key={check.id}
-            className="flex items-start justify-between gap-2 p-2 rounded-xl bg-muted/40 border border-border"
-          >
+          <div key={check.id} className="flex items-start justify-between gap-2 p-2 rounded-card bg-muted/40 border border-border">
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 font-bold text-foreground">
-                <StatusIcon status={check.status} />
+                <CheckCircle2 className={`h-3.5 w-3.5 ${check.status === 'Healthy' ? 'text-success' : 'text-warning'}`} />
                 <span>{check.name}</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-card text-muted-foreground font-sans">
                   {check.category}
@@ -193,7 +190,9 @@ export const ModelHealthPanel: React.FC = () => {
               </div>
               <p className="text-[10px] text-muted-foreground font-sans">{check.detail}</p>
             </div>
-            <span className={`text-[10px] font-bold ${statusTextClass(check.status)}`}>{check.status}</span>
+            <span className={`text-[10px] font-bold ${check.status === 'Healthy' ? 'text-success' : 'text-warning'}`}>
+              {check.status}
+            </span>
           </div>
         ))}
       </div>

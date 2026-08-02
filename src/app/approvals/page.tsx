@@ -23,7 +23,7 @@ export default function ApprovalsPage() {
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" /> Approval Workflow & Immutable Decision Snapshot
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -34,25 +34,25 @@ export default function ApprovalsPage() {
         {!isSigned ? (
           <button
             onClick={handleSignDecision}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all"
+            className="px-4 py-2 rounded-card bg-accent text-accent-foreground text-xs font-bold flex items-center gap-2 transition-all"
           >
             <FileCheck className="h-4 w-4" /> Sign & Lock Decision Snapshot ({selectedRole})
           </button>
         ) : (
-          <div className="px-3.5 py-1.5 rounded-xl bg-success/15 border border-success/30 text-success text-xs font-bold flex items-center gap-2">
+          <div className="px-3.5 py-1.5 rounded-card bg-success/15 border border-success/30 text-success text-xs font-bold flex items-center gap-2">
             <Lock className="h-4 w-4" /> Decision Locked ({snapshotTimestamp})
           </div>
         )}
       </div>
 
       {/* Decision Pack Summary */}
-      <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-        <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2 flex items-center gap-2">
+      <div className="glass-panel p-5 space-y-4">
+        <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2 flex items-center gap-2">
           <FileCheck className="h-4 w-4 text-primary" /> Executive Investment Decision Snapshot Pack
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-          <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-2">
+          <div className="p-4 rounded-card bg-muted/60 border border-border space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Company Entity:</span>
               <span className="font-bold text-foreground">NovaRetail GCC</span>
@@ -71,11 +71,11 @@ export default function ApprovalsPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Internal Rate of Return (IRR):</span>
-              <span className="font-bold text-purple-400">{(metrics.irr! * 100).toFixed(2)}%</span>
+              <span className="font-bold text-info">{(metrics.irr! * 100).toFixed(2)}%</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-2 font-sans">
+          <div className="p-4 rounded-card bg-muted/60 border border-border space-y-2 font-sans">
             <span className="font-bold text-foreground">Conditions of Approval:</span>
             <ul className="list-disc pl-4 text-muted-foreground text-[11px] space-y-1">
               <li>Phase 1 rollout limited to AED 14.0M until Stage Gate 4 WCS API latency benchmark (&lt; 50ms) is verified.</li>

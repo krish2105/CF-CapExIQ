@@ -76,13 +76,13 @@ export async function POST(req: Request) {
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
       return NextResponse.json(fallbackMemo);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are a Board Governance Specialist writing a formal Capital Expenditure Memorandum for NovaRetail GCC.
 Return ONLY a JSON object matching this schema:

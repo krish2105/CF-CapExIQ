@@ -90,20 +90,20 @@ export default function BoardDebatePanel() {
   const getVerdictBadge = (verdict: BoardMemberStatement['verdict']) => {
     switch (verdict) {
       case 'APPROVE':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"><CheckCircle className="h-3 w-3" /> APPROVE</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-success/10 text-success border border-success/20"><CheckCircle className="h-3 w-3" /> APPROVE</span>;
       case 'CONDITIONAL':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20"><AlertTriangle className="h-3 w-3" /> CONDITIONAL</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-warning/10 text-warning border border-warning/20"><AlertTriangle className="h-3 w-3" /> CONDITIONAL</span>;
       case 'DEFER':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20"><Clock className="h-3 w-3" /> DEFER</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-primary/10 text-primary border border-primary/20"><Clock className="h-3 w-3" /> DEFER</span>;
       case 'REJECT':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20"><XCircle className="h-3 w-3" /> REJECT</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-destructive/10 text-destructive border border-destructive/20"><XCircle className="h-3 w-3" /> REJECT</span>;
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Action Banner */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-card border border-border rounded-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-primary font-medium text-sm mb-1">
             <Users className="h-4 w-4" /> Multi-Agent C-Suite Simulation Engine
@@ -116,7 +116,7 @@ export default function BoardDebatePanel() {
         <button
           onClick={runBoardDebate}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0 shadow-md"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-card bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
         >
           {loading ? (
             <>
@@ -133,16 +133,16 @@ export default function BoardDebatePanel() {
       {debateData && (
         <div className="space-y-6 animate-fadeIn">
           {/* Consensus Overview Card */}
-          <div className="bg-gradient-to-br from-card via-card to-primary/5 border border-primary/20 rounded-xl p-6 shadow-md">
+          <div className="bg-gradient-to-br from-card via-card to-primary/5 border border-primary/20 rounded-card p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
               <div>
                 <span className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">Board Decision Consensus</span>
-                <h3 className="text-2xl font-black text-primary mt-1">{debateData.consensusDecision}</h3>
+                <h3 className="text-2xl font-semibold text-primary mt-1">{debateData.consensusDecision}</h3>
               </div>
-              <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-lg border border-border text-xs">
-                <span className="text-emerald-500 font-bold">{debateData.voteCount.approve} Approve</span> • 
-                <span className="text-amber-500 font-bold">{debateData.voteCount.conditional} Conditional</span> • 
-                <span className="text-rose-500 font-bold">{debateData.voteCount.reject} Reject</span>
+              <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-card border border-border text-xs">
+                <span className="text-success font-bold">{debateData.voteCount.approve} Approve</span> • 
+                <span className="text-warning font-bold">{debateData.voteCount.conditional} Conditional</span> • 
+                <span className="text-destructive font-bold">{debateData.voteCount.reject} Reject</span>
               </div>
             </div>
             <p className="text-sm text-foreground/90 mt-4 leading-relaxed">{debateData.consensusSummary}</p>
@@ -151,11 +151,11 @@ export default function BoardDebatePanel() {
             {debateData.stageGates && debateData.stageGates.length > 0 && (
               <div className="mt-5 pt-4 border-t border-border/60">
                 <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" /> Mandated Capital Release Stage-Gates
+                  <ShieldCheck className="h-4 w-4 text-success" /> Mandated Capital Release Stage-Gates
                 </h4>
                 <ul className="space-y-2">
                   {debateData.stageGates.map((gate, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 bg-background/50 p-2.5 rounded-md border border-border/40">
+                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 bg-background/50 p-2.5 rounded-card border border-border/40">
                       <span className="font-mono text-primary font-bold">{i + 1}.</span> {gate}
                     </li>
                   ))}
@@ -169,7 +169,7 @@ export default function BoardDebatePanel() {
             {debateData.statements.map((stmt, index) => (
               <div
                 key={index}
-                className="bg-card border border-border rounded-xl p-5 shadow-sm hover:border-primary/40 transition-colors flex flex-col justify-between"
+                className="bg-card border border-border rounded-card p-5 hover:border-primary/40 transition-colors flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 pb-3 border-b border-border/50 mb-3">

@@ -1,142 +1,169 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  LayoutDashboard,
-  LayoutGrid,
-  FileSpreadsheet,
-  Table,
-  GitCompare,
-  TrendingUp,
-  Dices,
-  PieChart,
-  Target,
-  Cpu,
-  BarChart3,
-  Zap,
-  Truck,
-  ShieldCheck,
-  GitBranch,
-  Landmark,
-  Award,
-  Calendar,
-  BookOpen,
-  Download,
-  Bot,
-  Sliders,
-  Monitor,
-  Sparkles,
-} from 'lucide-react';
+import { Menu, X, Search, Lock } from 'lucide-react';
+import { NAV_SECTIONS, sectionForPath } from '@/lib/navigation/taxonomy';
+import { useRole } from '@/components/auth/RoleGate';
+import { canAny, roleLabel } from '@/lib/auth/permissions';
 
-const NAV_GROUPS = [
-  {
-    title: 'Core Decision Workflow',
-    items: [
-      { href: '/', label: 'Overview', icon: Home },
-      { href: '/archetypes', label: 'Archetype Library', icon: LayoutGrid },
-      { href: '/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
-      { href: '/assumptions', label: 'Assumptions Register', icon: FileSpreadsheet },
-      { href: '/financial-model', label: 'Financial Model Schedule', icon: Table },
-    ],
-  },
-  {
-    title: 'Scenario & Risk Analysis',
-    items: [
-      { href: '/scenarios', label: 'Scenario Engine', icon: GitCompare },
-      { href: '/sensitivity', label: 'Sensitivity Matrix', icon: TrendingUp },
-      { href: '/monte-carlo', label: 'Monte Carlo Simulation', icon: Dices },
-    ],
-  },
-  {
-    title: 'Capital & Portfolio',
-    items: [
-      { href: '/portfolio', label: 'Capital Portfolio Optimizer', icon: PieChart },
-      { href: '/strategic-scorecard', label: 'Strategic Scorecard', icon: Target },
-    ],
-  },
-  {
-    title: 'Operations & Vendors',
-    items: [
-      { href: '/capacity-model', label: 'COO Capacity Model', icon: Cpu },
-      { href: '/operational-analytics', label: 'Operational Delivery', icon: BarChart3 },
-      { href: '/electricity-estimator', label: 'DEWA Tariff Estimator', icon: Zap },
-      { href: '/vendor-analysis', label: 'Vendor TCO Matrix', icon: Truck },
-    ],
-  },
-  {
-    title: 'Governance & Execution',
-    items: [
-      { href: '/approvals', label: 'Approval Workflow', icon: ShieldCheck },
-      { href: '/real-options', label: 'Real Options Staging', icon: GitBranch },
-      { href: '/funding', label: 'Funding & Liquidity', icon: Landmark },
-      { href: '/benefits-tracker', label: 'Benefits Realisation', icon: Award },
-      { href: '/implementation-plan', label: 'Implementation Gates', icon: Calendar },
-    ],
-  },
-  {
-    title: 'AI & Advanced Intelligence',
-    items: [
-      { href: '/rfp-negotiator', label: 'AI RFP Negotiator', icon: Zap },
-      { href: '/board-debate', label: 'Board Debate Swarm', icon: Bot },
-      { href: '/board-memo', label: 'Board Memorandum', icon: BookOpen },
-      { href: '/ai-scenario-studio', label: 'AI Scenario Studio', icon: Sliders },
-      { href: '/ai-threat-radar', label: 'AI Threat Radar', icon: ShieldCheck },
-      { href: '/3d-digital-twin', label: '3D Digital Twin', icon: Cpu },
-      { href: '/esg-sustainability', label: 'ESG Sustainability', icon: Award },
-    ],
-  },
-  {
-    title: 'Methodology & AI',
-    items: [
-      { href: '/data-sources', label: 'Data & Methodology', icon: BookOpen },
-      { href: '/external-data', label: 'UAE Tax & WACC', icon: Landmark },
-      { href: '/csv-management', label: 'CSV Import & Audit', icon: Download },
-      { href: '/ai-assistant', label: 'AI Finance Assistant', icon: Bot },
-      { href: '/ai-studio', label: 'AI Studio', icon: Sparkles },
-      { href: '/presentation', label: 'Boardroom Presentation', icon: Monitor },
-      { href: '/settings', label: 'Settings', icon: Sliders },
-    ],
-  },
-];
-
+/**
+ * Primary navigation — five sections, not thirty-one destinations.
+ *
+ * The rail now carries only section-level tabs. The routes inside a section
+ * are revealed by <SegmentNav> once you enter it, which keeps the rail
+ * scannable at a glance and means adding a route no longer lengthens the
+ * global navigation.
+ *
+ * Sections whose every segment is out of the active Executive Lens are
+ * removed entirely rather than shown disabled — a rail full of locked rows
+ * is worse than a short rail.
+ */
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const role = useRole();
 
-  return (
-    <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-border flex-shrink-0 transition-colors">
-      <div className="p-4 space-y-5">
-        {NAV_GROUPS.map((group, idx) => (
-          <div key={idx} className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 mb-1">
-              {group.title}
-            </p>
-            <nav className="space-y-0.5">
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
+  const sections = useMemo(
+    () =>
+      NAV_SECTIONS.map((section) => {
+        const visible = section.segments.filter((seg) => canAny(role, seg.permissions));
+        return { ...section, visibleSegments: visible };
+      }).filter((s) => s.visibleSegments.length > 0),
+    [role]
+  );
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-primary/15 text-primary border border-primary/30 shadow-sm font-bold'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+  const activeSection = sectionForPath(pathname);
+  const hiddenCount = NAV_SECTIONS.reduce(
+    (n, s) => n + s.segments.filter((seg) => !canAny(role, seg.permissions)).length,
+    0
+  );
+
+  const nav = (
+    <nav className="p-4 space-y-1.5" aria-label="Primary">
+      <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        Sections
+      </p>
+
+      <ul className="space-y-1">
+        {sections.map((section) => {
+          const Icon = section.icon;
+          const isActive = activeSection?.id === section.id;
+          // Enter the section at its own href when permitted, else at the
+          // first segment this role can actually open.
+          const entry =
+            section.visibleSegments.find((s) => s.href === section.href)?.href ??
+            section.visibleSegments[0].href;
+
+          return (
+            <li key={section.id}>
+              <Link
+                href={entry}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={() => setMobileOpen(false)}
+                className={`group relative flex items-start gap-3 rounded-card px-3 py-2.5 transition-colors duration-200 ${
+                  isActive
+                    ? 'text-primary bg-accent'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                <span
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-nav bg-primary transition-all duration-300 ${
+                    isActive ? 'h-7 opacity-100' : 'h-0 opacity-0'
+                  }`}
+                  aria-hidden="true"
+                />
+                <Icon
+                  className={`h-4 w-4 shrink-0 mt-0.5 transition-colors ${
+                    isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <span
+                    className={`block text-[13px] truncate ${
+                      isActive ? 'font-medium' : ''
                     }`}
                   >
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-        ))}
+                    {section.label}
+                  </span>
+                  <span className="block text-[10px] text-muted-foreground mt-0.5">
+                    {section.visibleSegments.length} module
+                    {section.visibleSegments.length === 1 ? '' : 's'}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="px-3 pt-4 mt-3 border-t border-border space-y-2">
+        {hiddenCount > 0 && (
+          <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground leading-relaxed">
+            <Lock className="h-3 w-3 mt-px shrink-0" aria-hidden="true" />
+            <span>
+              {hiddenCount} module{hiddenCount === 1 ? '' : 's'} outside the{' '}
+              <strong className="text-foreground font-medium">{roleLabel(role)}</strong> lens.
+            </span>
+          </p>
+        )}
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Press{' '}
+          <kbd className="font-mono text-[10px] px-1 py-0.5 rounded border border-border-strong text-foreground">
+            ⌘K
+          </kbd>{' '}
+          to search all modules.
+        </p>
       </div>
-    </aside>
+    </nav>
+  );
+
+  return (
+    <>
+      {/* Mobile trigger */}
+      <div className="md:hidden flex items-center justify-between border-b border-border px-4 py-2 no-print">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="pill h-8"
+          aria-label="Open navigation menu"
+          aria-expanded={mobileOpen}
+          aria-controls="primary-nav-drawer"
+        >
+          <Menu className="h-3.5 w-3.5" aria-hidden="true" /> Navigate
+        </button>
+        <span className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
+          <Search className="h-3 w-3" aria-hidden="true" /> ⌘K
+        </span>
+      </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-[70] flex no-print" id="primary-nav-drawer">
+          <div
+            className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm animate-reveal-fade"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="relative w-[280px] max-w-[85vw] bg-surface border-r border-border overflow-y-auto animate-drawer-in">
+            <div className="sticky top-0 flex justify-end p-3 bg-surface border-b border-border">
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close navigation menu"
+                className="icon-well h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+            {nav}
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop rail */}
+      <aside className="hidden md:block w-56 shrink-0 border-r border-border bg-surface no-print">
+        <div className="sticky top-[88px] max-h-[calc(100vh-88px)] overflow-y-auto">{nav}</div>
+      </aside>
+    </>
   );
 };

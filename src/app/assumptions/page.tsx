@@ -152,7 +152,7 @@ export default function AssumptionsPage() {
       {/* Page Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <FileSpreadsheet className="h-6 w-6 text-primary" /> Assumptions Register & Model Parameters
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -164,7 +164,7 @@ export default function AssumptionsPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="px-3.5 py-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 rounded-card bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <RotateCcw className="h-4 w-4" /> Reset to Defaults
           </button>
@@ -172,7 +172,7 @@ export default function AssumptionsPage() {
       </div>
 
       {savedSuccess && (
-        <div className="p-3 rounded-xl bg-success/10 border border-success/30 text-success text-xs flex items-center gap-2 font-bold">
+        <div className="p-3 rounded-card bg-success/10 border border-success/30 text-success text-xs flex items-center gap-2 font-bold">
           <Check className="h-4 w-4" /> Assumptions successfully saved to model store!
         </div>
       )}
@@ -205,8 +205,8 @@ export default function AssumptionsPage() {
       {/* Main Assumptions Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Section 1: Capital Outlay (CaPeX & NWC) */}
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-2">
+        <div className="glass-panel p-5 space-y-4">
+          <h3 className="font-sans text-sm font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2">
             1. Initial Capital Outlay & Working Capital (Time Zero)
           </h3>
 
@@ -221,7 +221,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="100000"
                 {...register('automationEquipment', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.automationEquipment && (
                 <p className="text-[11px] text-destructive font-bold">{errors.automationEquipment.message}</p>
@@ -239,7 +239,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="50000"
                 {...register('installationIntegration', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.installationIntegration && (
                 <p className="text-[11px] text-destructive font-bold">{errors.installationIntegration.message}</p>
@@ -257,7 +257,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="50000"
                 {...register('softwareCybersecurity', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.softwareCybersecurity && (
                 <p className="text-[11px] text-destructive font-bold">{errors.softwareCybersecurity.message}</p>
@@ -275,7 +275,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="10000"
                 {...register('trainingLaunch', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.trainingLaunch && (
                 <p className="text-[11px] text-destructive font-bold">{errors.trainingLaunch.message}</p>
@@ -293,7 +293,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="100000"
                 {...register('initialWorkingCapital', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.initialWorkingCapital && (
                 <p className="text-[11px] text-destructive font-bold">{errors.initialWorkingCapital.message}</p>
@@ -311,7 +311,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="1"
                 {...register('projectLifeYears', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.projectLifeYears && (
                 <p className="text-[11px] text-destructive font-bold">{errors.projectLifeYears.message}</p>
@@ -322,8 +322,8 @@ export default function AssumptionsPage() {
         </div>
 
         {/* Section 2: Operating Benefits & Growth */}
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-2">
+        <div className="glass-panel p-5 space-y-4">
+          <h3 className="font-sans text-sm font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2">
             2. Operating Benefits & Revenue Growth
           </h3>
 
@@ -338,7 +338,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="100000"
                 {...register('year1OperatingSavings', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.year1OperatingSavings && (
                 <p className="text-[11px] text-destructive font-bold">{errors.year1OperatingSavings.message}</p>
@@ -356,7 +356,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="0.005"
                 {...register('annualSavingsGrowth', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.annualSavingsGrowth && (
                 <p className="text-[11px] text-destructive font-bold">{errors.annualSavingsGrowth.message}</p>
@@ -374,7 +374,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="100000"
                 {...register('year1ContributionMargin', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.year1ContributionMargin && (
                 <p className="text-[11px] text-destructive font-bold">{errors.year1ContributionMargin.message}</p>
@@ -392,7 +392,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="0.005"
                 {...register('annualMarginGrowth', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.annualMarginGrowth && (
                 <p className="text-[11px] text-destructive font-bold">{errors.annualMarginGrowth.message}</p>
@@ -403,8 +403,8 @@ export default function AssumptionsPage() {
         </div>
 
         {/* Section 3: Operating Costs, Financial & Tax Rates */}
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-2">
+        <div className="glass-panel p-5 space-y-4">
+          <h3 className="font-sans text-sm font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2">
             3. Operating Expenses, Hurdle Rate & Corporate Tax
           </h3>
 
@@ -413,13 +413,13 @@ export default function AssumptionsPage() {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground flex items-center justify-between">
                 <span>Year 1 OpEx (AED/yr)</span>
-                <ClassificationBadge item={registerById['OPEX-Y1']} />
+                <span className="text-[10px] text-warning bg-warning/10 px-1.5 py-0.5 rounded font-mono font-bold">Forecast</span>
               </label>
               <input
                 type="number"
                 step="50000"
                 {...register('year1AdditionalOpEx', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.year1AdditionalOpEx && (
                 <p className="text-[11px] text-destructive font-bold">{errors.year1AdditionalOpEx.message}</p>
@@ -431,13 +431,13 @@ export default function AssumptionsPage() {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground flex items-center justify-between">
                 <span>OpEx Growth (decimal)</span>
-                <ClassificationBadge item={registerById['OPEX-GROWTH']} />
+                <span className="text-[10px] text-warning bg-warning/10 px-1.5 py-0.5 rounded font-mono font-bold">Forecast</span>
               </label>
               <input
                 type="number"
                 step="0.005"
                 {...register('annualOpExGrowth', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.annualOpExGrowth && (
                 <p className="text-[11px] text-destructive font-bold">{errors.annualOpExGrowth.message}</p>
@@ -455,7 +455,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="0.005"
                 {...register('discountRate', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.discountRate && (
                 <p className="text-[11px] text-destructive font-bold">{errors.discountRate.message}</p>
@@ -467,13 +467,13 @@ export default function AssumptionsPage() {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground flex items-center justify-between">
                 <span>UAE Corporate Tax</span>
-                <ClassificationBadge item={registerById['TAX']} />
+                <span className="text-[10px] text-info bg-info/10 px-1.5 py-0.5 rounded font-mono font-bold">Current Ext.</span>
               </label>
               <input
                 type="number"
                 step="0.01"
                 {...register('corporateTaxRate', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.corporateTaxRate && (
                 <p className="text-[11px] text-destructive font-bold">{errors.corporateTaxRate.message}</p>
@@ -484,9 +484,9 @@ export default function AssumptionsPage() {
         </div>
 
         {/* Section 4: Terminal Values */}
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-2">
-            4. Terminal Cash Flow Values (End of Year {Math.max(1, Math.round(assumptions.projectLifeYears))})
+        <div className="glass-panel p-5 space-y-4">
+          <h3 className="font-sans text-sm font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2">
+            4. Terminal Cash Flow Values (Year 6 End)
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -500,7 +500,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="100000"
                 {...register('salvageValue', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.salvageValue && (
                 <p className="text-[11px] text-destructive font-bold">{errors.salvageValue.message}</p>
@@ -518,7 +518,7 @@ export default function AssumptionsPage() {
                 type="number"
                 step="100000"
                 {...register('workingCapitalRecovery', { valueAsNumber: true })}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-card border border-border rounded-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
               {errors.workingCapitalRecovery && (
                 <p className="text-[11px] text-destructive font-bold">{errors.workingCapitalRecovery.message}</p>
@@ -532,7 +532,7 @@ export default function AssumptionsPage() {
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all"
+            className="px-6 py-2.5 rounded-card bg-accent text-accent-foreground text-xs font-bold flex items-center gap-2 transition-all"
           >
             <Save className="h-4 w-4" /> Save Updated Assumptions & Recalculate
           </button>
