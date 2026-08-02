@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireSession } from '@/lib/auth/apiAuth';
 
 /**
  * GCC macro reference indicators.
@@ -115,5 +116,12 @@ const RESPONSE: LiveMacroResponse = {
 };
 
 export async function GET() {
+  // Authenticated but unrestricted: these are hand-transcribed public
+  // reference figures, privileged to no role. The check is here so that
+  // "which endpoints are authorised" has no exceptions to remember — an
+  // endpoint with no guard is indistinguishable from one that was forgotten.
+  const auth = await requireSession();
+  if (!auth.ok) return auth.response;
+
   return NextResponse.json(RESPONSE, { headers: { 'Cache-Control': 'no-store' } });
 }

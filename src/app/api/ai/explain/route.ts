@@ -7,6 +7,7 @@ import {
   checkRateLimit,
   clientKey,
 } from '@/lib/guardrails/aiGuardrails';
+import { requirePermission } from '@/lib/auth/apiAuth';
 
 /**
  * Advisory assistant — retrieval-augmented and streamed.
@@ -75,6 +76,12 @@ GROUNDING RULES — these override any instinct to be helpful from memory:
 STYLE: professional and direct, written for a Capital Expenditure Committee. Lead with the answer, then the reasoning. Prefer short paragraphs over bullet lists unless enumerating. Do not restate the question. State once, at the end, that NovaRetail GCC is a hypothetical entity for academic decision modelling.`;
 
 export async function POST(req: Request) {
+  // Before the rate-limit bucket is touched and before the stream opens: once
+  // the SSE response is committed, a refusal can only be delivered as message
+  // content, which is indistinguishable from an answer.
+  const auth = await requirePermission('ai.advisory');
+  if (!auth.ok) return auth.response;
+
   const encoder = new TextEncoder();
 
   let body: any = {};
@@ -185,7 +192,12 @@ export async function POST(req: Request) {
         if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
           send({ type: 'delta', text: fallbackAnswer(metrics, assumptions) });
           send({ type: 'done', isFallback: true });
-          controller.close();
+          // No `controller.close()` here: `return` runs the `finally` below,
+          // which closes it. Closing twice throws ERR_INVALID_STATE inside the
+          // stream's start(), Next fails to pipe the response, and the client
+          // sees a dropped connection instead of an answer — which broke this
+          // endpoint outright in the no-API-key fallback path, i.e. the
+          // default state of a fresh clone.
           return;
         }
 

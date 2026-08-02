@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 
 export interface ParsedVendorQuote {
   vendorName: string;
@@ -64,6 +65,13 @@ const DEFAULT_FALLBACK_QUOTE: ParsedVendorQuote = {
 };
 
 export async function POST(req: Request) {
+  // `assumptions.edit`, not `vendor.view`: the extracted CapEx figures are fed
+  // straight into `updateAssumptions()` by the uploader, so calling this
+  // endpoint is a write to the capital model regardless of how it reads.
+  // Outside the try — the catch returns a fallback quote on any throw.
+  const auth = await requirePermission('assumptions.edit');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { documentText, filename } = body;

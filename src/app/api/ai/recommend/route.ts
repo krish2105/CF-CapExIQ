@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 import { StructedAIResponse } from '@/lib/types/finance';
 
 const DEFAULT_FALLBACK_RECOMMEND: StructedAIResponse = {
@@ -23,6 +24,11 @@ const DEFAULT_FALLBACK_RECOMMEND: StructedAIResponse = {
 };
 
 export async function POST(req: Request) {
+  // Outside the try: the catch below returns a fallback recommendation, so a
+  // refusal raised inside it would be swallowed and served as a 200.
+  const auth = await requirePermission('ai.advisory');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { assumptions, metrics } = body;

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 
 export interface NegotiatedRfpTerms {
   vendorName: string;
@@ -65,6 +66,11 @@ const DEFAULT_FALLBACK_RFP: NegotiatedRfpTerms = {
 };
 
 export async function POST(req: Request) {
+  // Outside the try: the catch below returns fallback negotiation terms, so a
+  // refusal raised inside it would be swallowed and served as a 200.
+  const auth = await requirePermission('vendor.negotiate');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { vendorName, targetDiscountPct, targetLiquidDamagesPct } = body;

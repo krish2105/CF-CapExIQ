@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 import crypto from 'crypto';
 
 export interface BoardMemoResponse {
@@ -48,6 +49,11 @@ const DEFAULT_FALLBACK_MEMO: BoardMemoResponse = {
 };
 
 export async function POST(req: Request) {
+  // Outside the try: the catch below returns a fallback memo, so a refusal
+  // raised inside it would be swallowed and served as a 200 with content.
+  const auth = await requirePermission('board.materials');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { assumptions, metrics, selectedScenario } = body;

@@ -1,3 +1,12 @@
+# pnpm 10 blocks dependency build scripts unless they are approved here.
+#
+# Both entries are build-time toolchain, not runtime dependencies:
+#   esbuild       — vitest's transform pipeline; without its postinstall the
+#                   platform binary is never linked and `pnpm test` cannot start.
+#   unrs-resolver — eslint's module resolver, same situation for `pnpm lint`.
+#
+# Left unapproved, a fresh clone installs "successfully" and then fails on the
+# first test run, which is exactly the trap CI must not walk into.
 allowBuilds:
-  esbuild: set this to true or false
-  unrs-resolver: set this to true or false
+  esbuild: true
+  unrs-resolver: true

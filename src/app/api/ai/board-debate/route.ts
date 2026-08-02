@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 
 export interface BoardMemberStatement {
   role: 'CFO' | 'COO' | 'CRO' | 'Strategy';
@@ -76,6 +77,11 @@ const DEFAULT_FALLBACK_DEBATE: BoardDebateResponse = {
 };
 
 export async function POST(req: Request) {
+  // Outside the try: the catch below returns a fallback debate, so a refusal
+  // raised inside it would be swallowed and served as a 200 with content.
+  const auth = await requirePermission('board.materials');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { assumptions, metrics, selectedScenario } = body;

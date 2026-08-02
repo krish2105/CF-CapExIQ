@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 
 export interface EsgImpactResponse {
   esgScore: number; // 0 to 100
@@ -27,6 +28,11 @@ const DEFAULT_FALLBACK_ESG: EsgImpactResponse = {
 };
 
 export async function POST(req: Request) {
+  // Outside the try: the catch below returns fallback ESG data, so a refusal
+  // raised inside it would be swallowed and served as a 200 with content.
+  const auth = await requirePermission('esg.view');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { assumptions, metrics } = body;

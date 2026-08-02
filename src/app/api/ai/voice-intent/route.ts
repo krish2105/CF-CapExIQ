@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { requirePermission } from '@/lib/auth/apiAuth';
 
 export interface VoiceIntentResponse {
   spokenSummary: string;
@@ -20,6 +21,13 @@ const DEFAULT_FALLBACK_VOICE: VoiceIntentResponse = {
 };
 
 export async function POST(req: Request) {
+  // `assumptions.edit`: this endpoint returns `proposedUpdates` that drive
+  // `updateAssumptions()`, so voice is a write path into the capital model.
+  // A CEO lacks this permission by design — the matrix says the model is
+  // changed by CFO and Analyst, and a microphone must not be a way around it.
+  const auth = await requirePermission('assumptions.edit');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const { userSpeech, currentAssumptions } = body;
