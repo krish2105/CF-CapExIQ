@@ -52,3 +52,7 @@ playwright-report/
 
 # Local SQLite database (created at runtime)
 .data/
+
+# Database snapshots contain password hashes and the full audit trail
+.data/backups/
+*.pre-restore-*

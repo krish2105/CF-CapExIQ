@@ -11,7 +11,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "build:kb": "node scripts/build-knowledge-base.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:backup": "node scripts/db-backup.mjs",
+    "db:backups": "node scripts/db-backup.mjs --list",
+    "db:verify": "node scripts/db-backup.mjs --verify",
+    "db:restore": "node scripts/db-backup.mjs --restore"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
