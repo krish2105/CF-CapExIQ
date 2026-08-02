@@ -50,10 +50,16 @@ export function LoginForm({ next }: { next: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      // A crashed route returns an HTML error page, not JSON. Parsing that
+      // throws, and the outer catch then blames the network for a server-side
+      // fault. Read the body defensively so the status code still gets a say.
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data?.error ?? 'Sign-in failed.');
+        setError(
+          data?.error ??
+            `Sign-in failed (${res.status}). Check the server logs for the cause.`
+        );
         setBusy(false);
         return;
       }

@@ -149,14 +149,17 @@ Sign in with any demo account, e.g. `cfo@novaretail.example` / `cfo-capex-2026`.
 The login page lists all six.
 
 ```bash
-pnpm build && pnpm start       # production
+# Production build. NODE_ENV becomes production, so AUTH_SECRET is required
+# even locally; without it the sign-in endpoint returns 503.
+echo "AUTH_SECRET=\"$(node -e 'console.log(require("crypto").randomBytes(32).toString("base64url"))')\"" >> .env.local
+pnpm build && pnpm start
 ```
 
 ### Environment
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `AUTH_SECRET` | **production only** | Session signing key (≥16 chars). The app refuses to start without it in production |
+| `AUTH_SECRET` | **yes, for `pnpm start`** | Session signing key (≥16 chars). Required whenever `NODE_ENV=production`, which includes running the production build locally. Sign-in returns 503 without it. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
 | `OPENAI_API_KEY` | no | Enables live model responses; without it every route serves its deterministic fallback |
 | `OPENAI_BASE_URL` | no | For OpenAI-compatible providers |
 | `OPENAI_MODEL` | no | Defaults to `gpt-4o` |

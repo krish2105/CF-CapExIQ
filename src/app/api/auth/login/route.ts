@@ -60,7 +60,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
   }
 
-  const token = await signSession({ sub: user.id, name: user.name, role: user.role });
+  /*
+   * signSession() throws when NODE_ENV is production and AUTH_SECRET is unset
+   * or too short, which is deliberate: signing with a guessable key would hand
+   * out forgeable sessions. Uncaught, that surfaced as a 500 carrying an HTML
+   * error page, and the browser then failed to parse it as JSON and reported
+   * "Could not reach the sign-in service" — which points the reader at the
+   * network when the real cause is a missing environment variable. Catch it
+   * here so the response says what is actually wrong.
+   */
+  let token: string;
+  try {
+    token = await signSession({ sub: user.id, name: user.name, role: user.role });
+  } catch (err) {
+    console.error('Session signing failed:', err);
+    return NextResponse.json(
+      {
+        error:
+          'The server cannot issue sessions because its signing key is missing. ' +
+          'Set AUTH_SECRET (at least 16 characters) in the environment and restart.',
+      },
+      { status: 503 }
+    );
+  }
 
   const res = NextResponse.json({
     user: {
