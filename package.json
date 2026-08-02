@@ -7,9 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "report:board": "node scripts/generate-board-report.js",
+    "report:qna": "node scripts/generate-pdf.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

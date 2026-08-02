@@ -1,6 +1,16 @@
 import { FinancialAssumptions, FinancialMetrics, RiskAlert, RiskSeverity, ScenarioResult } from '../types/finance';
 import { formatAED, formatPercent } from '../utils/formatting';
 
+/** Above this annual growth rate a benefit line is treated as not credible for a mature cost base. */
+const UNREALISTIC_GROWTH_CEILING = 0.25;
+
+/** Year-1 operating benefits above this share of total capex imply an implausibly fast raw payback. */
+const UNREALISTIC_YEAR1_BENEFIT_TO_CAPEX_RATIO = 0.60;
+
+/** Credible economic-life band for micro-fulfilment automation assets, in years. */
+const MIN_CREDIBLE_PROJECT_LIFE_YEARS = 2;
+const MAX_CREDIBLE_PROJECT_LIFE_YEARS = 15;
+
 export function evaluateRiskAlerts(
   assumptions: FinancialAssumptions,
   metrics: FinancialMetrics,
@@ -33,7 +43,7 @@ export function evaluateRiskAlerts(
   }
 
   // 3. MIRR Below Discount Rate
-  if (metrics.mirr < assumptions.discountRate) {
+  if (metrics.mirr !== null && metrics.mirr < assumptions.discountRate) {
     alerts.push({
       id: 'RISK-MIRR-HURDLE',
       severity: 'High',
@@ -108,13 +118,14 @@ export function evaluateRiskAlerts(
   }
 
   // 9. Low Tolerance to Benefit Shortfall
-  if (metrics.maxOperatingBenefitShortfallPct < 15.0) {
+  const shortfallPct = metrics.maxOperatingBenefitShortfallPct;
+  if (shortfallPct !== null && shortfallPct < 15.0) {
     alerts.push({
       id: 'RISK-BENEFIT-SENS',
       severity: 'High',
       title: 'High Sensitivity to Operating Benefit Shortfall',
-      explanation: `A minor benefit shortfall of ${metrics.maxOperatingBenefitShortfallPct.toFixed(1)}% erases project NPV entirely.`,
-      triggeringMetric: `Max Shortfall Tolerance = ${metrics.maxOperatingBenefitShortfallPct.toFixed(1)}%`,
+      explanation: `A minor benefit shortfall of ${shortfallPct.toFixed(1)}% erases project NPV entirely.`,
+      triggeringMetric: `Max Shortfall Tolerance = ${shortfallPct.toFixed(1)}%`,
       managementResponse: 'Implement SLA performance penalty clauses in WCS software integrator contracts.',
     });
   }
@@ -128,6 +139,75 @@ export function evaluateRiskAlerts(
       explanation: metrics.irrWarning,
       triggeringMetric: 'Multiple Sign Changes Detected',
       managementResponse: 'Rely on NPV and MIRR metrics for primary capital budgeting decisions.',
+    });
+  }
+
+  // 11. Unrealistic / internally inconsistent input assumptions.
+  // This is an INPUT sanity check, not an output check: it fires on assumption combinations that
+  // are arithmetically possible but not credible, and which would otherwise silently flatter NPV.
+  const totalCapexForChecks =
+    assumptions.automationEquipment +
+    assumptions.installationIntegration +
+    assumptions.softwareCybersecurity +
+    assumptions.trainingLaunch;
+  const year1TotalBenefits = assumptions.year1OperatingSavings + assumptions.year1ContributionMargin;
+
+  const unrealisticFindings: string[] = [];
+
+  if (assumptions.salvageValue > totalCapexForChecks) {
+    unrealisticFindings.push(
+      `Salvage value (${formatAED(assumptions.salvageValue)}) exceeds total capital expenditure (${formatAED(totalCapexForChecks)}) - the asset cannot be worth more at disposal than it cost to install.`
+    );
+  }
+
+  if (assumptions.workingCapitalRecovery > assumptions.initialWorkingCapital) {
+    unrealisticFindings.push(
+      `Working-capital recovery (${formatAED(assumptions.workingCapitalRecovery)}) exceeds the initial working capital injected (${formatAED(assumptions.initialWorkingCapital)}) - more capital is released at exit than was ever committed.`
+    );
+  }
+
+  if (assumptions.annualSavingsGrowth > UNREALISTIC_GROWTH_CEILING) {
+    unrealisticFindings.push(
+      `Annual operating-savings growth of ${formatPercent(assumptions.annualSavingsGrowth)} exceeds the ${formatPercent(UNREALISTIC_GROWTH_CEILING)} credibility ceiling for a mature retail cost base.`
+    );
+  }
+
+  if (assumptions.annualMarginGrowth > UNREALISTIC_GROWTH_CEILING) {
+    unrealisticFindings.push(
+      `Annual contribution-margin growth of ${formatPercent(assumptions.annualMarginGrowth)} exceeds the ${formatPercent(UNREALISTIC_GROWTH_CEILING)} credibility ceiling.`
+    );
+  }
+
+  if (
+    totalCapexForChecks > 0 &&
+    year1TotalBenefits > UNREALISTIC_YEAR1_BENEFIT_TO_CAPEX_RATIO * totalCapexForChecks
+  ) {
+    const ratioPct = ((year1TotalBenefits / totalCapexForChecks) * 100).toFixed(1);
+    unrealisticFindings.push(
+      `Year-1 total operating benefits (${formatAED(year1TotalBenefits)}) are ${ratioPct}% of total capital expenditure, above the ${(UNREALISTIC_YEAR1_BENEFIT_TO_CAPEX_RATIO * 100).toFixed(0)}% ceiling - this implies a sub-two-year raw payback before ramp-up.`
+    );
+  }
+
+  if (
+    assumptions.projectLifeYears < MIN_CREDIBLE_PROJECT_LIFE_YEARS ||
+    assumptions.projectLifeYears > MAX_CREDIBLE_PROJECT_LIFE_YEARS
+  ) {
+    unrealisticFindings.push(
+      `Project life of ${assumptions.projectLifeYears} years falls outside the credible ${MIN_CREDIBLE_PROJECT_LIFE_YEARS}-${MAX_CREDIBLE_PROJECT_LIFE_YEARS} year economic life band for micro-fulfilment robotics.`
+    );
+  }
+
+  if (unrealisticFindings.length > 0) {
+    alerts.push({
+      id: 'RISK-UNREALISTIC-ASSUMPTION',
+      severity: 'Medium',
+      title: 'Unrealistic Assumption Detected',
+      explanation: `${unrealisticFindings.length} input assumption${unrealisticFindings.length > 1 ? 's fail' : ' fails'} the model's credibility checks: ${unrealisticFindings.join(' ')}`,
+      triggeringMetric: unrealisticFindings.length === 1
+        ? '1 unrealistic input assumption'
+        : `${unrealisticFindings.length} unrealistic input assumptions`,
+      managementResponse:
+        'Re-baseline the flagged inputs against vendor quotations, HR cost data and asset-register depreciation policy before the capital paper is tabled. Re-run the model once corrected - outputs derived from these inputs should not be relied upon.',
     });
   }
 

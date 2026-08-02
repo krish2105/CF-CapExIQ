@@ -1,6 +1,0 @@
-dataset,purpose,data_classification,licence_or_status,source_url,usage_note
-DataCo Smart Supply Chain,Operational transactions and delivery analytics,Real external dataset,CC BY 4.0,https://data.mendeley.com/datasets/8gx2fvg2k6/5,The pack contains a de-identified 20-row sample; download the 91.5 MB full CSV from Mendeley for modelling.
-DEWA slab tariffs,Electricity operating-cost benchmark,Current official external,Official website terms,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff,July 2026 tariff and fuel surcharge included.
-UAE Ministry of Finance corporate tax,Tax assumption,Current official external,Official government source,https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/,Use simplified 9% marginal rate only with disclosure.
-CBUAE EIBOR,Cost-of-debt benchmark,Current official external,Official government source,https://centralbank.ae/en/forex-eibor/eibor-rates/,Add company credit spread; do not use EIBOR alone as project WACC.
-CapExIQ project assumptions,Project-specific capex and operating forecasts,Hypothetical academic assumptions,Created for assignment,Internal file,Replace key assumptions with supplier quotations or management estimates where available.

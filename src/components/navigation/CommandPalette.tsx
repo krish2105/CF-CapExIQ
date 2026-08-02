@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import {
   Search,
   LayoutDashboard,
+  LayoutGrid,
   FileSpreadsheet,
   Table,
   GitCompare,
@@ -35,6 +36,7 @@ import {
 
 const COMMAND_ROUTES = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
+  { href: '/archetypes', label: 'Investment Archetype Library', icon: LayoutGrid },
   { href: '/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
   { href: '/strategic-scorecard', label: 'Strategic-Fit Scorecard', icon: Target },
   { href: '/portfolio', label: 'Capital Portfolio Optimizer', icon: PieChart },

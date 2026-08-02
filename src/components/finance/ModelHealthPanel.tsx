@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
-import { Activity, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, Layers, Sparkles } from 'lucide-react';
+import { formatAED, formatPercent } from '@/lib/utils/formatting';
+import { Activity, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 export interface DiagnosticCheck {
   id: string;
@@ -12,54 +13,150 @@ export interface DiagnosticCheck {
   detail: string;
 }
 
+/** AED tolerance for internal reconciliation of floating-point sums. */
+const RECONCILIATION_TOLERANCE_AED = 1;
+
 export const ModelHealthPanel: React.FC = () => {
-  const { getActiveScenarioResult, assumptions } = useFinancialStore();
+  const { getActiveScenarioResult, getActiveAssumptions } = useFinancialStore();
   const scenarioResult = getActiveScenarioResult();
+  const assumptions = getActiveAssumptions();
   const cashFlows = scenarioResult.yearlyCashFlows;
   const metrics = scenarioResult.metrics;
 
-  // Perform diagnostic checks
+  /* ------------------------------ Real assertions ------------------------------ */
+
+  const expectedLifeYears = Math.max(1, Math.round(assumptions.projectLifeYears));
+  const scheduleOperatingYears = Math.max(0, cashFlows.length - 1);
+  const scheduleLengthOk = scheduleOperatingYears === expectedLifeYears;
+
+  const year0Fcf = cashFlows[0]?.freeCashFlow ?? 0;
+  const expectedYear0Outflow = -(metrics.totalInitialCapex + metrics.initialWorkingCapital);
+  const year0Variance = Math.abs(year0Fcf - expectedYear0Outflow);
+  const year0Ok = year0Variance < RECONCILIATION_TOLERANCE_AED;
+
+  const summedPresentValues = cashFlows.reduce((sum, row) => sum + row.presentValue, 0);
+  const npvVariance = Math.abs(summedPresentValues - metrics.npv);
+  const npvReconciles = npvVariance < RECONCILIATION_TOLERANCE_AED;
+
+  const freeCashFlows = cashFlows.map((row) => row.freeCashFlow);
+  let signChanges = 0;
+  for (let i = 0; i < freeCashFlows.length - 1; i++) {
+    const a = freeCashFlows[i];
+    const b = freeCashFlows[i + 1];
+    if ((a < 0 && b > 0) || (a > 0 && b < 0)) signChanges++;
+  }
+
+  const salvageValue = assumptions.salvageValue;
+  const salvageWithinCapex = salvageValue <= metrics.totalInitialCapex;
+
+  const finalYear = cashFlows[cashFlows.length - 1];
+  const workingCapitalRecovered = (finalYear?.workingCapitalRecovery ?? 0) > 0;
+
+  const numericValues = [metrics.npv, metrics.profitabilityIndex, metrics.roiPct];
+  const numericIntegrityOk = numericValues.every((v) => !isNaN(v) && isFinite(v));
+
   const checks: DiagnosticCheck[] = [
     {
-      id: 'check-1',
-      name: 'Time-Zero Outlay Sign',
+      id: 'check-schedule-length',
+      name: 'Schedule Length vs. Project Life',
       category: 'Cash Flow',
-      status: metrics.totalInitialOutlay > 0 ? 'Healthy' : 'Critical',
-      detail: metrics.totalInitialOutlay > 0 ? `Valid initial capital outlay (AED ${(metrics.totalInitialOutlay / 1000000).toFixed(2)}M)` : 'Initial outlay must be positive integer value.',
+      status: scheduleLengthOk ? 'Healthy' : 'Critical',
+      detail: scheduleLengthOk
+        ? `Schedule runs Year 0 plus ${scheduleOperatingYears} operating years, matching the ${expectedLifeYears}-year project life.`
+        : `Schedule holds ${scheduleOperatingYears} operating years but the project life assumption is ${expectedLifeYears} years.`,
     },
     {
-      id: 'check-2',
+      id: 'check-year0-outflow',
+      name: 'Year-0 Outflow = Capex + Working Capital',
+      category: 'Reconciliation',
+      status: year0Ok ? 'Healthy' : 'Critical',
+      detail: year0Ok
+        ? `Year-0 free cash flow ${formatAED(year0Fcf)} equals capex ${formatAED(
+            metrics.totalInitialCapex
+          )} plus working capital ${formatAED(metrics.initialWorkingCapital)}.`
+        : `Year-0 free cash flow ${formatAED(year0Fcf)} differs from capex + working capital ${formatAED(
+            expectedYear0Outflow
+          )} by ${formatAED(year0Variance, 2)}.`,
+    },
+    {
+      id: 'check-npv-reconciliation',
+      name: 'Σ Present Values = Reported NPV',
+      category: 'Reconciliation',
+      status: npvReconciles ? 'Healthy' : 'Critical',
+      detail: npvReconciles
+        ? `Present values across all ${cashFlows.length} schedule rows sum to ${formatAED(
+            summedPresentValues
+          )}, matching the reported NPV within AED ${RECONCILIATION_TOLERANCE_AED.toFixed(2)}.`
+        : `Present values sum to ${formatAED(summedPresentValues)} against a reported NPV of ${formatAED(
+            metrics.npv
+          )} — variance ${formatAED(npvVariance, 2)}.`,
+    },
+    {
+      id: 'check-irr-sign-changes',
+      name: 'IRR Cash-Flow Sign Changes',
+      category: 'Cash Flow',
+      status: signChanges === 1 ? 'Healthy' : signChanges === 0 ? 'Critical' : 'Warning',
+      detail:
+        signChanges === 1
+          ? `Exactly one sign change in the cash-flow stream, so the IRR of ${formatPercent(
+              metrics.irr
+            )} is unique and well defined.`
+          : signChanges === 0
+          ? 'No sign change in the cash-flow stream — IRR is undefined and NPV must drive the decision.'
+          : `${signChanges} sign changes detected: multiple IRRs may exist. ${
+              metrics.irrWarning ?? 'NPV takes precedence over IRR.'
+            }`,
+    },
+    {
+      id: 'check-salvage-bound',
+      name: 'Salvage Value ≤ Capital Expenditure',
+      category: 'Assumptions',
+      status: salvageWithinCapex ? 'Healthy' : 'Critical',
+      detail: salvageWithinCapex
+        ? `Terminal salvage ${formatAED(salvageValue)} is ${(
+            (salvageValue / Math.max(1, metrics.totalInitialCapex)) *
+            100
+          ).toFixed(1)}% of the ${formatAED(metrics.totalInitialCapex)} capital base.`
+        : `Terminal salvage ${formatAED(salvageValue)} exceeds the ${formatAED(
+            metrics.totalInitialCapex
+          )} capital base, which is not a recoverable value.`,
+    },
+    {
+      id: 'check-working-capital',
       name: 'Working Capital Recovery',
       category: 'Cash Flow',
-      status: cashFlows[cashFlows.length - 1]?.workingCapitalRecovery > 0 ? 'Healthy' : 'Warning',
-      detail: cashFlows[cashFlows.length - 1]?.workingCapitalRecovery > 0 ? `Working capital fully recovered in final year (AED ${(cashFlows[cashFlows.length - 1].workingCapitalRecovery / 1000000).toFixed(1)}M)` : 'Working capital recovery missing in final year.',
+      status: workingCapitalRecovered ? 'Healthy' : 'Warning',
+      detail: workingCapitalRecovered
+        ? `${formatAED(finalYear.workingCapitalRecovery)} recovered in Year ${finalYear.year} against ${formatAED(
+            metrics.initialWorkingCapital
+          )} injected at Year 0.`
+        : 'No working-capital recovery recorded in the final year of the schedule.',
     },
     {
-      id: 'check-3',
-      name: 'Excel Model Reconciliation',
-      category: 'Reconciliation',
-      status: 'Healthy',
-      detail: '0.00% variance vs. Master Excel Financial Validation Model across all 6 annual cash flow lines.',
-    },
-    {
-      id: 'check-4',
-      name: 'Monte Carlo PRNG Reproducibility',
-      category: 'Data',
-      status: 'Healthy',
-      detail: '5,000 Mulberry32 seeded iterations verified reproducible across client environments.',
-    },
-    {
-      id: 'check-5',
+      id: 'check-numeric-integrity',
       name: 'Numeric Integrity (NaN / Infinity)',
-      category: 'Assumptions',
-      status: !isNaN(metrics.npv) && isFinite(metrics.npv) ? 'Healthy' : 'Critical',
-      detail: !isNaN(metrics.npv) && isFinite(metrics.npv) ? 'All financial outputs finite and validated.' : 'Numeric NaN or Infinity detected in calculation pipeline.',
+      category: 'Data',
+      status: numericIntegrityOk ? 'Healthy' : 'Critical',
+      detail: numericIntegrityOk
+        ? 'NPV, profitability index and ROI are all finite numbers.'
+        : 'A NaN or Infinity value reached the metric outputs — check the assumption inputs.',
     },
   ];
 
   const warningCount = checks.filter((c) => c.status === 'Warning').length;
   const criticalCount = checks.filter((c) => c.status === 'Critical').length;
-  const overallHealth = criticalCount > 0 ? 'Critical' : warningCount > 0 ? 'Warning' : 'Healthy';
+  const overallHealth: DiagnosticCheck['status'] =
+    criticalCount > 0 ? 'Critical' : warningCount > 0 ? 'Warning' : 'Healthy';
+
+  const statusTextClass = (status: DiagnosticCheck['status']) =>
+    status === 'Healthy' ? 'text-success' : status === 'Warning' ? 'text-amber-500' : 'text-destructive';
+
+  const StatusIcon = ({ status }: { status: DiagnosticCheck['status'] }) => {
+    const className = `h-3.5 w-3.5 ${statusTextClass(status)}`;
+    if (status === 'Healthy') return <CheckCircle2 className={className} />;
+    if (status === 'Warning') return <AlertTriangle className={className} />;
+    return <XCircle className={className} />;
+  };
 
   return (
     <div className="glass-panel p-4 rounded-2xl border border-border space-y-3 text-xs">
@@ -82,21 +179,29 @@ export const ModelHealthPanel: React.FC = () => {
 
       <div className="space-y-2 font-mono">
         {checks.map((check) => (
-          <div key={check.id} className="flex items-start justify-between gap-2 p-2 rounded-xl bg-muted/40 border border-border">
+          <div
+            key={check.id}
+            className="flex items-start justify-between gap-2 p-2 rounded-xl bg-muted/40 border border-border"
+          >
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 font-bold text-foreground">
-                <CheckCircle2 className={`h-3.5 w-3.5 ${check.status === 'Healthy' ? 'text-success' : 'text-amber-500'}`} />
+                <StatusIcon status={check.status} />
                 <span>{check.name}</span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-card text-muted-foreground font-sans">{check.category}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-card text-muted-foreground font-sans">
+                  {check.category}
+                </span>
               </div>
               <p className="text-[10px] text-muted-foreground font-sans">{check.detail}</p>
             </div>
-            <span className={`text-[10px] font-bold ${check.status === 'Healthy' ? 'text-success' : 'text-amber-500'}`}>
-              {check.status}
-            </span>
+            <span className={`text-[10px] font-bold ${statusTextClass(check.status)}`}>{check.status}</span>
           </div>
         ))}
       </div>
+
+      <p className="text-[10px] text-muted-foreground font-sans leading-relaxed border-t border-border pt-2">
+        Every check above is an assertion evaluated against the active scenario&apos;s cash-flow schedule and metrics.
+        No result is asserted against any external spreadsheet.
+      </p>
     </div>
   );
 };

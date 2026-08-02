@@ -11,184 +11,15 @@ async function generatePDF() {
   const pdfPath = path.join(outputDir, 'CapExIQ_Complete_Project_Guide_and_QnA.pdf');
   const mdPath = path.join(outputDir, 'CapExIQ_Complete_Project_Guide_and_QnA.md');
 
-  const markdownContent = `# CapExIQ — Complete Project Guide & Executive Q&A Handbook
-**Project Title**: CapExIQ — AI-Enabled Capital-Budgeting Decision Dashboard for an Automated Micro-Fulfilment Centre  
-**Entity**: NovaRetail GCC (Hypothetical UAE Omnichannel Retailer)  
-**Date**: July 2026  
+  // SOURCE OF TRUTH: the markdown file on disk drives this PDF.
+  // Edit deliverables/CapExIQ_Complete_Project_Guide_and_QnA.md, then re-run this script.
+  // (This script used to embed a stale inline copy and overwrite the .md on every run.)
+  if (!fs.existsSync(mdPath)) {
+    throw new Error(`Source markdown not found: ${mdPath}`);
+  }
+  const markdownContent = fs.readFileSync(mdPath, 'utf8');
 
----
-
-## EXECUTIVE SUMMARY & PROJECT OVERVIEW
-
-### 1. What is NovaRetail GCC?
-NovaRetail GCC is a major hypothetical omnichannel retail enterprise operating hypermarkets, supermarkets, and a rapidly expanding e-commerce platform across the United Arab Emirates (Dubai, Abu Dhabi, Sharjah).
-
-### 2. The Core Problem & Opportunity
-With the surge in online grocery and retail shopping in the GCC region, NovaRetail GCC faces two main operational bottlenecks:
-- **High Fulfilment Costs**: Manual picking in traditional central warehouses is slow, labor-intensive, and prone to error.
-- **Customer Expectation for 2-Hour Delivery**: Urban UAE consumers expect fast 2-hour or same-day delivery windows, which manual fulfillment cannot sustain cost-effectively.
-
-### 3. The Proposed Capital Investment
-NovaRetail GCC's Board of Directors is evaluating a proposal to invest in a state-of-the-art **Automated Micro-Fulfilment Centre (MFC)** utilizing Goods-to-Person (G2P) robotics, automated storage and retrieval systems (ASRS), and Warehouse Control System (WCS) software in urban Dubai.
-
-- **Total Initial Capital Outlay**: **AED 22,000,000** (Time Zero / Year 0)
-  - **Automation Equipment**: AED 18,000,000 (Robotics, ASRS, conveyers)
-  - **Installation & Systems Integration**: AED 2,500,000 (M&E, WCS integration)
-  - **Software & Cybersecurity**: AED 1,200,000 (Licences, security hardening)
-  - **Training & Launch Support**: AED 300,000 (Staff onboarding)
-  - **Initial Net Working Capital (NWC)**: AED 1,000,000 (Inventory & spare parts, fully recovered at Year 6)
-
----
-
-## FINANCIAL EVALUATION & KEY METRICS (BASE CASE)
-
-All financial evaluations in CapExIQ derive strictly from deterministic corporate finance math using a **6-Year Economic Horizon** and NovaRetail GCC's **11.50% WACC Hurdle Rate**.
-
-| Financial Metric | Baseline Result | Hurdle / Benchmark | Board Recommendation |
-| :--- | :---: | :---: | :---: |
-| **Initial Capital Outlay (CF0)** | **AED 22,000,000** | Budget Cap: AED 25M | **Within Budget** |
-| **Net Present Value (NPV)** | **AED 4,682,752** | > AED 0 | **APPROVE FULL INVESTMENT** |
-| **Internal Rate of Return (IRR)** | **17.65%** | > 11.50% WACC | **Exceeds Hurdle Rate (+6.15%)** |
-| **Modified IRR (MIRR)** | **14.28%** | > 11.50% Reinvestment | **Economically Sound** |
-| **Profitability Index (PI)** | **1.21x** | > 1.00x | **AED 1.21 Value Created per AED 1.00 Spent** |
-| **Simple Payback Period** | **3.70 Years** | < 4.0 Years | **Payback Achieved in Year 4** |
-| **Discounted Payback Period** | **4.68 Years** | < 5.0 Years | **Discounted Payback in Year 5** |
-| **6-Year Cumulative Cash Flow** | **AED 11,850,000** | Net Undiscounted Gain | **Positive Cash Generation** |
-
----
-
-## MANAGEMENT DECISION ALTERNATIVES
-
-NovaRetail GCC management evaluated three strategic paths:
-
-1. **Option 1: Approve Full Investment (RECOMMENDED)**
-   - Outlay: AED 22.0M
-   - NPV: AED +4.68M | IRR: 17.65%
-   - Rationale: Maximizes long-term market share, delivers lowest cost-per-order (AED 4.20 vs AED 14.50 manual), and achieves 99.8% order accuracy.
-
-2. **Option 2: Approve Phased / Hybrid Investment**
-   - Outlay: AED 12.0M initial pilot in Year 0, with Option to Expand in Year 3.
-   - NPV: AED +2.10M | IRR: 14.20%
-   - Rationale: Lowers initial capital commitment by 45%, but loses volume economies of scale and incurs higher integration costs later.
-
-3. **Option 3: Reject Project / Status Quo (Manual Fulfillment)**
-   - Outlay: AED 0
-   - NPV: AED 0 | Lost Market Share: Estimated -18% over 3 years
-   - Rationale: Unviable. Order volume expansion would cause picking bottlenecks and surge 3PL logistics expenses by +35%.
-
----
-
-## SCENARIO & RISK SENSITIVITY ANALYSIS
-
-CapExIQ tests NovaRetail GCC's financial resilience across multiple stress scenarios:
-
-- **Optimistic Scenario (+10% Benefits, -5% Capex)**:
-  - NPV increases to **AED +9,450,000**, IRR rises to **23.10%**, Payback reduces to **3.1 Years**.
-- **Base Case Scenario (Management Baseline)**:
-  - NPV is **AED +4,682,752**, IRR is **17.65%**, Payback is **3.7 Years**.
-- **Pessimistic Stress-Test Scenario (-25% Benefits, +15% Capex, 14.5% Interest Rate Environment)**:
-  - NPV shifts to **AED -1,850,000**, IRR drops to **8.40%**.
-  - **Decision Implication**: Triggers automated guardrail to pause full commitment and switch to Phased Option 2.
-
-### Top Value Drivers (Tornado Chart Ranking)
-1. **Operating Cost Savings per Year** (Highest impact: ±AED 3.8M NPV variance).
-2. **Discount Rate / WACC** (1% increase in WACC reduces NPV by ~AED 1.1M).
-3. **Initial Automation Equipment Outlay** (±10% overrun changes NPV by ±AED 1.8M).
-4. **Incremental Contribution Margin Growth**.
-
----
-
-## REAL DATASET INTEGRATION & EXTERNAL MACRO DRIVERS
-
-CapExIQ integrates 10 real CSV datasets to ground all calculations in actual market conditions:
-
-1. **DEWA Electricity Tariffs (July 2026)**: Commercial slab rates (23 to 38 Fils/kWh + 6.5 Fils fuel surcharge) drive exact annual power OpEx estimates for robotics.
-2. **UAE Corporate Tax (9%)**: In effect since June 2023. Applied to EBIT after straight-line equipment depreciation, ensuring real after-tax cash flows.
-3. **CBUAE EIBOR Catalog**: Central Bank benchmark rates (3-Month EIBOR: 4.85%) inform the debt financing component of WACC.
-4. **DataCo Operational Sample**: 20 transaction records establishing baseline shipping delays, order margins, and fulfillment error rates.
-
----
-
-## AI GOVERNANCE & ETHICAL SAFETY
-
-- **Advisory Role Only**: The AI Financial Officer provides explanatory commentary for executive board memorandums.
-- **Zero Black-Box Math**: All financial metrics (NPV, IRR, Payback) are strictly calculated by deterministic TypeScript functions—never generated by the AI model.
-- **Human-in-the-Loop Safeguard**: The CFO and Capital Committee retain full decision authority.
-
----
-
-## COMPREHENSIVE EXECUTIVE Q&A HANDBOOK
-*(20 Critical Board & Examiner Questions with Clear, Professional Answers in Simple English)*
-
-### Q1: Why is NovaRetail GCC considering an automated micro-fulfilment centre?
-**Answer**: NovaRetail GCC needs to handle fast-growing online orders in urban Dubai and Abu Dhabi. Manual warehouse picking is too slow and expensive (costing AED 14.50 per order). The automated center uses robots to pick orders 4x faster, cutting cost per order to AED 4.20 and meeting 2-hour delivery demands.
-
-### Q2: How much money does NovaRetail GCC need to invest up front?
-**Answer**: The total initial outlay at Time Zero (Year 0) is **AED 22.0 Million**. This includes AED 18M for robotics equipment, AED 2.5M for installation and integration, AED 1.2M for software/cybersecurity, AED 300K for staff training, and AED 1.0M for initial working capital.
-
-### Q3: What is Net Present Value (NPV), and why is AED 4.68 Million a good result?
-**Answer**: Net Present Value measures how much net wealth an investment adds to the company today, after converting all future cash inflows into today's money using the company's cost of capital. A positive NPV of **AED 4.68 Million** means the project creates AED 4.68M in net value above all costs and financing returns.
-
-### Q4: What is the Internal Rate of Return (IRR), and how does it compare to the WACC hurdle rate?
-**Answer**: IRR is the annual percentage return generated by the project's cash flows. For NovaRetail GCC, the project's IRR is **17.65%**. Because 17.65% is significantly higher than NovaRetail's hurdle rate (WACC) of **11.50%**, the project comfortably earns more than it costs to finance.
-
-### Q5: What is the difference between IRR and Modified IRR (MIRR)? Why do we report MIRR?
-**Answer**: Standard IRR assumes all interim cash inflows are reinvested at the project's high IRR (17.65%), which is often unrealistic. Modified IRR (MIRR) assumes cash inflows are reinvested at NovaRetail's realistic cost of capital (11.50%). The project's MIRR is **14.28%**, which confirms the investment is genuinely profitable even under conservative reinvestment assumptions.
-
-### Q6: What is the Profitability Index (PI), and what does 1.21x tell us?
-**Answer**: The Profitability Index divides the present value of future cash inflows by the initial investment outlay. A PI of **1.21x** means that for every 1.00 AED invested, the project returns 1.21 AED in present value. Any PI greater than 1.00x creates shareholder value.
-
-### Q7: How long will it take NovaRetail GCC to get its initial investment back?
-**Answer**: On an undiscounted basis (Simple Payback), the project pays back its AED 22M initial outlay in **3.70 Years** (during Year 4). On a discounted basis (accounting for the time value of money), payback occurs in **4.68 Years** (during Year 5).
-
-### Q8: What happens if equipment installation costs increase or online order demand drops? (Pessimistic Scenario)
-**Answer**: Under a severe stress test where capital outlay increases by +15%, operating benefits drop by -25%, and financing rates rise to 14.50%, the NPV turns negative (**AED -1.85 Million**). CapExIQ automatically flags this risk and advises management to switch from full upfront commitment to **Option 2 (Phased Pilot)** to limit initial exposure to AED 12M.
-
-### Q9: How is UAE Corporate Tax handled in this evaluation?
-**Answer**: In line with UAE Ministry of Finance regulations (effective June 2023), a **9% Corporate Tax** rate is applied to taxable operating profits (EBIT). Equipment depreciation is deducted before tax, providing a annual tax shield that increases net cash flow.
-
-### Q10: How are electricity costs calculated for operating the robots?
-**Answer**: CapExIQ integrates real DEWA (Dubai Electricity & Water Authority) commercial tariffs (23–38 Fils/kWh plus 6.5 Fils fuel surcharge). Based on 24/7 robot fleet operation, annual electricity consumption is estimated at ~650,000 kWh, resulting in an annual power OpEx of approximately **AED 250,000**.
-
-### Q11: What is a Monte Carlo simulation, and what does it tell executive management?
-**Answer**: A Monte Carlo simulation runs thousands of random scenarios (5,000 iterations in CapExIQ) by varying capex, demand, labor savings, and interest rates simultaneously. It shows that the project has an **88.4% probability of producing a positive NPV**, giving the Board high quantitative confidence in approval.
-
-### Q12: What happens to the working capital and equipment at the end of Year 6?
-**Answer**: At the end of Year 6, the initial **AED 1.0M Working Capital** is fully recovered in cash. The equipment is assumed to have a conservative **AED 1.5M Salvage Value**, providing a total Year 6 terminal cash inflow of AED 2.5M.
-
-### Q13: What is Sensitivity Analysis, and which single factor has the biggest impact on success?
-**Answer**: Sensitivity Analysis tests how changing one variable at a time affects NPV. The Tornado Chart shows that **Annual Operating Cost Savings** is the single most sensitive variable: a 10% change in savings alters project NPV by AED 3.8 Million.
-
-### Q14: How does the AI Financial Assistant help executive management?
-**Answer**: The AI Financial Assistant analyzes the quantitative findings, writes professional executive summaries, highlights risk warnings, and answers board questions. It operates purely as an advisory tool—it cannot alter numbers or make unapproved decisions.
-
-### Q15: Why is Full Investment recommended over the Phased Option?
-**Answer**: Full Investment delivers a higher total NPV (AED 4.68M vs AED 2.10M) and unlocks maximum operational efficiency immediately. Phased investment reduces initial risk but adds AED 1.8M in overall integration costs and delays customer delivery improvements by 2 years.
-
-### Q16: How does the project impact NovaRetail GCC's operational throughput?
-**Answer**: The automated facility increases order processing capacity from 1,200 orders/day to **6,000 orders/day**, reduces picking errors from 2.4% to **0.2%**, and cuts average delivery prep time from 45 minutes to **8 minutes**.
-
-### Q17: What is WACC (Weighted Average Cost of Capital), and how was 11.50% determined?
-**Answer**: WACC is the average interest and return rate NovaRetail GCC must pay to its debt holders and equity shareholders. Based on a 40% Debt / 60% Equity capital structure, 6.5% interest rate on bank loans, 9% corporate tax, and 14.5% required return on equity, NovaRetail's baseline WACC is **11.50%**.
-
-### Q18: What are the main implementation risks during the 12-month construction phase?
-**Answer**: The three primary risks are: (1) WCS software integration delays with existing ERP, (2) Robotics hardware delivery lead times, and (3) Warehouse staff retraining. These are managed through stage-gate milestones and vendor penalty SLA clauses.
-
-### Q19: How does CapExIQ ensure data quality and audit compliance?
-**Answer**: CapExIQ includes a built-in CSV Data Quality Inspector that validates all uploaded datasets against predefined Zod schemas, checking for missing values, duplicates, and out-of-bounds ranges before accepting data into the model.
-
-### Q20: What is the final recommendation for the Board of Directors?
-**Answer**: The Board should **APPROVE OPTION 1 (Full Investment of AED 22.0M)** subject to: (1) Vendor SLA performance guarantees, (2) A strict AED 25.0M maximum cost ceiling, and (3) Quarterly stage-gate milestone reviews during construction.
-
----
-
-## CONCLUSION & SUMMARY FOR BOARD MEMORANDUM
-
-The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilment Centre is financially robust, economically value-accretive, and operationally necessary. With an NPV of **AED 4.68 Million**, an IRR of **17.65%**, and an **88.4% probabilistic confidence level**, the project provides an exceptional strategic opportunity to secure market leadership in GCC omnichannel retail.
-`;
-
-  // Write markdown version
-  fs.writeFileSync(mdPath, markdownContent, 'utf8');
+  // NOTE: the .md is an input, never an output. Do not write to mdPath here.
 
   // HTML content for PDF rendering
   const htmlContent = `<!DOCTYPE html>
@@ -405,23 +236,23 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
   <div class="stat-grid">
     <div class="stat-card">
       <div class="label">Initial Outlay</div>
-      <div class="val">AED 22.0M</div>
+      <div class="val">AED 24.0M</div>
       <div class="sub">Time Zero Outlay</div>
     </div>
     <div class="stat-card">
       <div class="label">Net Present Value</div>
-      <div class="val">AED 4.68M</div>
+      <div class="val">AED 12.08M</div>
       <div class="sub">Baseline NPV</div>
     </div>
     <div class="stat-card">
       <div class="label">Internal Return</div>
-      <div class="val">17.65%</div>
+      <div class="val">26.30%</div>
       <div class="sub">Hurdle: 11.50%</div>
     </div>
     <div class="stat-card">
       <div class="label">Payback Period</div>
-      <div class="val">3.70 Yrs</div>
-      <div class="sub">Discounted: 4.68 Yrs</div>
+      <div class="val">3.10 Yrs</div>
+      <div class="sub">Discounted: 3.98 Yrs</div>
     </div>
   </div>
 
@@ -430,12 +261,12 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
     <strong>NovaRetail GCC</strong> is a major hypothetical omnichannel retail group operating across the UAE. Facing rapid e-commerce expansion in Dubai and Abu Dhabi, NovaRetail's manual warehouse fulfillment system has become an operational bottleneck, driving up order preparation costs (AED 14.50/order) and missing 2-hour delivery SLAs.
   </p>
   <p>
-    Management has evaluated an investment of <strong>AED 22.0 Million</strong> to construct an <strong>Automated Micro-Fulfilment Centre (MFC)</strong> equipped with Goods-to-Person (G2P) robotics, automated storage/retrieval systems (ASRS), and Warehouse Control System (WCS) integration in urban Dubai.
+    Management has evaluated an investment of <strong>AED 24.0 Million</strong> to construct an <strong>Automated Micro-Fulfilment Centre (MFC)</strong> equipped with Goods-to-Person (G2P) robotics, automated storage/retrieval systems (ASRS), and Warehouse Control System (WCS) integration in urban Dubai.
   </p>
 
   <div class="highlight-box">
     <strong>Executive Recommendation: APPROVE OPTION 1 (Full Investment)</strong><br />
-    The baseline model yields a Net Present Value of <strong>AED 4,682,752</strong>, an Internal Rate of Return of <strong>17.65%</strong> (exceeding the 11.50% WACC hurdle rate), a Profitability Index of <strong>1.21x</strong>, and an 88.4% probabilistic probability of success under 5,000 Monte Carlo simulation runs.
+    The baseline model yields a Net Present Value of <strong>AED 12,083,628</strong>, an Internal Rate of Return of <strong>26.30%</strong> (exceeding the 11.50% WACC hurdle rate), a Profitability Index of <strong>1.5035x</strong>, and an 99.7% probability of a positive NPV under 5,000 Monte Carlo simulation runs.
   </div>
 
   <h2>2. Financial Return & Model Schedule</h2>
@@ -451,39 +282,39 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
     <tbody>
       <tr>
         <td><strong>Net Present Value (NPV)</strong></td>
-        <td><strong>AED 4,682,752</strong></td>
+        <td><strong>AED 12,083,628</strong></td>
         <td>> AED 0</td>
         <td>Passed (Approve)</td>
       </tr>
       <tr>
         <td><strong>Internal Rate of Return (IRR)</strong></td>
-        <td><strong>17.65%</strong></td>
+        <td><strong>26.30%</strong></td>
         <td>> 11.50% WACC</td>
-        <td>Passed (+6.15% Spread)</td>
+        <td>Passed (++14.80% Spread)</td>
       </tr>
       <tr>
         <td><strong>Modified IRR (MIRR)</strong></td>
-        <td><strong>14.28%</strong></td>
+        <td><strong>19.34%</strong></td>
         <td>> 11.50% Reinvestment</td>
         <td>Passed (Economically Sound)</td>
       </tr>
       <tr>
         <td><strong>Profitability Index (PI)</strong></td>
-        <td><strong>1.21x</strong></td>
+        <td><strong>1.5035x</strong></td>
         <td>> 1.00x</td>
-        <td>Passed (1.21 Value Created per 1.00 Outlay)</td>
+        <td>Passed (1.50 Value Created per 1.00 Outlay)</td>
       </tr>
       <tr>
         <td><strong>Simple Payback Period</strong></td>
-        <td><strong>3.70 Years</strong></td>
+        <td><strong>3.10 Years</strong></td>
         <td>< 4.0 Years</td>
         <td>Passed (Recouped in Year 4)</td>
       </tr>
       <tr>
         <td><strong>Discounted Payback Period</strong></td>
-        <td><strong>4.68 Years</strong></td>
-        <td>< 5.0 Years</td>
-        <td>Passed (Recouped in Year 5)</td>
+        <td><strong>3.98 Years</strong></td>
+        <td>< 4.5 Years</td>
+        <td>Passed (Recouped in Year 4)</td>
       </tr>
     </tbody>
   </table>
@@ -494,7 +325,7 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
     <li><strong>Installation & Systems Integration</strong>: AED 2,500,000 (Mechanical, Electrical, WCS software connection)</li>
     <li><strong>Software & Cybersecurity</strong>: AED 1,200,000 (WCS software licences and cybersecurity hardening)</li>
     <li><strong>Training & Launch Support</strong>: AED 300,000 (Staff retraining)</li>
-    <li><strong>Initial Working Capital</strong>: AED 1,000,000 (Inventory buffer, 100% recovered at Year 6 end)</li>
+    <li><strong>Initial Working Capital</strong>: AED 2,000,000 (Inventory buffer, 100% recovered at Year 6 end)</li>
     <li><strong>UAE Corporate Tax (9%)</strong>: Deducted annually after straight-line equipment depreciation shields.</li>
   </ul>
 
@@ -509,32 +340,32 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
 
   <div class="qa-card">
     <div class="question">Q2: How much money is needed up front, and how will it be spent?</div>
-    <div class="answer">The initial capital outlay is <strong>AED 22.0 Million</strong> in Year 0. This is spent on robotics hardware (AED 18M), integration (AED 2.5M), software (AED 1.2M), staff training (AED 300K), and working capital (AED 1.0M).</div>
+    <div class="answer">The initial capital outlay is <strong>AED 24.0 Million</strong> in Year 0. This is spent on robotics hardware (AED 18M), integration (AED 2.5M), software (AED 1.2M), staff training (AED 300K), and working capital (AED 2.0M).</div>
   </div>
 
   <div class="qa-card">
-    <div class="question">Q3: What is Net Present Value (NPV), and why is AED 4.68 Million good?</div>
-    <div class="answer">NPV measures how much net value the project adds to NovaRetail GCC today, after discounting all future cash flows back to present value using NovaRetail's 11.50% financing cost. An NPV of AED 4.68 Million means the project adds AED 4.68M in net shareholder wealth.</div>
+    <div class="question">Q3: What is Net Present Value (NPV), and why is AED 12.08 Million good?</div>
+    <div class="answer">NPV measures how much net value the project adds to NovaRetail GCC today, after discounting all future cash flows back to present value using NovaRetail's 11.50% financing cost. An NPV of AED 12.08 Million means the project adds AED 12.08M in net shareholder wealth.</div>
   </div>
 
   <div class="qa-card">
     <div class="question">Q4: What is Internal Rate of Return (IRR) compared to the WACC hurdle rate?</div>
-    <div class="answer">IRR is the annualized return percentage earned by the investment. At <strong>17.65%</strong>, the project's return is 6.15 percentage points higher than NovaRetail's 11.50% cost of capital (WACC), proving it is highly profitable.</div>
+    <div class="answer">IRR is the annualized return percentage earned by the investment. At <strong>26.30%</strong>, the project's return is 14.80 percentage points higher than NovaRetail's 11.50% cost of capital (WACC), proving it is highly profitable.</div>
   </div>
 
   <div class="qa-card">
     <div class="question">Q5: Why do we calculate Modified IRR (MIRR) in addition to standard IRR?</div>
-    <div class="answer">Standard IRR unrealistically assumes cash generated by the project is reinvested at 17.65%. MIRR conservatively assumes cash is reinvested at the company's realistic 11.50% hurdle rate. The project's MIRR of <strong>14.28%</strong> confirms it remains solid under conservative assumptions.</div>
+    <div class="answer">Standard IRR unrealistically assumes cash generated by the project is reinvested at 26.30%. MIRR conservatively assumes cash is reinvested at the company's realistic 11.50% hurdle rate. The project's MIRR of <strong>19.34%</strong> confirms it remains solid under conservative assumptions.</div>
   </div>
 
   <div class="qa-card">
-    <div class="question">Q6: What is the Profitability Index (PI), and why is 1.21x important?</div>
-    <div class="answer">PI divides present value inflows by initial outlay. A PI of <strong>1.21x</strong> means that every 1.00 AED invested generates 1.21 AED in present value, proving efficient capital usage.</div>
+    <div class="question">Q6: What is the Profitability Index (PI), and why is 1.5035x important?</div>
+    <div class="answer">PI divides present value inflows by initial outlay. A PI of <strong>1.5035x</strong> means that every 1.00 AED invested generates 1.21 AED in present value, proving efficient capital usage.</div>
   </div>
 
   <div class="qa-card">
     <div class="question">Q7: How long until NovaRetail GCC gets its money back?</div>
-    <div class="answer">The Simple Payback Period is <strong>3.70 Years</strong> (recouped during Year 4). The Discounted Payback Period (accounting for interest costs) is <strong>4.68 Years</strong> (recouped during Year 5).</div>
+    <div class="answer">The Simple Payback Period is <strong>3.10 Years</strong> (recouped during Year 4). The Discounted Payback Period (accounting for interest costs) is <strong>3.98 Years</strong> (recouped during Year 4).</div>
   </div>
 
   <div class="qa-card">
@@ -556,12 +387,12 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
 
   <div class="qa-card">
     <div class="question">Q11: What is a Monte Carlo simulation, and what does it tell the Board?</div>
-    <div class="answer">Monte Carlo runs 5,000 randomized market scenarios altering costs, demand, labor savings, and interest rates. It proves the project has an <strong>88.4% probability of achieving a positive NPV</strong>, offering strong quantitative confidence.</div>
+    <div class="answer">Monte Carlo runs 5,000 randomized market scenarios altering costs, demand, labor savings, and interest rates. It proves the project has an <strong>99.7% probability of achieving a positive NPV</strong>, offering strong quantitative confidence.</div>
   </div>
 
   <div class="qa-card">
     <div class="question">Q12: What happens to working capital and equipment at Year 6 end?</div>
-    <div class="answer">The initial <strong>AED 1.0M Working Capital</strong> is 100% recovered in cash in Year 6. Equipment salvage value is conservatively estimated at <strong>AED 1.5M</strong>, giving a total Year 6 terminal cash inflow of AED 2.5M.</div>
+    <div class="answer">The initial <strong>AED 2.0M Working Capital</strong> is 100% recovered in cash in Year 6. Equipment salvage value is conservatively estimated at <strong>AED 2.0M</strong>, giving a total Year 6 terminal cash inflow of AED 4.0M.</div>
   </div>
 
   <div class="qa-card">
@@ -576,7 +407,7 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
 
   <div class="qa-card">
     <div class="question">Q15: Why is Full Investment recommended over Phased Investment?</div>
-    <div class="answer">Full Investment produces higher total NPV (AED 4.68M vs AED 2.10M) and unlocks maximum operational economies of scale immediately. Phased investment reduces initial outlay but adds AED 1.8M in re-mobilization costs.</div>
+    <div class="answer">Full investment is the only option the deterministic engine values end-to-end, returning NPV AED 12.08M. Phasing lowers the Year-0 commitment to AED 14.0M and buys an abandonment option, but defers benefits and adds re-mobilisation cost, so its NPV is not directly comparable and is not quoted here.</div>
   </div>
 
   <div class="qa-card">
@@ -601,7 +432,7 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
 
   <div class="qa-card">
     <div class="question">Q20: What is the final action for NovaRetail GCC's Board?</div>
-    <div class="answer">The Board should <strong>APPROVE OPTION 1 (Full Investment of AED 22.0M)</strong> with conditions: (1) Vendor SLA penalty clauses, (2) Strict AED 25.0M cost overrun ceiling, and (3) Quarterly stage-gate milestone audits.</div>
+    <div class="answer">The Board should <strong>APPROVE OPTION 1 (Full Investment of AED 24.0M)</strong> with conditions: (1) Vendor SLA penalty clauses, (2) Strict AED 25.0M cost overrun ceiling, and (3) Quarterly stage-gate milestone audits.</div>
   </div>
 
   <div class="footer-text">
@@ -624,7 +455,7 @@ The **CapExIQ** evaluation confirms that NovaRetail GCC's proposed Micro-Fulfilm
   await browser.close();
 
   console.log(`Successfully generated PDF document at: ${pdfPath}`);
-  console.log(`Successfully generated Markdown document at: ${mdPath}`);
+  console.log(`Source markdown read from: ${mdPath}`);
 }
 
 generatePDF().catch((err) => {

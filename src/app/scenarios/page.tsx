@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
+import { ScenarioDefinition } from '@/lib/types/finance';
 import { evaluateAllScenarios, calculateExpectedNpv } from '@/lib/finance/scenarios';
 import { formatAED, formatPercent, getDecisionBadgeColor } from '@/lib/utils/formatting';
 import { useThemeChartColors } from '@/lib/utils/chartColors';
@@ -16,6 +17,20 @@ export default function ScenariosPage() {
   const scenarioResults = evaluateAllScenarios(assumptions);
   const { Optimistic, Base, Pessimistic } = scenarioResults;
   const expectedNpv = calculateExpectedNpv(scenarioResults);
+
+  // Every rate and multiplier label below is read from the scenario definitions, so the cards can
+  // never drift away from the parameters the engine actually used.
+  const rate = (value: number) => formatPercent(value, 1);
+  const multiplierLine = (def: ScenarioDefinition) =>
+    `Capex ${def.investmentMultiplier.toFixed(2)}x • Benefits ${def.operatingBenefitMultiplier.toFixed(
+      2
+    )}x • OpEx ${def.operatingCostMultiplier.toFixed(2)}x`;
+  const deltaPct = (multiplier: number) => {
+    const delta = (multiplier - 1) * 100;
+    return `${delta >= 0 ? '+' : '-'}${Math.abs(delta).toFixed(0)}%`;
+  };
+  const npvClass = (npv: number) => (npv >= 0 ? 'text-success' : 'text-destructive');
+  const paybackLabel = (years: number | null) => (years !== null ? `${years.toFixed(1)} Yrs` : 'N/A');
 
   const chartData = [
     { name: 'Optimistic', npv: Optimistic.metrics.npv / 1000000 },
@@ -81,7 +96,7 @@ export default function ScenariosPage() {
           <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
             <div>
               <h3 className="text-sm font-bold text-success">Optimistic Scenario</h3>
-              <p className="text-[11px] text-muted-foreground">Capex 0.95x • Benefits 1.10x • OpEx 0.95x</p>
+              <p className="text-[11px] text-muted-foreground">{multiplierLine(Optimistic.definition)}</p>
             </div>
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getDecisionBadgeColor(Optimistic.metrics.decisionStatus)}`}>
               {Optimistic.metrics.decisionStatus}
@@ -91,11 +106,11 @@ export default function ScenariosPage() {
           <div className="space-y-2 text-xs font-mono">
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Hurdle Rate:</span>
-              <span className="text-foreground font-bold">10.5%</span>
+              <span className="text-foreground font-bold">{rate(Optimistic.definition.discountRate)}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Net Present Value (NPV):</span>
-              <span className="text-success font-bold">{formatAED(Optimistic.metrics.npv)}</span>
+              <span className={`font-bold ${npvClass(Optimistic.metrics.npv)}`}>{formatAED(Optimistic.metrics.npv)}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Internal Rate of Return:</span>
@@ -112,7 +127,7 @@ export default function ScenariosPage() {
             <div className="flex justify-between py-1 pt-2">
               <span className="text-muted-foreground">Payback Period:</span>
               <span className="text-amber-600 dark:text-amber-400 font-bold">
-                {Optimistic.metrics.paybackPeriodYears ? `${Optimistic.metrics.paybackPeriodYears.toFixed(1)} Yrs` : 'N/A'}
+                {paybackLabel(Optimistic.metrics.paybackPeriodYears)}
               </span>
             </div>
           </div>
@@ -129,7 +144,7 @@ export default function ScenariosPage() {
           <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
             <div>
               <h3 className="text-sm font-bold text-primary">Base Case (Management Baseline)</h3>
-              <p className="text-[11px] text-muted-foreground">Capex 1.00x • Benefits 1.00x • OpEx 1.00x</p>
+              <p className="text-[11px] text-muted-foreground">{multiplierLine(Base.definition)}</p>
             </div>
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getDecisionBadgeColor(Base.metrics.decisionStatus)}`}>
               {Base.metrics.decisionStatus}
@@ -139,11 +154,11 @@ export default function ScenariosPage() {
           <div className="space-y-2 text-xs font-mono">
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Hurdle Rate:</span>
-              <span className="text-foreground font-bold">11.5%</span>
+              <span className="text-foreground font-bold">{rate(Base.definition.discountRate)}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Net Present Value (NPV):</span>
-              <span className="text-success font-bold">{formatAED(Base.metrics.npv)}</span>
+              <span className={`font-bold ${npvClass(Base.metrics.npv)}`}>{formatAED(Base.metrics.npv)}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Internal Rate of Return:</span>
@@ -160,7 +175,7 @@ export default function ScenariosPage() {
             <div className="flex justify-between py-1 pt-2">
               <span className="text-muted-foreground">Payback Period:</span>
               <span className="text-amber-600 dark:text-amber-400 font-bold">
-                {Base.metrics.paybackPeriodYears ? `${Base.metrics.paybackPeriodYears.toFixed(1)} Yrs` : 'N/A'}
+                {paybackLabel(Base.metrics.paybackPeriodYears)}
               </span>
             </div>
           </div>
@@ -177,7 +192,7 @@ export default function ScenariosPage() {
           <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
             <div>
               <h3 className="text-sm font-bold text-destructive">Pessimistic Scenario</h3>
-              <p className="text-[11px] text-muted-foreground">Capex 1.15x • Benefits 0.75x • OpEx 1.15x</p>
+              <p className="text-[11px] text-muted-foreground">{multiplierLine(Pessimistic.definition)}</p>
             </div>
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getDecisionBadgeColor(Pessimistic.metrics.decisionStatus)}`}>
               {Pessimistic.metrics.decisionStatus}
@@ -187,7 +202,7 @@ export default function ScenariosPage() {
           <div className="space-y-2 text-xs font-mono">
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Hurdle Rate:</span>
-              <span className="text-foreground font-bold">14.5%</span>
+              <span className="text-foreground font-bold">{rate(Pessimistic.definition.discountRate)}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-border/50">
               <span className="text-muted-foreground">Net Present Value (NPV):</span>
@@ -210,7 +225,7 @@ export default function ScenariosPage() {
             <div className="flex justify-between py-1 pt-2">
               <span className="text-muted-foreground">Payback Period:</span>
               <span className="text-amber-600 dark:text-amber-400 font-bold">
-                {Pessimistic.metrics.paybackPeriodYears ? `${Pessimistic.metrics.paybackPeriodYears.toFixed(1)} Yrs` : 'N/A'}
+                {paybackLabel(Pessimistic.metrics.paybackPeriodYears)}
               </span>
             </div>
           </div>
@@ -303,7 +318,20 @@ export default function ScenariosPage() {
           <Info className="h-4 w-4 text-primary" /> Strategic Analysis of Decision Thresholds
         </h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          The baseline investment in NovaRetail GCC’s micro-fulfilment centre yields a robust <strong>AED {formatAED(Base.metrics.npv)}</strong> net present value. In the <strong>Optimistic Scenario</strong>, lower hardware integration costs (-5%) combined with stronger customer delivery SLA uptake (+10% benefits) elevate NPV to <strong>{formatAED(Optimistic.metrics.npv)}</strong>. Conversely, the <strong>Pessimistic Scenario</strong> reflects a severe operational stress test (+15% capex cost overrun, -25% benefit shortfall, 14.5% interest rate environment), which shifts the recommendation from full approval to phased implementation or delay.
+          The baseline investment in NovaRetail GCC’s micro-fulfilment centre yields a{' '}
+          <strong>{formatAED(Base.metrics.npv)}</strong> net present value at a{' '}
+          {rate(Base.definition.discountRate)} hurdle rate, with a decision status of{' '}
+          <strong>{Base.metrics.decisionStatus}</strong>. In the <strong>Optimistic Scenario</strong>, lower hardware
+          and integration costs ({deltaPct(Optimistic.definition.investmentMultiplier)} capex) combined with stronger
+          delivery-SLA uptake ({deltaPct(Optimistic.definition.operatingBenefitMultiplier)} benefits) at a{' '}
+          {rate(Optimistic.definition.discountRate)} hurdle rate move NPV to{' '}
+          <strong>{formatAED(Optimistic.metrics.npv)}</strong> ({Optimistic.metrics.decisionStatus}). Conversely, the{' '}
+          <strong>Pessimistic Scenario</strong> stress test ({deltaPct(Pessimistic.definition.investmentMultiplier)}{' '}
+          capex overrun, {deltaPct(Pessimistic.definition.operatingBenefitMultiplier)} benefit shortfall,{' '}
+          {deltaPct(Pessimistic.definition.operatingCostMultiplier)} operating cost, and a{' '}
+          {rate(Pessimistic.definition.discountRate)} interest-rate environment) takes NPV to{' '}
+          <strong>{formatAED(Pessimistic.metrics.npv)}</strong>, shifting the recommendation to{' '}
+          <strong>{Pessimistic.metrics.decisionStatus}</strong>.
         </p>
       </div>
     </div>

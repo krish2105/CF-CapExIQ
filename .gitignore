@@ -28,3 +28,11 @@ pnpm-debug.log*
 *.pem
 .vscode/
 .idea/
+
+# Build & test artifacts
+tsconfig.tsbuildinfo
+/playwright-report/
+/test-results/
+
+# Local purge staging (delete manually)
+_to_delete/

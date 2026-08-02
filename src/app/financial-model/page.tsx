@@ -3,13 +3,25 @@
 import React from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { formatAED, formatPercent } from '@/lib/utils/formatting';
-import { Table, Download, Info, ShieldCheck, CheckCircle } from 'lucide-react';
+import {
+  FormulaInspector,
+  FORMULA_METRIC_KEYS,
+  buildFormulaRegistry,
+} from '@/components/finance/FormulaInspector';
+import { Table, Download, BookOpen } from 'lucide-react';
 
 export default function FinancialModelPage() {
-  const { getActiveScenarioResult, selectedScenario } = useFinancialStore();
+  const { getActiveScenarioResult, getActiveAssumptions, selectedScenario } = useFinancialStore();
   const scenarioResult = getActiveScenarioResult();
+  const assumptions = getActiveAssumptions();
   const yearlyCashFlows = scenarioResult.yearlyCashFlows;
   const metrics = scenarioResult.metrics;
+
+  // Derived from the schedule itself, so every label below tracks the live inputs.
+  const projectLifeYears = Math.max(0, yearlyCashFlows.length - 1);
+  const discountRateLabel = formatPercent(assumptions.discountRate, 1);
+  const taxRateLabel = formatPercent(assumptions.corporateTaxRate, 1);
+  const formulaRegistry = buildFormulaRegistry(metrics, assumptions);
 
   const handleExportCSV = () => {
     const headers = [
@@ -21,13 +33,13 @@ export default function FinancialModelPage() {
       'EBITDA (AED)',
       'Depreciation (AED)',
       'EBIT (AED)',
-      'Tax 9% (AED)',
+      `Tax ${taxRateLabel} (AED)`,
       'NOPAT (AED)',
       'Operating Cash Flow (AED)',
       'Salvage Value (AED)',
       'Working Capital Rec (AED)',
       'Free Cash Flow (AED)',
-      'Discount Factor',
+      `Discount Factor (${discountRateLabel})`,
       'Present Value (AED)',
       'Cumulative FCF (AED)',
       'Cumulative Discounted FCF (AED)',
@@ -92,20 +104,27 @@ export default function FinancialModelPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Net Present Value (NPV)</span>
-          <p className="text-lg font-bold text-success mt-0.5">{formatAED(metrics.npv)}</p>
+          <p className={`text-lg font-bold mt-0.5 ${metrics.npv >= 0 ? 'text-success' : 'text-destructive'}`}>
+            {formatAED(metrics.npv)}
+          </p>
+          <FormulaInspector metricKey="NPV" metrics={metrics} assumptions={assumptions} />
         </div>
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Internal Rate of Return (IRR)</span>
           <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-0.5">{formatPercent(metrics.irr)}</p>
+          <FormulaInspector metricKey="IRR" metrics={metrics} assumptions={assumptions} />
         </div>
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Modified IRR (MIRR)</span>
           <p className="text-lg font-bold text-primary mt-0.5">{formatPercent(metrics.mirr)}</p>
+          <FormulaInspector metricKey="MIRR" metrics={metrics} assumptions={assumptions} />
         </div>
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Discounted Payback</span>
           <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5">
-            {metrics.discountedPaybackPeriodYears ? `${metrics.discountedPaybackPeriodYears.toFixed(1)} Yrs` : '> 6 Yrs'}
+            {metrics.discountedPaybackPeriodYears !== null
+              ? `${metrics.discountedPaybackPeriodYears.toFixed(1)} Yrs`
+              : `> ${projectLifeYears} Yrs`}
           </p>
         </div>
       </div>
@@ -114,7 +133,7 @@ export default function FinancialModelPage() {
       <div className="glass-panel rounded-2xl border border-border overflow-hidden">
         <div className="p-4 border-b border-border flex items-center justify-between">
           <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
-            6-Year Cash Flow Projections (AED)
+            {projectLifeYears}-Year Cash Flow Projections (AED) — Years 0 – {projectLifeYears}
           </h3>
           <span className="text-[11px] text-muted-foreground font-mono">Full Precision Math</span>
         </div>
@@ -200,7 +219,7 @@ export default function FinancialModelPage() {
 
               {/* Tax & NOPAT */}
               <tr className="hover:bg-muted/40 text-amber-600 dark:text-amber-400 font-semibold">
-                <td className="py-2.5 px-4 sticky left-0 bg-card">Less: Corporate Tax (9%)</td>
+                <td className="py-2.5 px-4 sticky left-0 bg-card">Less: Corporate Tax ({taxRateLabel})</td>
                 {yearlyCashFlows.map((y) => (
                   <td key={y.year} className="py-2.5 px-4 text-right">
                     {y.year === 0 ? '-' : `(${formatAED(y.tax)})`}
@@ -236,7 +255,7 @@ export default function FinancialModelPage() {
                 ))}
               </tr>
               <tr className="hover:bg-muted/40 text-success font-bold">
-                <td className="py-2.5 px-4 sticky left-0 bg-card">Terminal Cash Flow (Salvage + NWC Rec)</td>
+                <td className="py-2.5 px-4 sticky left-0 bg-card text-foreground">Terminal Cash Flow (Salvage + NWC Rec)</td>
                 {yearlyCashFlows.map((y) => (
                   <td key={y.year} className="py-2.5 px-4 text-right">
                     {y.terminalCashFlow > 0 ? formatAED(y.terminalCashFlow) : '-'}
@@ -245,10 +264,15 @@ export default function FinancialModelPage() {
               </tr>
 
               {/* Free Cash Flow */}
-              <tr className="bg-muted font-bold text-success text-sm border-t-2 border-border">
-                <td className="py-3 px-4 sticky left-0 bg-muted">Free Cash Flow (FCF)</td>
+              <tr className="bg-muted font-bold text-sm border-t-2 border-border">
+                <td className="py-3 px-4 sticky left-0 bg-muted text-foreground">Free Cash Flow (FCF)</td>
                 {yearlyCashFlows.map((y) => (
-                  <td key={y.year} className="py-3 px-4 text-right font-extrabold">
+                  <td
+                    key={y.year}
+                    className={`py-3 px-4 text-right font-extrabold ${
+                      y.freeCashFlow >= 0 ? 'text-success' : 'text-destructive'
+                    }`}
+                  >
                     {formatAED(y.freeCashFlow)}
                   </td>
                 ))}
@@ -256,7 +280,7 @@ export default function FinancialModelPage() {
 
               {/* Discount Factor & PV */}
               <tr className="text-muted-foreground text-[11px]">
-                <td className="py-2.5 px-4 sticky left-0 bg-card">Discount Factor (11.5%)</td>
+                <td className="py-2.5 px-4 sticky left-0 bg-card">Discount Factor ({discountRateLabel})</td>
                 {yearlyCashFlows.map((y) => (
                   <td key={y.year} className="py-2.5 px-4 text-right">
                     {y.discountFactor.toFixed(4)}
@@ -301,6 +325,39 @@ export default function FinancialModelPage() {
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Formula Library - every headline metric, its equation, its live inputs and its result */}
+      <div className="glass-panel p-5 rounded-2xl border border-border space-y-3">
+        <div className="flex items-center justify-between border-b border-border pb-2">
+          <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-primary" /> Formula Library — Equations, Inputs & Interpretation
+          </h3>
+          <span className="text-[11px] text-muted-foreground font-mono">
+            Computed live from the active scenario ({selectedScenario})
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {FORMULA_METRIC_KEYS.map((key) => {
+            const detail = formulaRegistry[key];
+            return (
+              <div key={key} className="p-3 rounded-xl border border-border bg-muted/30 space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-foreground">{detail.metricName}</span>
+                  <FormulaInspector
+                    metricKey={key}
+                    metrics={metrics}
+                    assumptions={assumptions}
+                    label="Explain"
+                  />
+                </div>
+                <p className="text-[11px] font-mono text-primary break-words">{detail.formulaEquation}</p>
+                <p className="text-[11px] font-mono font-bold text-foreground">= {detail.calculatedResult}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

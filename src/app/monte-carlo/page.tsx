@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { runMonteCarloSimulation, MonteCarloSummary } from '@/lib/finance/monteCarlo';
+import { DECISION_THRESHOLDS } from '@/lib/finance/metrics';
 import { formatAED, formatPercent } from '@/lib/utils/formatting';
 import { useThemeChartColors } from '@/lib/utils/chartColors';
 import {
@@ -36,6 +37,16 @@ export default function MonteCarloPage() {
     setSeed(Math.floor(Math.random() * 900000) + 100000);
   };
 
+  // The histogram X axis is categorical, so a ReferenceLine has to reference an actual bin label.
+  // Find the bin that straddles NPV = 0; if the whole distribution sits on one side of zero there
+  // is no break-even bin and the line is simply not drawn.
+  const breakEvenBinLabel = simulation.histogramData.find(
+    (bin) => bin.binMin <= 0 && bin.binMax >= 0
+  )?.binLabel;
+
+  const waccLabel = formatPercent(assumptions.discountRate, 2);
+  const paybackTargetYears = DECISION_THRESHOLDS.maxPaybackYearsForApproval;
+
   return (
     <div className="space-y-6">
       {/* Title Header */}
@@ -50,6 +61,18 @@ export default function MonteCarloPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+            Iterations
+            <select
+              value={iterations}
+              onChange={(e) => setIterations(parseInt(e.target.value, 10))}
+              className="bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-foreground font-mono font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value={1000}>1,000</option>
+              <option value={5000}>5,000</option>
+              <option value={10000}>10,000</option>
+            </select>
+          </label>
           <button
             onClick={handleReseed}
             className="px-3 py-1.5 rounded-lg bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center gap-1.5 transition-colors"
@@ -71,7 +94,7 @@ export default function MonteCarloPage() {
           </span>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Out of {simulation.iterations.toLocaleString()} simulated market realizations, <strong>{(100 - simulation.probNegativeNpvPct).toFixed(1)}%</strong> generated positive NPV ($NPV &gt; 0$). The probability of negative NPV (capital loss exposure) is estimated at <strong>{simulation.probNegativeNpvPct.toFixed(1)}%</strong>.
+          Out of {simulation.iterations.toLocaleString()} simulated market realizations, <strong>{(100 - simulation.probNegativeNpvPct).toFixed(1)}%</strong> generated a positive NPV (NPV &gt; 0). The probability of a negative NPV (capital loss exposure) is estimated at <strong>{simulation.probNegativeNpvPct.toFixed(1)}%</strong>. Across the same runs, <strong>{simulation.probIrrAboveWaccPct.toFixed(1)}%</strong> cleared the {waccLabel} WACC hurdle on IRR and <strong>{simulation.probPaybackUnderTargetPct.toFixed(1)}%</strong> paid back within the {paybackTargetYears.toFixed(1)}-year management liquidity window.
         </p>
       </div>
 
@@ -79,7 +102,13 @@ export default function MonteCarloPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel p-4 rounded-2xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Expected Mean NPV</span>
-          <p className="text-lg font-bold text-success mt-1">{formatAED(simulation.meanNpv)}</p>
+          <p
+            className={`text-lg font-bold mt-1 ${
+              simulation.meanNpv >= 0 ? 'text-success' : 'text-destructive'
+            }`}
+          >
+            {formatAED(simulation.meanNpv)}
+          </p>
           <span className="text-[10px] text-muted-foreground font-mono">StdDev: {formatAED(simulation.stdDevNpv)}</span>
         </div>
 
@@ -102,6 +131,39 @@ export default function MonteCarloPage() {
         </div>
       </div>
 
+      {/* Threshold Probabilities */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass-panel p-4 rounded-2xl border border-border">
+          <span className="text-[11px] text-muted-foreground font-medium">P(NPV &gt; 0)</span>
+          <p className="text-lg font-bold text-success mt-1">
+            {(100 - simulation.probNegativeNpvPct).toFixed(1)}%
+          </p>
+          <span className="text-[10px] text-muted-foreground font-mono">
+            Value-creating outcomes across {simulation.iterations.toLocaleString()} runs
+          </span>
+        </div>
+
+        <div className="glass-panel p-4 rounded-2xl border border-border">
+          <span className="text-[11px] text-muted-foreground font-medium">P(IRR ≥ WACC)</span>
+          <p className="text-lg font-bold text-primary mt-1">{simulation.probIrrAboveWaccPct.toFixed(1)}%</p>
+          <span className="text-[10px] text-muted-foreground font-mono">
+            IRR clears the sampled hurdle rate (base {waccLabel})
+          </span>
+        </div>
+
+        <div className="glass-panel p-4 rounded-2xl border border-border">
+          <span className="text-[11px] text-muted-foreground font-medium">
+            P(Payback ≤ {paybackTargetYears.toFixed(1)} yrs)
+          </span>
+          <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">
+            {simulation.probPaybackUnderTargetPct.toFixed(1)}%
+          </p>
+          <span className="text-[10px] text-muted-foreground font-mono">
+            Within the management liquidity window
+          </span>
+        </div>
+      </div>
+
       {/* Visual Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* NPV Frequency Histogram */}
@@ -120,7 +182,14 @@ export default function MonteCarloPage() {
                   contentStyle={{ backgroundColor: colors.tooltipBg, borderColor: colors.tooltipBorder, color: colors.tooltipText, borderRadius: '12px' }}
                   formatter={(val: number) => [`${val.toFixed(1)}%`, 'Frequency']}
                 />
-                <ReferenceLine x="0M" stroke={colors.danger} strokeDasharray="4 4" label={{ value: 'Break-even', fill: colors.danger, fontSize: 10 }} />
+                {breakEvenBinLabel !== undefined && (
+                  <ReferenceLine
+                    x={breakEvenBinLabel}
+                    stroke={colors.danger}
+                    strokeDasharray="4 4"
+                    label={{ value: 'Break-even (NPV = 0)', fill: colors.danger, fontSize: 10 }}
+                  />
+                )}
                 <Bar dataKey="frequencyPct" fill={colors.primary} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

@@ -41,14 +41,14 @@ export default function DataSourcesPage() {
       { file_name: '01_dataco_supply_chain_sample.csv', variable_name: 'Delivery Status', definition: 'Order shipping status indicator', unit_or_type: 'Categorical', source_reference: 'DataCo Sample' },
       { file_name: '02_dewa_tariff_schedule.csv', variable_name: 'Tariff Slab (AED/kWh)', definition: 'Commercial electricity rate slab', unit_or_type: 'Currency (AED)', source_reference: 'DEWA Official Tariff' },
       { file_name: '03_uae_corporate_tax_guidelines.csv', variable_name: 'Tax Rate (%)', definition: 'Federal corporate tax rate', unit_or_type: 'Percentage (9.0%)', source_reference: 'Ministry of Finance Law 47' },
-      { file_name: '04_eibor_historical_rates.csv', variable_name: 'EIBOR 3M Rate', definition: 'Emirates Interbank Offered Rate benchmark', unit_or_type: 'Percentage (4.85%)', source_reference: 'Central Bank of UAE' },
+      { file_name: '04_eibor_historical_rates.csv', variable_name: 'EIBOR 3M Rate', definition: 'Emirates Interbank Offered Rate benchmark', unit_or_type: 'Percentage (3.79%)', source_reference: 'Central Bank of UAE' },
       { file_name: '05_micro_fulfilment_capex_quotes.csv', variable_name: 'Equipment Capex', definition: 'Automated warehouse robotics quotation', unit_or_type: 'Currency (AED)', source_reference: 'Vendor Quotation' },
     ]);
 
     setSources([
       { source_id: 'SRC-01', organisation: 'Dubai Electricity & Water Authority (DEWA)', dataset_title: 'Commercial Slab Tariffs 2024', purpose: 'Power utility cost modeling', official_url: 'https://www.dewa.gov.ae', licence_or_status: 'Official Public Data', usage_note: 'Applied to facility annual kWh consumption' },
       { source_id: 'SRC-02', organisation: 'UAE Ministry of Finance', dataset_title: 'Federal Corporate Tax Decree-Law No. 47', purpose: '9.0% Tax liability calculation', official_url: 'https://mof.gov.ae', licence_or_status: 'Official Legislation', usage_note: 'Applies to net taxable profit > AED 375,000' },
-      { source_id: 'SRC-03', organisation: 'Central Bank of the UAE (CBUAE)', dataset_title: '3-Month EIBOR Benchmark Rates', purpose: 'Cost of debt benchmark', official_url: 'https://www.centralbank.ae', licence_or_status: 'Official Public Data', usage_note: 'Base debt interest rate = EIBOR + 1.65% spread' },
+      { source_id: 'SRC-03', organisation: 'Central Bank of the UAE (CBUAE)', dataset_title: '3-Month EIBOR Benchmark Rates', purpose: 'Cost of debt benchmark', official_url: 'https://www.centralbank.ae', licence_or_status: 'Official Public Data', usage_note: 'Base debt interest rate = EIBOR 3M (3.79%) + 2.50% credit spread' },
     ]);
 
     setFormulas([

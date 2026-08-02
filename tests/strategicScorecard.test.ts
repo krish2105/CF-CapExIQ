@@ -3,7 +3,7 @@ import { DEFAULT_STRATEGIC_DIMENSIONS, calculateStrategicScorecard } from '../sr
 
 describe('Strategic-Fit Scorecard Engine', () => {
   it('calculates weighted strategic score correctly', () => {
-    const res = calculateStrategicScorecard(DEFAULT_STRATEGIC_DIMENSIONS, 9184210);
+    const res = calculateStrategicScorecard(DEFAULT_STRATEGIC_DIMENSIONS, 12083628);
 
     expect(res.weightedScore).toBeGreaterThanOrEqual(3.5);
     expect(res.strategicFitCategory).toBe('Strong');

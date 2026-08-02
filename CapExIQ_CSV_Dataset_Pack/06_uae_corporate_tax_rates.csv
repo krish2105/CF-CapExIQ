@@ -1,3 +1,0 @@
-taxable_income_from_aed,taxable_income_to_aed,corporate_tax_rate,description,source,source_url,model_note
-0.0,375000.0,0.0,"Taxable income up to and including AED 375,000",UAE Ministry of Finance,https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/,CapExIQ uses 9% as a simplified marginal project tax assumption; actual taxable income requires tax review.
-375000.01,,0.09,"Taxable income above AED 375,000",UAE Ministry of Finance,https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/,CapExIQ uses 9% as a simplified marginal project tax assumption; actual taxable income requires tax review.

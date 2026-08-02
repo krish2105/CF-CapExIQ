@@ -31,6 +31,39 @@ export interface AssumptionAuditEntry {
   userLabel: string;
 }
 
+/**
+ * Optional per-year shape of the operating benefit and cost lines.
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * The engine natively models each line as `year-1 value x (1 + growth)^(year-1)`, i.e. a pure
+ * geometric series. That is exactly right for a labour-savings or maintenance-cost line, but it
+ * cannot express a ramp curve (a new branch or a commissioning production line), a
+ * subscription base net of churn, or a product life-cycle that peaks and then declines.
+ *
+ * Rather than fork the cash-flow engine per project type, an archetype builder may supply an
+ * INDEX for each line. The index is a multiplier applied to the corresponding year-1 field:
+ *
+ *     value(year) = year1Value * index[year - 1]
+ *
+ * so `index[0]` is normally 1.0 and later elements carry the shape. Expressing the profile as a
+ * relative index (rather than absolute AED per year) is deliberate: every existing scenario
+ * multiplier and sensitivity sweep operates on the year-1 fields, and those continue to scale the
+ * whole curve correctly without any change to `scenarios.ts` or `sensitivity.ts`.
+ *
+ * When an index is absent - or shorter than the project life - the engine falls back to the
+ * geometric growth formula for those years, so omitting this field reproduces the legacy
+ * behaviour exactly.
+ */
+export interface AnnualBenefitProfile {
+  /** Multipliers on `year1OperatingSavings`; element 0 = Year 1. */
+  operatingSavingsIndex?: number[];
+  /** Multipliers on `year1ContributionMargin`; element 0 = Year 1. */
+  contributionMarginIndex?: number[];
+  /** Multipliers on `year1AdditionalOpEx`; element 0 = Year 1. */
+  additionalOpExIndex?: number[];
+}
+
 export interface FinancialAssumptions {
   // CaPeX Items
   automationEquipment: number; // AED 18,000,000
@@ -69,6 +102,13 @@ export interface FinancialAssumptions {
   // Terminal
   salvageValue: number; // AED 2,000,000
   workingCapitalRecovery: number; // AED 2,000,000
+
+  /**
+   * Optional archetype-supplied per-year shape for the benefit/cost lines (see
+   * `AnnualBenefitProfile`). Undefined for the legacy NovaRetail MFC model and for any archetype
+   * whose profile is genuinely geometric, in which case the engine behaves exactly as before.
+   */
+  annualBenefitProfile?: AnnualBenefitProfile;
 }
 
 export interface YearlyCashFlow {
@@ -101,15 +141,15 @@ export interface FinancialMetrics {
   npv: number;
   irr: number | null; // Percentage decimal, null if no real root
   irrWarning?: string;
-  mirr: number;
+  mirr: number | null; // null when MIRR is undefined (no financed outflows / no terminal inflows)
   profitabilityIndex: number;
   roiPct: number; // Total Net Gain / Initial Investment * 100
   paybackPeriodYears: number | null;
   discountedPaybackPeriodYears: number | null;
-  breakEvenAnnualOperatingBenefit: number;
+  breakEvenAnnualOperatingBenefit: number | null; // null when no break-even exists in the search bracket
   breakEvenInitialInvestment: number;
   maxInvestmentCostOverrunPct: number;
-  maxOperatingBenefitShortfallPct: number;
+  maxOperatingBenefitShortfallPct: number | null; // null when base benefits are zero or no break-even exists
   totalProjectCashInflow: number;
   totalProjectNetCashFlow: number;
   averageAnnualCashFlow: number;
@@ -236,7 +276,15 @@ export interface PortfolioOptimizationResult {
   totalInvestmentCommitted: number;
   remainingCapital: number;
   totalPortfolioNpv: number;
-  weightedPortfolioIrr: number;
+  /**
+   * APPROXIMATION ONLY: the investment-weighted arithmetic mean of the selected projects' IRRs.
+   * This is NOT a portfolio IRR. IRR is a root of a polynomial and is not additive, so a
+   * capital-weighted average of IRRs has no financial meaning beyond a rough blended headline.
+   * A true portfolio IRR requires aggregating the selected projects' full cash-flow streams
+   * period by period and solving NPV = 0 on the combined stream; `PortfolioProject` does not
+   * carry cash flows, so that cannot be done from this data model.
+   */
+  investmentWeightedAverageIrrApprox: number;
   averageStrategicScore: number;
   selectedProjects: PortfolioProject[];
   deferredProjects: PortfolioProject[];

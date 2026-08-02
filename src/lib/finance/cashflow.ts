@@ -19,6 +19,7 @@ export function calculateCashFlowSchedule(assumptions: FinancialAssumptions): Ye
     corporateTaxRate,
     salvageValue,
     workingCapitalRecovery,
+    annualBenefitProfile,
   } = assumptions;
 
   const totalCapex = automationEquipment + installationIntegration + softwareCybersecurity + trainingLaunch;
@@ -38,7 +39,13 @@ export function calculateCashFlowSchedule(assumptions: FinancialAssumptions): Ye
   if (toggles.trainingLaunch) depreciableCapex += trainingLaunch;
 
   const projectLife = Math.max(1, Math.round(projectLifeYears));
-  const annualDepreciation = Math.max(0, (depreciableCapex - salvageValue) / projectLife);
+
+  // Salvage guard: the residual value used to reduce the depreciable basis can never exceed
+  // the depreciable basis itself. Without this clamp an over-stated salvage assumption makes
+  // (depreciableCapex - salvageValue) negative, which pushes EBIT above EBITDA, understates tax
+  // and silently inflates NPV. Depreciation floors at zero (fully-depreciated / non-depreciable basis).
+  const depreciationSalvageBasis = Math.min(Math.max(0, salvageValue), depreciableCapex);
+  const annualDepreciation = Math.max(0, (depreciableCapex - depreciationSalvageBasis) / projectLife);
 
   const schedule: YearlyCashFlow[] = [];
 
@@ -56,6 +63,11 @@ export function calculateCashFlowSchedule(assumptions: FinancialAssumptions): Ye
     tax: 0,
     nopat: 0,
     operatingCashFlow: 0,
+    // PRESENTATIONAL FIELD ONLY - do not add this to freeCashFlow.
+    // Year 0: the working-capital outflow is already inside `freeCashFlow` (year0Fcf) below.
+    // Operating years: 0 (this model assumes no incremental NWC build after commissioning).
+    // Terminal year: the recovery shown here is already carried in `terminalCashFlow`.
+    // Consumers must display either `changeWorkingCapital` or the terminal/year-0 flows, never both.
     changeWorkingCapital: -initialWorkingCapital,
     salvageValue: 0,
     workingCapitalRecovery: 0,
@@ -71,10 +83,26 @@ export function calculateCashFlowSchedule(assumptions: FinancialAssumptions): Ye
   let runningCumulativeDiscountedFcf = year0Fcf;
 
   for (let year = 1; year <= projectLife; year++) {
-    const savings = year1OperatingSavings * Math.pow(1 + annualSavingsGrowth, year - 1);
-    const margin = year1ContributionMargin * Math.pow(1 + annualMarginGrowth, year - 1);
+    // Optional per-year shape index (see `AnnualBenefitProfile`). When no index is supplied for a
+    // line - the legacy path, and the path taken by every geometric archetype - the expression
+    // below is byte-for-byte the original `year1Value * (1 + growth)^(year-1)` calculation.
+    const savingsIndex = annualBenefitProfile?.operatingSavingsIndex?.[year - 1];
+    const marginIndex = annualBenefitProfile?.contributionMarginIndex?.[year - 1];
+    const opExIndex = annualBenefitProfile?.additionalOpExIndex?.[year - 1];
+
+    const savings =
+      savingsIndex === undefined
+        ? year1OperatingSavings * Math.pow(1 + annualSavingsGrowth, year - 1)
+        : year1OperatingSavings * savingsIndex;
+    const margin =
+      marginIndex === undefined
+        ? year1ContributionMargin * Math.pow(1 + annualMarginGrowth, year - 1)
+        : year1ContributionMargin * marginIndex;
     const benefits = savings + margin;
-    const opex = year1AdditionalOpEx * Math.pow(1 + annualOpExGrowth, year - 1);
+    const opex =
+      opExIndex === undefined
+        ? year1AdditionalOpEx * Math.pow(1 + annualOpExGrowth, year - 1)
+        : year1AdditionalOpEx * opExIndex;
     const ebitda = benefits - opex;
     const ebit = ebitda - annualDepreciation;
     const tax = Math.max(0, ebit * corporateTaxRate);
@@ -105,7 +133,10 @@ export function calculateCashFlowSchedule(assumptions: FinancialAssumptions): Ye
       tax,
       nopat,
       operatingCashFlow: ocf,
-      changeWorkingCapital: isTerminalYear ? workingCapitalRecovery : 0,
+      // PRESENTATIONAL FIELD ONLY (see Year 0 note above): zero during operating years, and in the
+      // terminal year it restates the working-capital recovery that is ALREADY included in
+      // `terminalCashFlow` / `freeCashFlow`. Never sum `changeWorkingCapital` and `terminalCashFlow`.
+      changeWorkingCapital: isTerminalYear ? termNwcRec : 0,
       salvageValue: termSalvage,
       workingCapitalRecovery: termNwcRec,
       terminalCashFlow,

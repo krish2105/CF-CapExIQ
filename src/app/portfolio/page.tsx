@@ -54,9 +54,9 @@ export default function PortfolioPage() {
         </div>
 
         <div className="glass-panel p-4 rounded-2xl border border-border">
-          <span className="text-[11px] text-muted-foreground font-medium">Weighted Portfolio IRR</span>
-          <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">{formatPercent(result.weightedPortfolioIrr)}</p>
-          <span className="text-[10px] text-muted-foreground font-mono">Capital-Weighted Return</span>
+          <span className="text-[11px] text-muted-foreground font-medium">Blended IRR (Approx.)</span>
+          <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">{formatPercent(result.investmentWeightedAverageIrrApprox)}</p>
+          <span className="text-[10px] text-muted-foreground font-mono" title="Investment-weighted average of individual project IRRs. Not a true portfolio IRR - that requires solving NPV = 0 on the aggregated cash-flow streams.">Capital-Weighted Avg of Project IRRs</span>
         </div>
 
         <div className="glass-panel p-4 rounded-2xl border border-border">

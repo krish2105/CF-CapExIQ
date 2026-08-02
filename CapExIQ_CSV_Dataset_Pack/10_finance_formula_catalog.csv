@@ -1,6 +1,0 @@
-metric,formula,interpretation
-Free Cash Flow,FCF_t = EBIT_t*(1-T) + Depreciation_t - DeltaNWC_t - CapEx_t,Annual project cash flow
-NPV,NPV = -I0 + sum(FCF_t/(1+r)^t),Absolute value created
-IRR,0 = -I0 + sum(FCF_t/(1+IRR)^t),Project return rate
-Profitability Index,PI = PV of future inflows / Initial investment,Value per unit of capital
-Payback Period,Time until cumulative undiscounted cash flow >= 0,Liquidity/recovery indicator

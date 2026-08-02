@@ -10,11 +10,16 @@ export default function ExternalDataPage() {
   const { assumptions, updateAssumptions } = useFinancialStore();
   const [activeTab, setActiveTab] = useState<'tax' | 'eibor' | 'wacc'>('wacc');
 
-  // WACC Form States
+  // WACC form defaults - this is the published derivation of NovaRetail GCC's 11.50% hurdle rate.
+  // r_e = 4.20% + 1.15 x 6.00% + 0.75% + 3.50%              = 15.35%
+  // r_d = 3.79% (3M EIBOR) + 2.50% spread = 6.29% pre-tax   -> 5.72% after 9% UAE corporate tax
+  // WACC = 0.60 x 15.35% + 0.40 x 5.7239%                   = 11.50%
   const [riskFreeRate, setRiskFreeRate] = useState<number>(0.042);
   const [beta, setBeta] = useState<number>(1.15);
   const [equityRiskPremium, setEquityRiskPremium] = useState<number>(0.06);
-  const [eiborBenchmark, setEiborBenchmark] = useState<number>(0.0485);
+  const [countryRiskPremium, setCountryRiskPremium] = useState<number>(0.0075);
+  const [projectExecutionPremium, setProjectExecutionPremium] = useState<number>(0.035);
+  const [eiborBenchmark, setEiborBenchmark] = useState<number>(0.0379);
   const [creditSpread, setCreditSpread] = useState<number>(0.025);
   const [debtWeight, setDebtWeight] = useState<number>(0.40);
   const [appliedNotice, setAppliedNotice] = useState(false);
@@ -23,6 +28,8 @@ export default function ExternalDataPage() {
     riskFreeRate,
     beta,
     equityRiskPremium,
+    countryRiskPremium,
+    projectExecutionPremium,
     eiborBenchmark,
     creditSpread,
     taxRate: assumptions.corporateTaxRate,
@@ -104,7 +111,7 @@ export default function ExternalDataPage() {
               {/* Cost of Equity (CAPM) */}
               <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-3">
                 <span className="text-xs font-bold text-foreground flex items-center gap-1">
-                  1. Cost of Equity ($r_e = R_f + \beta \cdot ERP$)
+                  1. Cost of Equity ($r_e = R_f + \beta \cdot ERP + CRP + EXEC$)
                 </span>
                 <div className="space-y-2 text-xs">
                   <div>
@@ -137,6 +144,32 @@ export default function ExternalDataPage() {
                       className="w-full bg-card border border-border rounded px-2.5 py-1 text-xs text-foreground mt-0.5"
                     />
                   </div>
+                  <div>
+                    <label className="text-[11px] text-muted-foreground">UAE Country Risk Premium ($CRP$)</label>
+                    <input
+                      type="number"
+                      step="0.0025"
+                      value={countryRiskPremium}
+                      onChange={(e) => setCountryRiskPremium(parseFloat(e.target.value) || 0)}
+                      className="w-full bg-card border border-border rounded px-2.5 py-1 text-xs text-foreground mt-0.5"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                      Sovereign / jurisdictional risk not captured by a mature-market ERP.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-muted-foreground">Project Execution Premium ($EXEC$)</label>
+                    <input
+                      type="number"
+                      step="0.005"
+                      value={projectExecutionPremium}
+                      onChange={(e) => setProjectExecutionPremium(parseFloat(e.target.value) || 0)}
+                      className="w-full bg-card border border-border rounded px-2.5 py-1 text-xs text-foreground mt-0.5"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                      Greenfield, first-of-a-kind robotics delivery, ramp-up and obsolescence risk.
+                    </p>
+                  </div>
                   <div className="pt-1 text-xs font-mono font-bold text-primary">
                     Cost of Equity: {formatPercent(waccResult.costOfEquity)}
                   </div>
@@ -150,7 +183,7 @@ export default function ExternalDataPage() {
                 </span>
                 <div className="space-y-2 text-xs">
                   <div>
-                    <label className="text-[11px] text-muted-foreground">Reference EIBOR</label>
+                    <label className="text-[11px] text-muted-foreground">Reference EIBOR (3-Month)</label>
                     <input
                       type="number"
                       step="0.001"
@@ -179,7 +212,10 @@ export default function ExternalDataPage() {
                       className="w-full bg-card border border-border rounded px-2.5 py-1 text-xs text-foreground mt-0.5"
                     />
                   </div>
-                  <div className="pt-1 text-xs font-mono font-bold text-emerald-400">
+                  <div className="pt-1 text-xs font-mono text-muted-foreground">
+                    Pre-Tax Cost of Debt: {formatPercent(waccResult.preTaxCostOfDebt)}
+                  </div>
+                  <div className="text-xs font-mono font-bold text-emerald-400">
                     After-Tax Cost of Debt: {formatPercent(waccResult.afterTaxCostOfDebt)}
                   </div>
                 </div>

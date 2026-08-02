@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   Home,
   LayoutDashboard,
+  LayoutGrid,
   FileSpreadsheet,
   Table,
   GitCompare,
@@ -27,6 +28,7 @@ import {
   Bot,
   Sliders,
   Monitor,
+  Sparkles,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -34,6 +36,7 @@ const NAV_GROUPS = [
     title: 'Core Decision Workflow',
     items: [
       { href: '/', label: 'Overview', icon: Home },
+      { href: '/archetypes', label: 'Archetype Library', icon: LayoutGrid },
       { href: '/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
       { href: '/assumptions', label: 'Assumptions Register', icon: FileSpreadsheet },
       { href: '/financial-model', label: 'Financial Model Schedule', icon: Table },
@@ -80,6 +83,7 @@ const NAV_GROUPS = [
       { href: '/external-data', label: 'UAE Tax & WACC', icon: Landmark },
       { href: '/csv-management', label: 'CSV Import & Audit', icon: Download },
       { href: '/ai-assistant', label: 'AI Finance Assistant', icon: Bot },
+      { href: '/ai-studio', label: 'AI Studio', icon: Sparkles },
       { href: '/presentation', label: 'Boardroom Presentation', icon: Monitor },
       { href: '/settings', label: 'Settings', icon: Sliders },
     ],

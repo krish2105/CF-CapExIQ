@@ -142,7 +142,12 @@ export function optimizeCapitalPortfolio(
   const totalInvestmentCommitted = selected.reduce((sum, p) => sum + p.initialInvestment, 0);
   const totalPortfolioNpv = selected.reduce((sum, p) => sum + p.npv, 0);
 
-  const weightedIrr = totalInvestmentCommitted > 0
+  // APPROXIMATION ONLY - investment-weighted arithmetic mean of individual project IRRs.
+  // IRRs are roots of NPV polynomials and are not additive, so this is a presentational headline,
+  // not a true portfolio IRR. A true portfolio IRR requires summing the selected projects'
+  // cash-flow streams period by period and solving NPV = 0 on the aggregated stream; PortfolioProject
+  // stores only summary metrics (no cash flows), so that is not derivable here.
+  const investmentWeightedAverageIrrApprox = totalInvestmentCommitted > 0
     ? selected.reduce((sum, p) => sum + p.irr * p.initialInvestment, 0) / totalInvestmentCommitted
     : 0;
 
@@ -155,7 +160,7 @@ export function optimizeCapitalPortfolio(
     totalInvestmentCommitted,
     remainingCapital: budgetLimit - totalInvestmentCommitted,
     totalPortfolioNpv,
-    weightedPortfolioIrr: weightedIrr,
+    investmentWeightedAverageIrrApprox,
     averageStrategicScore,
     selectedProjects: selected,
     deferredProjects: deferred,

@@ -1,7 +1,0 @@
-customer_type,monthly_kwh_from,monthly_kwh_to,base_tariff_aed_per_kwh,fuel_surcharge_aed_per_kwh,vat_rate,effective_month,unit,source,source_url
-Residential/Commercial,0,2000.0,0.23,0.06,0.05,2026-07,AED/kWh,Dubai Electricity & Water Authority (DEWA) slab tariff page,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff
-Residential/Commercial,2001,4000.0,0.28,0.06,0.05,2026-07,AED/kWh,Dubai Electricity & Water Authority (DEWA) slab tariff page,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff
-Residential/Commercial,4001,6000.0,0.32,0.06,0.05,2026-07,AED/kWh,Dubai Electricity & Water Authority (DEWA) slab tariff page,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff
-Residential/Commercial,6001,,0.38,0.06,0.05,2026-07,AED/kWh,Dubai Electricity & Water Authority (DEWA) slab tariff page,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff
-Industrial,0,10000.0,0.23,0.06,0.05,2026-07,AED/kWh,Dubai Electricity & Water Authority (DEWA) slab tariff page,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff
-Industrial,10001,,0.38,0.06,0.05,2026-07,AED/kWh,Dubai Electricity & Water Authority (DEWA) slab tariff page,https://www.dewa.gov.ae/en/consumer/billing/slab-tariff
