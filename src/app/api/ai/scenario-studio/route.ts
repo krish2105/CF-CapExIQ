@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { guardInput } from '@/lib/guardrails/aiGuardrails';
 
 export interface GeneratedScenarioStudio {
   scenarioName: string;
@@ -110,14 +111,29 @@ export async function POST(req: Request) {
   const auth = await requirePermission('scenario.author');
   if (!auth.ok) return auth.response;
 
-  try {
-    const body = await req.json().catch(() => ({}));
-    const { userPrompt } = (body ?? {}) as { userPrompt?: unknown };
+  const limited = rateLimited('scenario-studio', auth.session);
+  if (limited) return limited;
 
-    const promptText =
-      typeof userPrompt === 'string' && userPrompt.trim()
-        ? userPrompt.trim().slice(0, MAX_PROMPT_CHARS)
-        : 'Simulate GCC e-commerce logistics expansion boom';
+  const rawBody = await req.json().catch(() => ({}));
+  const { userPrompt } = (rawBody ?? {}) as { userPrompt?: unknown };
+
+  // Truncating at MAX_PROMPT_CHARS bounded the cost but not the content: the
+  // first 500 characters of an injection are still an injection.
+  const guarded = guardInput(
+    typeof userPrompt === 'string' && userPrompt.trim()
+      ? userPrompt.trim().slice(0, MAX_PROMPT_CHARS)
+      : 'Simulate GCC e-commerce logistics expansion boom'
+  );
+  if (!guarded.ok) {
+    return NextResponse.json(
+      { error: 'guardrail', message: guarded.message, notices: guarded.notices },
+      { status: 400, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
+  const promptText = guarded.text;
+
+  try {
 
     const fallbackScenario: GeneratedScenarioStudio = {
       ...DEFAULT_FALLBACK_SCENARIO,

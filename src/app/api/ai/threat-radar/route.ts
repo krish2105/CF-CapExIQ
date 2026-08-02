@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
 export interface ThreatVector {
   dimension: string;
@@ -66,6 +67,9 @@ export async function POST(req: Request) {
   const auth = await requirePermission('risk.view');
   if (!auth.ok) return auth.response;
 
+  const limited = rateLimited('threat-radar', auth.session);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { assumptions, metrics } = body;
@@ -98,7 +102,12 @@ Return ONLY a JSON object matching this schema:
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Assumptions: ${JSON.stringify(assumptions)}\nMetrics: ${JSON.stringify(metrics)}` },
+        {
+          role: 'user',
+          content:
+            `Assumptions: ${safeContextJson(assumptions)}\n` +
+            `Metrics: ${safeContextJson(metrics)}`,
+        },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,

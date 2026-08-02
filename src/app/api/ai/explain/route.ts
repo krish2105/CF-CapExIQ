@@ -1,13 +1,8 @@
 import OpenAI from 'openai';
 import { retrieve, buildContextBlock, toCitations, knowledgeBaseStats } from '@/lib/rag/retrieve';
 import type { Citation } from '@/lib/rag/types';
-import {
-  guardInput,
-  sanitizeContext,
-  checkRateLimit,
-  clientKey,
-} from '@/lib/guardrails/aiGuardrails';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { guardInput, sanitizeContext } from '@/lib/guardrails/aiGuardrails';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 
 /**
  * Advisory assistant — retrieval-augmented and streamed.
@@ -100,23 +95,11 @@ export async function POST(req: Request) {
         : 'Explain the project financial viability.';
 
   // ---- Guardrails, before anything is billed --------------------------
-  const limit = checkRateLimit(clientKey(req));
-  if (!limit.allowed) {
-    return new Response(
-      JSON.stringify({
-        error: 'rate_limited',
-        message: `Too many questions in a short window. Retry in ${limit.retryAfterSeconds}s.`,
-      }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Retry-After': String(limit.retryAfterSeconds),
-          'Cache-Control': 'no-store',
-        },
-      }
-    );
-  }
+  // Keyed by session rather than by IP: `clientKey()` buckets an entire
+  // office behind one NAT into a shared budget, and lets an authenticated
+  // abuser reset their own by changing address.
+  const limited = rateLimited('explain', auth.session);
+  if (limited) return limited;
 
   const guarded = guardInput(rawQuestion);
   if (!guarded.ok) {

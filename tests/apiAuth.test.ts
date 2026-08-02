@@ -103,6 +103,31 @@ describe('every AI route is authorised', () => {
     expect(source).toMatch(/if \(!auth\.ok\) return auth\.response;/);
   });
 
+  /**
+   * `live-macro` is exempt: it makes no provider call and serves a static
+   * constant, so it costs nothing to answer, and the header ticker polls it
+   * often enough that a 20/minute budget would break the UI rather than
+   * protect anything.
+   */
+  const BILLED = routes.filter((r) => r.name !== 'live-macro');
+
+  it.each(BILLED)('$name rate-limits per user', ({ file }) => {
+    const source = readFileSync(file, 'utf8');
+    expect(source).toMatch(/rateLimited\(/);
+    expect(source).toMatch(/if \(limited\) return limited;/);
+  });
+
+  it('leaves no route interpolating raw client JSON into a prompt', () => {
+    // `JSON.stringify(assumptions)` in a user turn is a prompt-injection
+    // channel: the object is arbitrary client-supplied JSON, so a string field
+    // anywhere inside it reached the model unchecked while the guarded
+    // question field carried nothing.
+    const offenders = routes.filter(({ file }) =>
+      /JSON\.stringify\((assumptions|metrics|currentAssumptions)\)/.test(readFileSync(file, 'utf8'))
+    );
+    expect(offenders.map((o) => o.name)).toEqual([]);
+  });
+
   it.each(routes)('$name checks before entering its try block', ({ file }) => {
     const source = readFileSync(file, 'utf8');
     const guard = source.indexOf('if (!auth.ok) return auth.response;');

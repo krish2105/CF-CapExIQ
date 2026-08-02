@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { SESSION_COOKIE, verifySession, type SessionPayload } from '@/lib/auth/session';
 import { can, type Permission } from '@/lib/auth/permissions';
+import { checkRateLimit } from '@/lib/guardrails/aiGuardrails';
 
 /**
  * Server-side authorisation for route handlers.
@@ -108,4 +109,43 @@ export async function requirePermission(permission: Permission | null): Promise<
 /** Authenticated, no specific capability required. */
 export function requireSession(): Promise<AuthResult> {
   return requirePermission(null);
+}
+
+/**
+ * Per-user, per-route rate limit. Returns a 429 to return, or null to proceed.
+ *
+ *   const limited = rateLimited('esg-impact', auth.session);
+ *   if (limited) return limited;
+ *
+ * Keyed by session subject rather than by IP. `clientKey()` buckets everyone
+ * behind one NAT or one corporate proxy together, so a single busy user could
+ * lock out an entire office — and conversely, an authenticated abuser could
+ * reset their own bucket by changing address. The user id is the thing that
+ * actually maps to the cost being bounded.
+ *
+ * Scoped per route so that exhausting the budget on one endpoint does not
+ * disable the rest of the application for that user.
+ *
+ * Still in-memory, and still therefore per-process: this bounds accidental
+ * spend and casual abuse, not a distributed attacker. See the note on
+ * `checkRateLimit` — a shared store is a prerequisite for running more than
+ * one instance.
+ */
+export function rateLimited(routeName: string, session: SessionPayload): NextResponse | null {
+  const limit = checkRateLimit(`${routeName}:${session.sub}`);
+  if (limit.allowed) return null;
+
+  return NextResponse.json(
+    {
+      error: 'rate_limited',
+      message: `Too many requests to ${routeName}. Retry in ${limit.retryAfterSeconds}s.`,
+    },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(limit.retryAfterSeconds),
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }

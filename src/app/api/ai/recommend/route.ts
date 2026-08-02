@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { StructedAIResponse } from '@/lib/types/finance';
 
 const DEFAULT_FALLBACK_RECOMMEND: StructedAIResponse = {
@@ -28,6 +28,9 @@ export async function POST(req: Request) {
   // refusal raised inside it would be swallowed and served as a 200.
   const auth = await requirePermission('ai.advisory');
   if (!auth.ok) return auth.response;
+
+  const limited = rateLimited('recommend', auth.session);
+  if (limited) return limited;
 
   try {
     const body = await req.json();

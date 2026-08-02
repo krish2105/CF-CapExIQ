@@ -141,6 +141,88 @@ export function sanitizeContext(text: string): string {
 }
 
 /**
+ * Longest uploaded document forwarded to the provider.
+ *
+ * Far above MAX_INPUT_CHARS because a vendor quotation legitimately runs to
+ * several thousand characters, and far below "whatever the client sent"
+ * because `VendorQuoteUploader` reads an arbitrary file with `file.text()`
+ * and posts the whole thing. 20k characters is roughly 5k tokens — enough for
+ * any real quote, bounded enough that a 40 MB PDF cannot bill a fortune.
+ */
+export const MAX_DOCUMENT_CHARS = 20_000;
+
+/** Longest JSON context block (assumptions/metrics) forwarded per request. */
+export const MAX_CONTEXT_JSON_CHARS = 8_000;
+
+/**
+ * Prepare an uploaded document for a prompt.
+ *
+ * Documents are neutralised rather than refused. A vendor quote is data the
+ * user chose to submit, and rejecting the whole upload because one line
+ * happened to match an injection pattern turns a false positive into a broken
+ * feature. `sanitizeContext` already defangs the role-tag and
+ * instruction-override shapes, so the residual risk is worth the usability.
+ *
+ * The truncation is reported in `notices` rather than applied silently — a
+ * user whose quote was cut in half must be able to see that the extracted
+ * total is incomplete, otherwise a truncated document produces a confident
+ * wrong CapEx figure.
+ */
+export function guardDocument(raw: unknown): GuardResult {
+  const notices: string[] = [];
+
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return { ok: false, text: '', code: 'empty', message: 'Document text was empty.', notices };
+  }
+
+  let text = raw.trim();
+
+  if (text.length > MAX_DOCUMENT_CHARS) {
+    text = text.slice(0, MAX_DOCUMENT_CHARS);
+    notices.push(
+      `Document truncated to the first ${MAX_DOCUMENT_CHARS.toLocaleString()} characters. ` +
+        `Figures beyond that point were not read.`
+    );
+  }
+
+  for (const { re, label, replacement } of PII_PATTERNS) {
+    if (re.test(text)) {
+      text = text.replace(re, replacement);
+      notices.push(`Redacted ${label} before sending to the model provider.`);
+    }
+  }
+
+  const before = text;
+  text = sanitizeContext(text);
+  if (text !== before) notices.push('Neutralised instruction-like text inside the document.');
+
+  return { ok: true, text, notices };
+}
+
+/**
+ * Serialise a client-supplied object for inclusion in a prompt.
+ *
+ * `assumptions` and `metrics` arrive as arbitrary JSON from the browser and
+ * several handlers interpolated them with `JSON.stringify(...)` directly into
+ * the user turn. A string field anywhere in that object was therefore a clean
+ * prompt-injection channel that bypassed every check on the question itself —
+ * the guarded field was never the one carrying the payload.
+ */
+export function safeContextJson(value: unknown, maxChars = MAX_CONTEXT_JSON_CHARS): string {
+  let json: string;
+  try {
+    json = JSON.stringify(value ?? {});
+  } catch {
+    // Circular or otherwise unserialisable input is not worth diagnosing:
+    // it cannot have come from the app's own store.
+    return '{}';
+  }
+  if (typeof json !== 'string') return '{}';
+  if (json.length > maxChars) json = `${json.slice(0, maxChars)}…[truncated]`;
+  return sanitizeContext(json);
+}
+
+/**
  * Fixed-window rate limit, per process.
  *
  * Deliberately in-memory: this is a single-instance academic deployment, and

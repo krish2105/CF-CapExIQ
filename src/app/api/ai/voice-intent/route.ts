@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { guardInput, safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
 export interface VoiceIntentResponse {
   spokenSummary: string;
@@ -28,11 +29,37 @@ export async function POST(req: Request) {
   const auth = await requirePermission('assumptions.edit');
   if (!auth.ok) return auth.response;
 
-  try {
-    const body = await req.json();
-    const { userSpeech, currentAssumptions } = body;
+  const limited = rateLimited('voice-intent', auth.session);
+  if (limited) return limited;
 
-    const speechText = userSpeech || 'Summarize project viability';
+  // Guardrails run before the try so a refusal is a refusal. Inside it, the
+  // catch would convert one into a fallback 200 carrying model updates —
+  // precisely the outcome the guard exists to prevent on a write path.
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    /* handled by the guard below, which rejects a non-string speech field */
+  }
+  const { currentAssumptions } = body ?? {};
+
+  // A transcript is untrusted free text: speech-to-text will faithfully
+  // transcribe "ignore all previous instructions" spoken at a microphone.
+  const guarded = guardInput(
+    typeof body?.userSpeech === 'string' && body.userSpeech.trim()
+      ? body.userSpeech
+      : 'Summarize project viability'
+  );
+  if (!guarded.ok) {
+    return NextResponse.json(
+      { error: 'guardrail', message: guarded.message, notices: guarded.notices },
+      { status: 400, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
+  const speechText = guarded.text;
+
+  try {
 
     const fallbackResponse: VoiceIntentResponse = {
       ...DEFAULT_FALLBACK_VOICE,
@@ -102,7 +129,12 @@ Return ONLY a JSON object matching this schema:
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Current Assumptions: ${JSON.stringify(currentAssumptions)}\nUser Spoken Input: "${speechText}"` },
+        {
+          role: 'user',
+          content:
+            `Current Assumptions: ${safeContextJson(currentAssumptions)}\n` +
+            `User Spoken Input: "${speechText}"`,
+        },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.1,

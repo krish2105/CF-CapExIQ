@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 import crypto from 'crypto';
 
 export interface BoardMemoResponse {
@@ -53,6 +54,9 @@ export async function POST(req: Request) {
   // raised inside it would be swallowed and served as a 200 with content.
   const auth = await requirePermission('board.materials');
   if (!auth.ok) return auth.response;
+
+  const limited = rateLimited('board-memo', auth.session);
+  if (limited) return limited;
 
   try {
     const body = await req.json();
@@ -113,7 +117,7 @@ Return ONLY a JSON object matching this schema:
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Financial Context:\n- NPV: ${npv}\n- IRR: ${irr}\n- MIRR: ${mirr}\n- WACC: ${wacc}\n- Payback: ${payback}\n- Scenario: ${selectedScenario}` },
+        { role: 'user', content: `Financial Context:\n- NPV: ${npv}\n- IRR: ${irr}\n- MIRR: ${mirr}\n- WACC: ${wacc}\n- Payback: ${payback}\n- Scenario: ${sanitizeContext(String(selectedScenario ?? 'Base')).slice(0, 60)}` },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,

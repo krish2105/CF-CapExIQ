@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
 export interface EsgImpactResponse {
   esgScore: number; // 0 to 100
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
   // raised inside it would be swallowed and served as a 200 with content.
   const auth = await requirePermission('esg.view');
   if (!auth.ok) return auth.response;
+
+  const limited = rateLimited('esg-impact', auth.session);
+  if (limited) return limited;
 
   try {
     const body = await req.json();
@@ -66,7 +70,12 @@ Return ONLY a JSON object matching this schema:
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Assumptions: ${JSON.stringify(assumptions)}\nMetrics: ${JSON.stringify(metrics)}` },
+        {
+          role: 'user',
+          content:
+            `Assumptions: ${safeContextJson(assumptions)}\n` +
+            `Metrics: ${safeContextJson(metrics)}`,
+        },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { guardInput } from '@/lib/guardrails/aiGuardrails';
 
 export interface NegotiatedRfpTerms {
   vendorName: string;
@@ -71,11 +72,27 @@ export async function POST(req: Request) {
   const auth = await requirePermission('vendor.negotiate');
   if (!auth.ok) return auth.response;
 
-  try {
-    const body = await req.json();
-    const { vendorName, targetDiscountPct, targetLiquidDamagesPct } = body;
+  const limited = rateLimited('rfp-negotiator', auth.session);
+  if (limited) return limited;
 
-    const vendor = vendorName || 'Swisslog Logistics Automation';
+  const rawBody = await req.json().catch(() => ({}));
+  const { targetDiscountPct, targetLiquidDamagesPct } = rawBody ?? {};
+
+  const guarded = guardInput(
+    typeof rawBody?.vendorName === 'string' && rawBody.vendorName.trim()
+      ? rawBody.vendorName
+      : 'Swisslog Logistics Automation'
+  );
+  if (!guarded.ok) {
+    return NextResponse.json(
+      { error: 'guardrail', message: guarded.message, notices: guarded.notices },
+      { status: 400, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
+  const vendor = guarded.text;
+
+  try {
 
     const fallbackResponse: NegotiatedRfpTerms = {
       ...DEFAULT_FALLBACK_RFP,

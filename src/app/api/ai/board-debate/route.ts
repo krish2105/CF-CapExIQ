@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { requirePermission } from '@/lib/auth/apiAuth';
+import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
+import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 
 export interface BoardMemberStatement {
   role: 'CFO' | 'COO' | 'CRO' | 'Strategy';
@@ -82,6 +83,9 @@ export async function POST(req: Request) {
   const auth = await requirePermission('board.materials');
   if (!auth.ok) return auth.response;
 
+  const limited = rateLimited('board-debate', auth.session);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { assumptions, metrics, selectedScenario } = body;
@@ -134,7 +138,7 @@ Return ONLY a JSON object matching this schema:
 }`;
 
     const userPrompt = `Financial Model Context:
-- Scenario: ${selectedScenario || 'Base'}
+- Scenario: ${sanitizeContext(String(selectedScenario ?? 'Base')).slice(0, 60)}
 - Initial Capital Outlay: AED ${metrics?.totalInitialOutlay ? (metrics.totalInitialOutlay / 1000000).toFixed(2) + 'M' : '24.0M'}
 - NPV: ${npv}
 - IRR: ${irr}
