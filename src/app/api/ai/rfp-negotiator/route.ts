@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput } from '@/lib/guardrails/aiGuardrails';
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       return aiFallback(fallbackResponse, 'provider-unconfigured');
     }
 
-    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
+    const openai = createModelClient(apiKey);
 
     const systemPrompt = `You are an AI Multi-Agent Game Theory RFP Negotiator for NovaRetail GCC.
 Simulate a multi-round game-theoretic procurement negotiation between an AI Buyer Agent and a Vendor Sales AI for warehouse automation equipment.

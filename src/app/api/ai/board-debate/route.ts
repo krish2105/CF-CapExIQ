@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
       return aiFallback(fallbackResponse, 'provider-unconfigured');
     }
 
-    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
+    const openai = createModelClient(apiKey);
 
     const systemPrompt = `You are an Executive Board Debate Simulation Swarm for NovaRetail GCC evaluating a AED 24.0M automated micro-fulfilment centre.
 Simulate a debate between 4 board members:

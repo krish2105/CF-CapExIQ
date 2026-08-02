@@ -1,4 +1,5 @@
 import { normalize } from './vectors';
+import { guardedFetch } from '@/lib/guardrails/egress';
 
 /**
  * Query embedding against the provider's OpenAI-compatible /embeddings route.
@@ -60,7 +61,10 @@ export async function embedTexts(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${baseURL.replace(/\/+$/, '')}/embeddings`, {
+    // guardedFetch, not fetch: this is one of the two paths that actually
+    // leaves the process, and it previously bypassed the allowlist entirely
+    // because the structural test only matched a literal `fetch('https://…')`.
+    const res = await guardedFetch(`${baseURL.replace(/\/+$/, '')}/embeddings`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,

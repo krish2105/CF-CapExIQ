@@ -10,3 +10,14 @@
 allowBuilds:
   esbuild: true
   unrs-resolver: true
+
+# Transitive dependency pins.
+#
+# These lived under a `pnpm.overrides` key in package.json, which pnpm 10 no
+# longer reads — it warns "The pnpm field in package.json is no longer read"
+# and continues. The pins had therefore been silently inactive since the pnpm
+# major bump: a supply-chain control that looked present in review and did
+# nothing. Moved here, where this version actually applies them.
+overrides:
+  debug: 4.3.4
+  postcss: ^8.4.47

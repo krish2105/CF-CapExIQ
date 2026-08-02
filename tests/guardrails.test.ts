@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { checkEgress, guardedFetch, EgressBlockedError } from '@/lib/guardrails/egress';
+import { fetchAndParseBundledCsv } from '@/lib/csv/csvParser';
 import {
   guardInput,
   sanitizeContext,
@@ -81,6 +82,18 @@ describe('client-supplied JSON context', () => {
   });
 });
 
+describe('bundled CSV loader is same-origin only', () => {
+  it.each([
+    'https://evil.example/data.csv',
+    'http://evil.example/data.csv',
+    '//evil.example/data.csv',
+    'file:///etc/passwd',
+    'data/relative.csv',
+  ])('refuses %s', async (target) => {
+    await expect(fetchAndParseBundledCsv(target)).rejects.toThrow(/same-origin/i);
+  });
+});
+
 describe('egress allowlist', () => {
   it('permits the configured model provider', () => {
     process.env.OPENAI_BASE_URL = 'https://integrate.api.nvidia.com/v1';
@@ -137,9 +150,23 @@ describe('no scraping in the source tree', () => {
 
   const files = walk(SRC);
 
+  /**
+   * Source with comments removed.
+   *
+   * These checks assert what the code *does*. Scanning raw text instead makes
+   * them fire on any comment that quotes the pattern being banned — including
+   * the comments explaining the ban, which is how a documented rule turns into
+   * a failing build for describing itself.
+   */
+  function codeOf(file: string): string {
+    return readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  }
+
   it('imports no scraping or headless-browser library', () => {
     const banned = /from\s+['"](puppeteer|playwright|cheerio|jsdom|got|axios|node-fetch|request)['"]/;
-    const offenders = files.filter((f) => banned.test(readFileSync(f, 'utf8')));
+    const offenders = files.filter((f) => banned.test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 
@@ -150,7 +177,47 @@ describe('no scraping in the source tree', () => {
     const literalFetch = /fetch\(\s*['"`]https?:\/\//;
     const offenders = files
       .filter((f) => !allowFile.test(f))
-      .filter((f) => literalFetch.test(readFileSync(f, 'utf8')));
+      .filter((f) => literalFetch.test(codeOf(f)));
+    expect(offenders).toEqual([]);
+  });
+
+  /**
+   * The check above only ever matched `fetch('https://…')` written inline.
+   * `src/lib/rag/embed.ts` called `fetch(\`${baseURL}/embeddings\`)` and sailed
+   * past it for exactly that reason — the policy was enforced against the one
+   * spelling nobody actually used.
+   */
+  it('routes every outbound call through the allowlist', () => {
+    // Same-origin calls are the browser talking to this app, not egress.
+    const bareFetch = /(?<!guarded)\bfetch\(\s*(?!['"`]\/)(?!['"`]#)/;
+    const allowed =
+      /(guardrails[\\/]egress\.ts|lib[\\/]ai[\\/]client\.ts|csv[\\/]csvParser\.ts)$/;
+    // csvParser fetches a variable path, so no regex can clear it statically.
+    // It is exempt because it rejects anything that is not a same-origin
+    // absolute path at runtime — asserted by the test directly below, so this
+    // entry is earned rather than asserted.
+
+    const offenders = files
+      .filter((f) => !allowed.test(f))
+      // Client components legitimately call their own API routes.
+      .filter((f) => !/^'use client';/.test(readFileSync(f, 'utf8').trimStart()))
+      .filter((f) => bareFetch.test(codeOf(f)))
+      .map((f) => f.replace(/.*[\\/]src[\\/]/, 'src/'));
+
+    expect(offenders).toEqual([]);
+  });
+
+  /**
+   * The provider SDK carries its own transport, so constructing it directly
+   * puts a network client in the process that the allowlist never sees.
+   */
+  it('constructs no model client outside the guarded factory', () => {
+    const allowed = /lib[\\/]ai[\\/]client\.ts$/;
+    const offenders = files
+      .filter((f) => !allowed.test(f))
+      .filter((f) => /new OpenAI\(/.test(codeOf(f)))
+      .map((f) => f.replace(/.*[\\/]src[\\/]/, 'src/'));
+
     expect(offenders).toEqual([]);
   });
 });

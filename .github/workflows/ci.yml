@@ -1,0 +1,88 @@
+name: CI
+
+# Nothing ran the 179 unit tests, the typechecker or the build on push before
+# this existed, which is how the e2e suite came to navigate unauthenticated to
+# pages that now redirect to /login without anyone noticing.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+# A superseded run on the same branch is wasted minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # The session module refuses to sign with a guessable key when
+      # NODE_ENV=production, which `next build` sets. A CI-only value keeps the
+      # build honest without putting a real secret in the workflow.
+      AUTH_SECRET: ci-only-ephemeral-secret-not-used-by-any-deployment
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Must match the pnpm that wrote pnpm-lock.yaml, or --frozen-lockfile
+      # fails on a lockfile-format difference rather than a real drift.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # --frozen-lockfile so a drifting dependency fails here rather than
+      # resolving to something nobody tested.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # pnpm 10 blocks dependency build scripts by default. esbuild's binary is
+      # linked by its postinstall, so without approval (pnpm-workspace.yaml)
+      # install succeeds and `pnpm test` then fails to start.
+      - name: Verify test toolchain is executable
+        run: pnpm exec vitest --version
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit and structural tests
+        run: pnpm test
+
+      - name: Production build
+        run: pnpm build
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Advisory only. A new CVE in a transitive dependency should raise a flag,
+    # not block an unrelated bugfix from merging at 5pm.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+      # Must match the pnpm that wrote pnpm-lock.yaml, or --frozen-lockfile
+      # fails on a lockfile-format difference rather than a real drift.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit dependencies
+        run: pnpm audit --audit-level high

@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { createModelClient } from '@/lib/ai/client';
 import { retrieve, buildContextBlock, toCitations, knowledgeBaseStats } from '@/lib/rag/retrieve';
 import type { Citation } from '@/lib/rag/types';
 import { guardInput, sanitizeContext } from '@/lib/guardrails/aiGuardrails';
@@ -184,7 +184,7 @@ export async function POST(req: Request) {
           return;
         }
 
-        const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
+        const openai = createModelClient(apiKey);
 
         const userPrompt = `CONTEXT PASSAGES
 ${sanitizeContext(buildContextBlock(result.chunks))}

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput } from '@/lib/guardrails/aiGuardrails';
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
       return aiFallback(fallbackScenario, 'provider-unconfigured');
     }
 
-    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
+    const openai = createModelClient(apiKey);
 
     const systemPrompt = `You are a Generative Macroeconomic Scenario & Monte Carlo Fitter for NovaRetail GCC.
 Generate realistic investment scenario parameters based on user input text.
