@@ -44,3 +44,8 @@ tsconfig.tsbuildinfo
 # secret.
 .env*
 !.env.example
+
+# Playwright signed-in browser state (contains session cookies)
+e2e/.auth/
+test-results/
+playwright-report/

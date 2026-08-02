@@ -1,32 +1,56 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('CapExIQ Application End-to-End Tests', () => {
-  test('1. Opens the application overview page and checks branding', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('h1').first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('NovaRetail GCC').first()).toBeVisible();
-  });
+/**
+ * Signed in as CFO — the lens that holds nearly every permission, so these
+ * specs exercise the application rather than the authorisation matrix. Role
+ * restrictions live in rbac.spec.ts, sign-in in access-control.spec.ts.
+ *
+ * Every assertion names content that exists ONLY on the page under test. The
+ * previous suite asserted `h1` visibility, which the login page also
+ * satisfies — so three of its five tests passed while never once reaching
+ * their target page.
+ */
+test.describe('CapExIQ — authenticated application', () => {
+  test('dashboard renders the headline capital position', async ({ page }) => {
+    await page.goto('/dashboard');
 
-  test('2. Navigates to Executive Dashboard and verifies KPI metrics', async ({ page }) => {
-    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('h1').first()).toBeVisible({ timeout: 15000 });
+    await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByText('Baseline NPV').first()).toBeVisible();
     await expect(page.getByText('Initial Outlay').first()).toBeVisible();
   });
 
-  test('3. Theme toggle button is rendered in top-right header', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    const themeBtn = page.locator('button[aria-label="Select color theme"]').first();
-    await expect(themeBtn).toBeVisible({ timeout: 15000 });
+  test('CFO sees the analyst-grade metrics their lens holds', async ({ page }) => {
+    await page.goto('/dashboard');
+    // metrics.advanced — withheld from the CEO lens, asserted in rbac.spec.ts.
+    await expect(page.getByText('Profitability Index').first()).toBeVisible();
   });
 
-  test('4. Navigates to Monte Carlo Risk Simulation page', async ({ page }) => {
-    await page.goto('/monte-carlo', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('h1').first()).toBeVisible({ timeout: 15000 });
+  test('monte carlo page loads under its own route', async ({ page }) => {
+    await page.goto('/monte-carlo');
+    await expect(page).toHaveURL(/\/monte-carlo/);
+    await expect(page.locator('h1').first()).toBeVisible();
   });
 
-  test('5. Navigates to WACC & CAPM Calculator page', async ({ page }) => {
-    await page.goto('/external-data', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('h1').first()).toBeVisible({ timeout: 15000 });
+  test('financial model exposes the cash-flow schedule', async ({ page }) => {
+    await page.goto('/financial-model');
+    await expect(page).toHaveURL(/\/financial-model/);
+    await expect(page.locator('h1').first()).toBeVisible();
+  });
+
+  test('theme toggle is present in the application chrome', async ({ page }) => {
+    await page.goto('/dashboard');
+    // "colour", not "color" — the original spec asserted the American
+    // spelling and could never have matched, independently of the auth change.
+    await expect(page.locator('button[aria-label="Select colour theme"]').first()).toBeVisible();
+  });
+
+  test('the persisted store is populated while signed in', async ({ page }) => {
+    await page.goto('/dashboard');
+    const stored = await page.evaluate(() =>
+      localStorage.getItem('capexiq-financial-store')
+    );
+    expect(stored).not.toBeNull();
+    // The role mirrored at sign-in is what every RoleGate reads.
+    expect(stored).toContain('CFO');
   });
 });

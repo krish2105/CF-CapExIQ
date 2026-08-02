@@ -86,13 +86,20 @@ export default function DashboardPage() {
         metrics.irr
       )} — exceeding the ${formatPercent(
         activeAssumptions.discountRate
-      )} WACC hurdle — the automated micro-fulfilment centre delivers a strong financial return. A profitability index of ${metrics.profitabilityIndex.toFixed(
-        2
-      )} and a payback period of ${metrics.paybackPeriodYears?.toFixed(
-        1
-      )} years justify capital commitment under the ${selectedScenario} scenario. Management controls must mandate vendor SLA penalty clauses and a 15% maximum CapEx overrun ceiling.`
+      )} WACC hurdle — the automated micro-fulfilment centre delivers a strong financial return. ${
+        // The metric grid gates Profitability Index behind `metrics.advanced`,
+        // but this narrative interpolated it unconditionally — so the figure
+        // withheld from the tile above was printed in prose directly below it.
+        // Gating one presentation of a number and not the other is not gating.
+        showAdvanced
+          ? `A profitability index of ${metrics.profitabilityIndex.toFixed(2)} and a payback period of ${metrics.paybackPeriodYears?.toFixed(1)} years justify`
+          : `A payback period of ${metrics.paybackPeriodYears?.toFixed(1)} years justifies`
+      } capital commitment under the ${selectedScenario} scenario. Management controls must mandate vendor SLA penalty clauses and a 15% maximum CapEx overrun ceiling.`
     );
-  }, [metrics, activeAssumptions, selectedScenario]);
+    // `showAdvanced` is a dependency: without it, switching lens leaves the
+    // previously composed summary on screen, still carrying the figure the
+    // new lens is not entitled to.
+  }, [metrics, activeAssumptions, selectedScenario, showAdvanced]);
 
   const annualChartData = yearlyCashFlows.map((item) => ({
     year: `Year ${item.year}`,
