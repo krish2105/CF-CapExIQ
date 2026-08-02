@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
 
       # --frozen-lockfile so a drifting dependency fails here rather than
@@ -102,7 +102,7 @@ jobs:
           version: 11
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Audit dependencies

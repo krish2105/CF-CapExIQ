@@ -3,6 +3,9 @@ import { findByEmail, verifyPassword } from '@/lib/auth/users';
 import { signSession, SESSION_COOKIE, SESSION_TTL_SECONDS } from '@/lib/auth/session';
 import { checkRateLimit, clientKey } from '@/lib/guardrails/aiGuardrails';
 import { roleLabel } from '@/lib/auth/permissions';
+import { randomUUID } from 'node:crypto';
+import { createSession } from '@/lib/db/repositories/sessions';
+import { recordAudit } from '@/lib/db/repositories/audit';
 
 export const runtime = 'nodejs';
 
@@ -55,10 +58,48 @@ export async function POST(req: Request) {
   const ok = await verifyPassword(user ?? decoy, password);
 
   if (!user || !ok) {
+    // Recorded without an actor id: a failed attempt against an unknown
+    // address has no user to attribute it to, and repeated failures are
+    // exactly what an operator needs to see.
+    recordAudit({
+      action: 'auth.login_failed',
+      entity: 'session',
+      summary: `Failed sign-in for ${email.trim().toLowerCase().slice(0, 120)}`,
+      actorUserId: user?.id ?? null,
+      ip: clientKey(req),
+    });
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
   }
 
-  const token = await signSession({ sub: user.id, name: user.name, role: user.role });
+  const sessionId = randomUUID();
+  const { token, iat, exp } = await signSession({
+    sub: user.id,
+    name: user.name,
+    role: user.role,
+    jti: sessionId,
+  });
+
+  // The session row is what makes sign-out enforceable. Written before the
+  // cookie is handed out, so a token can never exist without a record that
+  // can revoke it.
+  createSession({
+    id: sessionId,
+    userId: user.id,
+    issuedAt: new Date(iat * 1000).toISOString(),
+    expiresAt: new Date(exp * 1000).toISOString(),
+    ip: clientKey(req),
+    userAgent: req.headers.get('user-agent')?.slice(0, 400) ?? null,
+  });
+
+  recordAudit({
+    actorUserId: user.id,
+    actorRole: user.role,
+    action: 'auth.login',
+    entity: 'session',
+    entityId: sessionId,
+    summary: `${user.name} signed in as ${user.role}`,
+    ip: clientKey(req),
+  });
 
   const res = NextResponse.json({
     user: {

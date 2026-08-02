@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { SESSION_COOKIE, verifySession, type SessionPayload } from '@/lib/auth/session';
 import { can, type Permission } from '@/lib/auth/permissions';
 import { checkRateLimit } from '@/lib/guardrails/aiGuardrails';
+import { isSessionActive } from '@/lib/db/repositories/sessions';
 
 /**
  * Server-side authorisation for route handlers.
@@ -63,6 +64,19 @@ export async function authorizeToken(
   const session = await verifySession(token);
   if (!session) {
     return { ok: false, status: 401, error: 'Authentication required.' };
+  }
+
+  // Revocation. Middleware cannot do this — it runs on the Edge runtime where
+  // `node:sqlite` does not exist — so every Node entry point checks here
+  // instead. A signature that verifies is not the same as a session that is
+  // still allowed to act: sign-out, offboarding and a forced password change
+  // all invalidate a token whose HMAC remains perfectly valid.
+  if (!isSessionActive(session.jti)) {
+    return {
+      ok: false,
+      status: 401,
+      error: 'This session has been signed out or revoked. Please sign in again.',
+    };
   }
 
   if (permission && !can(session.role, permission)) {

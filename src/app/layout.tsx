@@ -6,6 +6,7 @@ import { AppChrome } from '@/components/layout/AppChrome';
 import { ChartGradients } from '@/components/ui/charts';
 import { cookies } from 'next/headers';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth/session';
+import { isSessionActive } from '@/lib/db/repositories/sessions';
 import { RoleProvider } from '@/components/auth/RoleProvider';
 
 /**
@@ -62,6 +63,12 @@ export default async function RootLayout({
 }>) {
   const session = await verifySession(cookies().get(SESSION_COOKIE)?.value);
 
+  // A revoked session resolves to no lens. Middleware verified the signature
+  // at the edge, where the database is unreachable, so this is where a
+  // signed-out-but-still-signed token stops resolving to a role — meaning it
+  // can route a page shell but cannot render anything gated.
+  const role = session && isSessionActive(session.jti) ? session.role : null;
+
   return (
     <html
       lang="en"
@@ -79,7 +86,7 @@ export default async function RootLayout({
           <ChartGradients />
         </svg>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <RoleProvider role={session?.role ?? null}>
+          <RoleProvider role={role}>
             <AppChrome>{children}</AppChrome>
           </RoleProvider>
         </ThemeProvider>

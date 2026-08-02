@@ -28,6 +28,16 @@ export interface SessionPayload {
   sub: string;
   name: string;
   role: ExecutiveRole;
+  /**
+   * Session id — the primary key of the `sessions` row.
+   *
+   * Carried so the token can be revoked. Without it the cookie is entirely
+   * self-describing and a "sign out" cannot invalidate a copy that has
+   * already been taken; it only removes the browser's. Optional in the type
+   * because a token minted before this existed still verifies structurally —
+   * `isSessionActive` then fails it closed, which is the intended outcome.
+   */
+  jti?: string;
   /** Issued-at, epoch seconds. */
   iat: number;
   /** Expiry, epoch seconds. */
@@ -79,12 +89,16 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
 
 export async function signSession(
   payload: Omit<SessionPayload, 'iat' | 'exp'>
-): Promise<string> {
+): Promise<{ token: string; iat: number; exp: number }> {
   const iat = Math.floor(Date.now() / 1000);
-  const full: SessionPayload = { ...payload, iat, exp: iat + SESSION_TTL_SECONDS };
+  const exp = iat + SESSION_TTL_SECONDS;
+  const full: SessionPayload = { ...payload, iat, exp };
   const body = base64UrlEncode(encoder.encode(JSON.stringify(full)));
   const sig = await crypto.subtle.sign('HMAC', await key(), encoder.encode(body));
-  return `${body}.${base64UrlEncode(new Uint8Array(sig))}`;
+  // Returns the timestamps alongside the token so the caller can persist a
+  // matching `sessions` row without re-deriving them and risking a skew
+  // between what the cookie claims and what the database records.
+  return { token: `${body}.${base64UrlEncode(new Uint8Array(sig))}`, iat, exp };
 }
 
 /** Verify signature and expiry. Returns null on any failure — never throws. */

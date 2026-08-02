@@ -1,4 +1,5 @@
 import type { ExecutiveRole } from '@/lib/types/finance';
+import { seedUsers, findByEmail as dbFindByEmail } from '@/lib/db/repositories/users';
 
 /**
  * Account directory.
@@ -107,9 +108,55 @@ export function directory(): DirectoryUser[] {
   return SEED_USERS;
 }
 
+/**
+ * Ensure the database directory exists, seeding it once from `SEED_USERS`.
+ *
+ * Idempotent — `seedUsers` is a no-op on a non-empty table. That matters: an
+ * operator who disables an account or changes a role must not have it
+ * silently restored on the next deploy, so source seeds populate an empty
+ * table and never overwrite a populated one.
+ */
+export function ensureDirectorySeeded(): void {
+  seedUsers(
+    directory().map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      title: u.title,
+      role: u.role,
+      passwordHash: u.passwordHash,
+    }))
+  );
+}
+
+/**
+ * Look up an account.
+ *
+ * Reads the database, which is now the authority: rows can be disabled and
+ * re-roled, and a disabled row cannot sign in. `CAPEXIQ_USERS` still short
+ * -circuits this for deployments that manage identity elsewhere — the point of
+ * that variable is to replace the directory entirely, so it must not require a
+ * database write to take effect.
+ */
 export function findByEmail(email: string): DirectoryUser | undefined {
   const needle = email.trim().toLowerCase();
-  return directory().find((u) => u.email.toLowerCase() === needle);
+
+  if (process.env.CAPEXIQ_USERS) {
+    return directory().find((u) => u.email.toLowerCase() === needle);
+  }
+
+  ensureDirectorySeeded();
+  const row = dbFindByEmail(needle);
+  if (!row) return undefined;
+
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    title: row.title,
+    role: row.role,
+    passwordHash: row.passwordHash,
+  };
 }
 
 // ---------------------------------------------------------------- hashing

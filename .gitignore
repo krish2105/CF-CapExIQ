@@ -49,3 +49,6 @@ tsconfig.tsbuildinfo
 e2e/.auth/
 test-results/
 playwright-report/
+
+# Local SQLite database (created at runtime)
+.data/

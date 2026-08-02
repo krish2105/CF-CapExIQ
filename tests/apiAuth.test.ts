@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { authorizeToken } from '@/lib/auth/apiAuth';
-import { signSession } from '@/lib/auth/session';
+import { issueTestSession } from '@/test/session';
 import type { ExecutiveRole } from '@/lib/types/finance';
 
-const token = (role: ExecutiveRole) =>
-  signSession({ sub: `u-${role}`, name: `Test ${role}`, role });
+/** A usable session: signed token plus the row that keeps it valid. */
+const token = async (role: ExecutiveRole) => (await issueTestSession(role)).token;
 
 describe('API authorisation policy', () => {
   it('rejects a missing session with 401, not 403', async () => {

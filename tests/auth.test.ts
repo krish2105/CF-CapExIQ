@@ -13,7 +13,7 @@ beforeAll(() => {
 
 describe('session tokens', () => {
   it('round-trips a valid session', async () => {
-    const token = await signSession({ sub: 'u-cfo', name: 'Rashid Kamal', role: 'CFO' });
+    const token = (await signSession({ sub: 'u-cfo', name: 'Rashid Kamal', role: 'CFO' })).token;
     const payload = await verifySession(token);
     expect(payload?.sub).toBe('u-cfo');
     expect(payload?.role).toBe('CFO');
@@ -21,7 +21,7 @@ describe('session tokens', () => {
   });
 
   it('rejects a tampered payload — the whole point of signing it', async () => {
-    const token = await signSession({ sub: 'u-analyst', name: 'Priya Nair', role: 'Analyst' });
+    const token = (await signSession({ sub: 'u-analyst', name: 'Priya Nair', role: 'Analyst' })).token;
     const [body, sig] = token.split('.');
     const decoded = JSON.parse(Buffer.from(body, 'base64url').toString());
 
@@ -33,19 +33,19 @@ describe('session tokens', () => {
   });
 
   it('rejects a token signed with a different secret', async () => {
-    const token = await signSession({ sub: 'u-ceo', name: 'A', role: 'CEO' });
+    const token = (await signSession({ sub: 'u-ceo', name: 'A', role: 'CEO' })).token;
     process.env.AUTH_SECRET = 'a-completely-different-secret-key';
     expect(await verifySession(token)).toBeNull();
     process.env.AUTH_SECRET = 'test-secret-value-at-least-16-chars';
   });
 
   it('rejects an expired token', async () => {
-    const token = await signSession({ sub: 'u-ceo', name: 'A', role: 'CEO' });
+    const token = (await signSession({ sub: 'u-ceo', name: 'A', role: 'CEO' })).token;
     const [body] = token.split('.');
     const decoded = JSON.parse(Buffer.from(body, 'base64url').toString());
     decoded.exp = Math.floor(Date.now() / 1000) - 10;
     // Re-sign honestly so only expiry, not the signature, is at fault.
-    const resigned = await signSession({ sub: decoded.sub, name: decoded.name, role: decoded.role });
+    const resigned = (await signSession({ sub: decoded.sub, name: decoded.name, role: decoded.role })).token;
     const stale = await verifySession(resigned);
     expect(stale).not.toBeNull();
     expect(await verifySession('garbage')).toBeNull();

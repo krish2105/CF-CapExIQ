@@ -12,5 +12,16 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    /**
+     * `node:sqlite` is newer than this Vite's list of Node builtins, so the
+     * resolver strips the prefix and then fails looking for a package called
+     * "sqlite". Marking it external hands the import straight to Node, which
+     * does have it.
+     */
+    server: {
+      deps: {
+        external: [/^node:sqlite$/],
+      },
+    },
   },
 });
