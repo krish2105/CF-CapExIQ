@@ -250,11 +250,11 @@ export default function DashboardPage() {
           <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-primary" /> Executive Financial Dashboard
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground" suppressHydrationWarning>
             NovaRetail GCC • Automated Micro-Fulfilment Centre • Active Scenario: <strong className="text-primary">{selectedScenario}</strong>
           </p>
         </div>
-        <div className={`px-4 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 ${getDecisionBadgeColor(metrics.decisionStatus)}`}>
+        <div suppressHydrationWarning className={`px-4 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-2 ${getDecisionBadgeColor(metrics.decisionStatus)}`}>
           <ShieldAlert className="h-4 w-4" /> Recommended Action: {metrics.decisionStatus}
         </div>
       </div>
@@ -263,18 +263,18 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Initial Outlay</span>
-          <p className="text-lg font-bold text-foreground mt-1">{formatAED(metrics.totalInitialOutlay)}</p>
+          <p suppressHydrationWarning className="text-lg font-bold text-foreground mt-1">{formatAED(metrics.totalInitialOutlay)}</p>
           <span className="text-[10px] text-muted-foreground font-mono">Time Zero (Y0)</span>
         </div>
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Baseline NPV</span>
-          <p className="text-lg font-bold text-success mt-1">{formatAED(metrics.npv)}</p>
-          <span className="text-[10px] text-muted-foreground font-mono">WACC @ {formatPercent(activeAssumptions.discountRate)}</span>
+          <p suppressHydrationWarning className="text-lg font-bold text-success mt-1">{formatAED(metrics.npv)}</p>
+          <span suppressHydrationWarning className="text-[10px] text-muted-foreground font-mono">WACC @ {formatPercent(activeAssumptions.discountRate)}</span>
         </div>
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">IRR / MIRR</span>
-          <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">{formatPercent(metrics.irr)}</p>
-          <span className="text-[10px] text-muted-foreground font-mono">MIRR: {formatPercent(metrics.mirr)}</span>
+          <p suppressHydrationWarning className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">{formatPercent(metrics.irr)}</p>
+          <span suppressHydrationWarning className="text-[10px] text-muted-foreground font-mono">MIRR: {formatPercent(metrics.mirr)}</span>
         </div>
         <div className="glass-panel p-3.5 rounded-xl border border-border">
           <span className="text-[11px] text-muted-foreground font-medium">Profitability Index</span>

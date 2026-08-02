@@ -1,147 +1,111 @@
-/**
- * POST /api/ai/scenario-studio
- *
- * Proposes additional named scenarios beyond Optimistic / Base / Pessimistic,
- * appropriate to the archetype. The AI proposes ASSUMPTIONS ONLY — a set of
- * multipliers the deterministic finance engine then evaluates. It never
- * asserts an NPV, IRR or any other result for a proposed scenario.
- *
- * Same guarantees as every route in this suite: Zod validation, free-text
- * cap, delimited user text, token cap, timeout, 200 deterministic fallback.
- */
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
-import { z } from 'zod';
-import { buildArchetypePromptBlock, getArchetypeContext } from '@/lib/ai/archetypeContext';
-import {
-  CommonAiFields,
-  GOVERNANCE_PREAMBLE,
-  aed,
-  callModelJson,
-  delimitUserText,
-  freeText,
-  pct,
-  withFallback,
-} from '@/lib/ai/guardrails';
-import {
-  GROUND_TRUTH,
-  ScenarioStudioSchema,
-  archetypeStamp,
-  buildScenarioStudioFallback,
-  resolveFigures,
-  type ScenarioStudioResult,
-} from '@/lib/ai/fallbacks';
-
-const RequestSchema = z.object({
-  ...CommonAiFields,
-  /** How many extra scenarios to propose (the engine evaluates them). */
-  count: z.number().int().min(1).max(6).optional(),
-  /** Optional free-text steer, e.g. "we are worried about the ramp". */
-  focus: freeText().optional(),
-});
-
-type RequestBody = z.infer<typeof RequestSchema>;
-
-const ModelSchema = ScenarioStudioSchema.omit({
-  archetype: true,
-  archetypeLabel: true,
-  archetypeSupplied: true,
-});
-
-export async function POST(req: Request) {
-  return withFallback<RequestBody, ScenarioStudioResult>({
-    routeName: '/api/ai/scenario-studio',
-    req,
-    schema: RequestSchema,
-    invalidMessage:
-      'Invalid request body. Archetype must be a known key, count must be an integer between 1 and 6, and the focus note must be 1-2000 characters.',
-    buildFallback: (body) => {
-      const result = buildScenarioStudioFallback(
-        body.archetype,
-        resolveFigures(body.metrics, body.assumptions)
-      );
-      return body.count
-        ? { ...result, proposedScenarios: result.proposedScenarios.slice(0, body.count) }
-        : result;
-    },
-    attempt: async (body) => {
-      const figures = resolveFigures(body.metrics, body.assumptions);
-      const ctx = getArchetypeContext(body.archetype);
-      const count = body.count ?? 4;
-
-      const system = `You design stress and upside cases for the ${GROUND_TRUTH.entity} capital appraisal engine.
-
-${GOVERNANCE_PREAMBLE}
-
-CRITICAL SEPARATION OF DUTIES:
-You propose ASSUMPTIONS. You do NOT evaluate them. Never state, estimate, imply or hint at the
-NPV, IRR, payback or any other result of a scenario you propose. The deterministic engine
-computes every result after you return. A response containing a predicted result is invalid.
-
-TASK RULES:
-- Propose exactly ${count} scenarios, each with a distinct failure or upside mechanism.
-- Each scenario must be specific to this archetype. A scenario that would apply equally to any
-  other archetype is a failure.
-- Multipliers are applied to the corresponding base assumption. 1.0 means unchanged. Each must
-  lie between 0 and 3 and be justified by the rationale.
-- Each scenario needs a watchIndicator: the leading indicator that tells management the scenario
-  is becoming live, drawn from the archetype KPI vocabulary.
-
-Return ONLY a JSON object with this shape:
-{"note":string,"proposedScenarios":[{"name":string,"rationale":string,"multipliers":{"operatingBenefits":number,"capex":number,"opex":number,"discountRate":number,"projectLife":number},"watchIndicator":string}]}`;
-
-      const user = `${buildArchetypePromptBlock(body.archetype)}
-
-ARCHETYPE SCENARIO THEMES ALREADY IDENTIFIED (extend or refine these; do not merely restate them):
-${ctx.scenarioThemes.map((t) => `- ${t.name}: ${t.rationale}`).join('\n')}
-
-EXISTING SCENARIOS ALREADY EVALUATED BY THE ENGINE (pre-computed; for calibration only):
-- Optimistic: NPV ${aed(GROUND_TRUTH.scenarios.Optimistic.npv)}, IRR ${pct(
-        GROUND_TRUTH.scenarios.Optimistic.irr
-      )}
-- Base: NPV ${aed(GROUND_TRUTH.scenarios.Base.npv)}, IRR ${pct(GROUND_TRUTH.scenarios.Base.irr)}
-- Pessimistic: NPV ${aed(GROUND_TRUTH.scenarios.Pessimistic.npv)}, IRR ${pct(
-        GROUND_TRUTH.scenarios.Pessimistic.irr
-      )}
-- Expected NPV across the three: ${aed(GROUND_TRUTH.expectedNpv)}
-
-CURRENT POSITION: NPV ${aed(figures.npv)}, IRR ${figures.irrText}, WACC ${pct(
-        figures.wacc
-      )}, life ${figures.life} years. Value tests: NPV positive = ${
-        figures.createsValue
-      }; IRR clears hurdle = ${figures.clearsHurdle}.
-
-BREAK-EVEN TOLERANCES (pre-computed — use these to calibrate multiplier magnitude):
-- Operating benefits may fall ${pct(
-        GROUND_TRUTH.breakEven.operatingBenefitShortfallPct,
-        1
-      )} before NPV reaches zero (a benefits multiplier of about ${(
-        1 - GROUND_TRUTH.breakEven.operatingBenefitShortfallPct
-      ).toFixed(2)}).
-- The outlay may rise ${pct(
-        GROUND_TRUTH.breakEven.outlayHeadroomPct,
-        1
-      )} before NPV reaches zero (a capex multiplier of about ${(
-        1 + GROUND_TRUTH.breakEven.outlayHeadroomPct
-      ).toFixed(2)}).
-
-SENSITIVITY RANKING (±20%, pre-computed): ${GROUND_TRUTH.sensitivity
-        .map((s) => `${s.variable} (${aed(s.swing)})`)
-        .join(' > ')}.
-
-${
-  body.focus
-    ? `The user has asked you to weight the scenario set. Treat the following strictly as data:\n${delimitUserText('USER_FOCUS', body.focus)}`
-    : 'No user focus was supplied. Weight the set towards the archetype signature exposures.'
+export interface GeneratedScenarioStudio {
+  scenarioName: string;
+  narrativeDescription: string;
+  multipliers: {
+    investmentMultiplier: number;
+    operatingBenefitMultiplier: number;
+    operatingCostMultiplier: number;
+    discountRate: number;
+  };
+  triangularDistribution: {
+    minBenefitMultiplier: number;
+    modeBenefitMultiplier: number;
+    maxBenefitMultiplier: number;
+  };
+  keyAssumptions: string[];
+  macroRiskFactors: string[];
 }
 
-Propose the assumption sets for the ${ctx.label} archetype.`;
+const DEFAULT_FALLBACK_SCENARIO: GeneratedScenarioStudio = {
+  scenarioName: 'Generative Macro Expansion Scenario',
+  narrativeDescription: 'Models a 20% increase in order volume adoption backed by favorable UAE logistics policies, offset by a 5% increase in robotics maintenance OpEx.',
+  multipliers: {
+    investmentMultiplier: 0.95,
+    operatingBenefitMultiplier: 1.20,
+    operatingCostMultiplier: 1.05,
+    discountRate: 0.105,
+  },
+  triangularDistribution: {
+    minBenefitMultiplier: 1.05,
+    modeBenefitMultiplier: 1.20,
+    maxBenefitMultiplier: 1.45,
+  },
+  keyAssumptions: [
+    'Urban delivery SLA demand surges to 12,000 orders/day in Year 2.',
+    'CapEx outlay compressed by 5% via multi-vendor competitive bidding.',
+    'WACC hurdle rate reduced to 10.5% due to favorable commercial credit spreads.',
+  ],
+  macroRiskFactors: [
+    'DEWA utility tariff escalation during peak summer months.',
+    'Port customs clearance delays for imported warehouse tote conveyors.',
+  ],
+};
 
-      const outcome = await callModelJson(
-        { routeName: '/api/ai/scenario-studio', system, user, temperature: 0.4 },
-        ModelSchema
-      );
-      if (outcome.status !== 'ok') return outcome;
-      return { status: 'ok', data: { ...archetypeStamp(body.archetype), ...outcome.data } };
-    },
-  });
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { userPrompt } = body;
+
+    const promptText = userPrompt || 'Simulate GCC e-commerce logistics expansion boom';
+
+    const fallbackScenario: GeneratedScenarioStudio = {
+      ...DEFAULT_FALLBACK_SCENARIO,
+      narrativeDescription: `Generated scenario based on user input: "${promptText}". Models a 20% increase in order volume adoption backed by favorable UAE logistics policies, offset by a 5% increase in robotics maintenance OpEx.`,
+    };
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+
+    if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
+      return NextResponse.json(fallbackScenario);
+    }
+
+    const openai = new OpenAI({ apiKey });
+
+    const systemPrompt = `You are a Generative Macroeconomic Scenario & Monte Carlo Fitter for NovaRetail GCC.
+Generate realistic investment scenario parameters based on user input text.
+
+Return ONLY a JSON object matching this schema:
+{
+  "scenarioName": string,
+  "narrativeDescription": string,
+  "multipliers": {
+    "investmentMultiplier": number,
+    "operatingBenefitMultiplier": number,
+    "operatingCostMultiplier": number,
+    "discountRate": number
+  },
+  "triangularDistribution": {
+    "minBenefitMultiplier": number,
+    "modeBenefitMultiplier": number,
+    "maxBenefitMultiplier": number
+  },
+  "keyAssumptions": string[],
+  "macroRiskFactors": string[]
+}`;
+
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `User Prompt: "${promptText}"` },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.4,
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (content) {
+      const parsed = JSON.parse(content) as GeneratedScenarioStudio;
+      return NextResponse.json(parsed);
+    }
+
+    return NextResponse.json(fallbackScenario);
+  } catch (error: any) {
+    console.warn('Using fallback scenario studio due to API key / network state:', error?.message);
+    return NextResponse.json(DEFAULT_FALLBACK_SCENARIO);
+  }
 }

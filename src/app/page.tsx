@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { formatAED, formatPercent, getDecisionBadgeColor } from '@/lib/utils/formatting';
+import { useHasMounted } from '@/lib/hooks/useHasMounted';
 import {
   Building2,
   TrendingUp,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function OverviewPage() {
+  const hasMounted = useHasMounted();
   const { getActiveAssumptions, getActiveScenarioResult, selectedScenario } = useFinancialStore();
   const assumptions = getActiveAssumptions();
   const scenarioResult = getActiveScenarioResult();
@@ -99,28 +101,40 @@ export default function OverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel p-4 rounded-2xl">
           <p className="text-xs text-muted-foreground font-medium">Initial Capital Outlay</p>
-          <p className="text-xl font-bold text-foreground mt-1">{formatAED(metrics.totalInitialOutlay)}</p>
+          <p suppressHydrationWarning className="text-xl font-bold text-foreground mt-1">
+            {formatAED(metrics.totalInitialOutlay)}
+          </p>
           <p className="text-[11px] text-muted-foreground mt-1">AED 22M Capex + AED 2M NWC</p>
         </div>
 
         <div className="glass-panel p-4 rounded-2xl">
           <p className="text-xs text-muted-foreground font-medium">Net Present Value (NPV)</p>
-          <p className="text-xl font-bold text-success mt-1">{formatAED(metrics.npv)}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Discount Rate: {formatPercent(assumptions.discountRate)}</p>
+          <p suppressHydrationWarning className="text-xl font-bold text-success mt-1">
+            {formatAED(metrics.npv)}
+          </p>
+          <p suppressHydrationWarning className="text-[11px] text-muted-foreground mt-1">
+            Discount Rate: {formatPercent(assumptions.discountRate)}
+          </p>
         </div>
 
         <div className="glass-panel p-4 rounded-2xl">
           <p className="text-xs text-muted-foreground font-medium">Internal Rate of Return (IRR)</p>
-          <p className="text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">{formatPercent(metrics.irr)}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">MIRR: {formatPercent(metrics.mirr)}</p>
+          <p suppressHydrationWarning className="text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+            {formatPercent(metrics.irr)}
+          </p>
+          <p suppressHydrationWarning className="text-[11px] text-muted-foreground mt-1">
+            MIRR: {formatPercent(metrics.mirr)}
+          </p>
         </div>
 
         <div className="glass-panel p-4 rounded-2xl">
           <p className="text-xs text-muted-foreground font-medium">Payback Period</p>
-          <p className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+          <p suppressHydrationWarning className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">
             {metrics.paybackPeriodYears ? `${metrics.paybackPeriodYears.toFixed(1)} Yrs` : 'N/A'}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-1">Discounted: {metrics.discountedPaybackPeriodYears?.toFixed(1)} Yrs</p>
+          <p suppressHydrationWarning className="text-[11px] text-muted-foreground mt-1">
+            Discounted: {metrics.discountedPaybackPeriodYears?.toFixed(1)} Yrs
+          </p>
         </div>
       </div>
 
@@ -130,7 +144,7 @@ export default function OverviewPage() {
           <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" /> Management Decision Alternatives
           </h2>
-          <span className={`px-3 py-1 rounded-lg border text-xs ${getDecisionBadgeColor(metrics.decisionStatus)}`}>
+          <span suppressHydrationWarning className={`px-3 py-1 rounded-lg border text-xs ${getDecisionBadgeColor(metrics.decisionStatus)}`}>
             Recommended: {metrics.decisionStatus}
           </span>
         </div>
