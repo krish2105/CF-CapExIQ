@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { GeneratedScenarioStudio } from '@/app/api/ai/scenario-studio/route';
 import { Sparkles, Wand2, Play, Sliders, CheckCircle2, RefreshCw, Activity, Layers } from 'lucide-react';
+import { FallbackNotice } from '@/components/ai/FallbackNotice';
 
 const INITIAL_STUDIO_SCENARIO: GeneratedScenarioStudio = {
   scenarioName: 'High Inflation & GCC Logistics Bottleneck Scenario',
@@ -73,6 +74,7 @@ export default function AiScenarioStudioPage() {
 
   return (
     <div className="space-y-6">
+      <FallbackNotice isFallback={generatedScenario.isFallback} reason={generatedScenario.fallbackReason} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
           <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">

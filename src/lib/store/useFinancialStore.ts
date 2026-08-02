@@ -143,6 +143,8 @@ interface FinancialStoreState {
   resetAssumptions: () => void;
   setScenario: (scenario: ScenarioType) => void;
   setRole: (role: ExecutiveRole) => void;
+  /** Discard all persisted user state. Called on sign-out. */
+  clearSession: () => void;
   updateCustomScenarioSliders: (sliders: Partial<CustomScenarioSliders>) => void;
   addChatMessage: (
     role: 'user' | 'assistant',
@@ -214,6 +216,42 @@ export const useFinancialStore = create<FinancialStoreState>()(
 
       setRole: (role) => {
         set({ selectedRole: role });
+      },
+
+      /**
+       * Wipe everything this browser retained about the signed-in user.
+       *
+       * Signing out cleared the session cookie and nothing else. The store is
+       * persisted to localStorage, so the previous user's chat transcript,
+       * assumption audit trail and edited capital model stayed on disk and
+       * were rehydrated for whoever signed in next — on a shared demo machine
+       * that is cross-user disclosure, and the audit log is exactly the record
+       * that must not be attributable to the wrong person.
+       *
+       * Everything resets, including the working model. Losing an unsaved
+       * scenario on sign-out is a smaller harm than handing it to the next
+       * person at the keyboard, and profiles exist for work worth keeping.
+       */
+      clearSession: () => {
+        clearScenarioMemo();
+        set({
+          assumptions: DEFAULT_FINANCIAL_ASSUMPTIONS,
+          assumptionsRegister: DEFAULT_ASSUMPTIONS_REGISTER,
+          selectedScenario: 'Base',
+          customScenarioSliders: DEFAULT_CUSTOM_SLIDERS,
+          chatMessages: [],
+          auditLog: [],
+        });
+        // Remove the persisted copy outright rather than relying on the
+        // rehydrated defaults being written back: if the tab closes before
+        // the next write, the old payload would still be on disk.
+        if (typeof window !== 'undefined') {
+          try {
+            window.localStorage.removeItem('capexiq-financial-store');
+          } catch {
+            /* private mode or a disabled store — nothing recoverable to do */
+          }
+        }
       },
 
       updateCustomScenarioSliders: (sliders) => {

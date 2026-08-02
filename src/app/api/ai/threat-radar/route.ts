@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
@@ -10,7 +11,7 @@ export interface ThreatVector {
   mitigationStrategy: string;
 }
 
-export interface ThreatRadarResponse {
+export interface ThreatRadarResponse extends AiResponseMeta {
   overallThreatScore: number;
   threatLevel: 'STABLE' | 'MODERATE ELEVATED' | 'HIGH EXPOSURE';
   threatVectors: ThreatVector[];
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
     const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
-      return NextResponse.json(fallbackResponse);
+      return aiFallback(fallbackResponse, 'provider-unconfigured');
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -116,12 +117,12 @@ Return ONLY a JSON object matching this schema:
     const content = completion.choices[0]?.message?.content;
     if (content) {
       const parsed = JSON.parse(content) as ThreatRadarResponse;
-      return NextResponse.json(parsed);
+      return aiGenerated(parsed);
     }
 
-    return NextResponse.json(fallbackResponse);
+    return aiFallback(fallbackResponse, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback threat radar due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_THREATS);
+    return aiFallback(DEFAULT_FALLBACK_THREATS, 'provider-error');
   }
 }

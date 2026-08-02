@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { EsgImpactResponse } from '@/app/api/ai/esg-impact/route';
 import { Leaf, Sun, Zap, Award, ShieldCheck, RefreshCw, Layers } from 'lucide-react';
+import { FallbackNotice } from '@/components/ai/FallbackNotice';
 
 const INITIAL_ESG_DATA: EsgImpactResponse = {
   esgScore: 92,
@@ -56,6 +57,7 @@ export default function EsgSustainabilityPage() {
 
   return (
     <div className="space-y-6">
+      <FallbackNotice isFallback={esgData.isFallback} reason={esgData.fallbackReason} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
           <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">

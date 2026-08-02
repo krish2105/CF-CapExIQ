@@ -7,6 +7,7 @@ import { projectAssumptionRowSchema } from '@/lib/csv/schemas';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { Download, Upload, FileText, CheckCircle2, AlertTriangle, FileSpreadsheet, Printer } from 'lucide-react';
 import VendorQuoteUploader from '@/components/csv/VendorQuoteUploader';
+import { RoleGate } from '@/components/auth/RoleGate';
 import Link from 'next/link';
 
 export default function CsvManagementPage() {
@@ -112,7 +113,14 @@ export default function CsvManagementPage() {
       </div>
 
       {/* Vendor Quote OCR Ingestion Engine */}
-      <VendorQuoteUploader />
+      {/*
+        Gated to match the endpoint. `parse-quote` requires `assumptions.edit`
+        because its output writes the capital model, so without this a
+        read-only role saw a working-looking uploader that 403s on use.
+      */}
+      <RoleGate require={['assumptions.edit']} fallback="notice" label="Vendor quotation extraction">
+        <VendorQuoteUploader />
+      </RoleGate>
 
       {/* Upload Zone & Export Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

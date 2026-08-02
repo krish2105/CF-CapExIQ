@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 
@@ -13,7 +14,7 @@ export interface BoardMemberStatement {
   keyConcernOrDriver: string;
 }
 
-export interface BoardDebateResponse {
+export interface BoardDebateResponse extends AiResponseMeta {
   consensusDecision: 'APPROVE WITH GATES' | 'UNCONDITIONAL APPROVAL' | 'DEFER INVESTIGATION' | 'REJECT';
   consensusSummary: string;
   voteCount: {
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
     const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
-      return NextResponse.json(fallbackResponse);
+      return aiFallback(fallbackResponse, 'provider-unconfigured');
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -161,12 +162,12 @@ Simulate the executive board debate and output structured JSON.`;
     const content = completion.choices[0]?.message?.content;
     if (content) {
       const parsed = JSON.parse(content) as BoardDebateResponse;
-      return NextResponse.json(parsed);
+      return aiGenerated(parsed);
     }
 
-    return NextResponse.json(fallbackResponse);
+    return aiFallback(fallbackResponse, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback board debate due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_DEBATE);
+    return aiFallback(DEFAULT_FALLBACK_DEBATE, 'provider-error');
   }
 }

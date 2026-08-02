@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput } from '@/lib/guardrails/aiGuardrails';
 
-export interface NegotiatedRfpTerms {
+export interface NegotiatedRfpTerms extends AiResponseMeta {
   vendorName: string;
   initialQuotedCapex: number;
   finalNegotiatedCapex: number;
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
     const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
-      return NextResponse.json(fallbackResponse);
+      return aiFallback(fallbackResponse, 'provider-unconfigured');
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -147,12 +148,12 @@ Return ONLY a JSON object matching this schema:
     const content = completion.choices[0]?.message?.content;
     if (content) {
       const parsed = JSON.parse(content) as NegotiatedRfpTerms;
-      return NextResponse.json(parsed);
+      return aiGenerated(parsed);
     }
 
-    return NextResponse.json(fallbackResponse);
+    return aiFallback(fallbackResponse, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback RFP negotiation due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_RFP);
+    return aiFallback(DEFAULT_FALLBACK_RFP, 'provider-error');
   }
 }

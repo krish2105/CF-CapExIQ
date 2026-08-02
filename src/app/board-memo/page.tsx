@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { BoardMemoResponse } from '@/app/api/ai/board-memo/route';
 import { FileText, Printer, ShieldCheck, Sparkles, CheckCircle2, Lock, Download, RefreshCw } from 'lucide-react';
+import { FallbackNotice } from '@/components/ai/FallbackNotice';
 
 const INITIAL_MEMO_DATA: BoardMemoResponse = {
   memoTitle: 'EXECUTIVE BOARD MEMORANDUM: AUTOMATED MICRO-FULFILMENT CENTRE CAPEX APPROVAL',
@@ -74,6 +75,7 @@ export default function BoardMemoPage() {
 
   return (
     <div className="space-y-6">
+      <FallbackNotice isFallback={memoData.isFallback} reason={memoData.fallbackReason} />
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border print:hidden">
         <div>

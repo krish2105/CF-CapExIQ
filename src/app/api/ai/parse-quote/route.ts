@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardDocument, sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 
-export interface ParsedVendorQuote {
+export interface ParsedVendorQuote extends AiResponseMeta {
   vendorName: string;
   quotationRef: string;
   quoteDate: string;
@@ -21,6 +22,10 @@ export interface ParsedVendorQuote {
     amountAED: number;
   }>;
   vendorNotes: string;
+  /** Guardrail actions applied to the upload — truncation, PII redaction. */
+  notices?: string[];
+  /** True when this is canned data, not an extraction. See item 5 rationale. */
+  isFallback?: boolean;
 }
 
 const DEFAULT_FALLBACK_QUOTE: ParsedVendorQuote = {
@@ -103,7 +108,7 @@ export async function POST(req: Request) {
     const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here') || !documentText) {
-      return NextResponse.json(fallbackResponse);
+      return aiFallback(fallbackResponse, 'provider-unconfigured');
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -151,12 +156,14 @@ Return ONLY a JSON object matching this schema:
     const content = completion.choices[0]?.message?.content;
     if (content) {
       const parsed = JSON.parse(content) as ParsedVendorQuote;
-      return NextResponse.json(parsed);
+      // Carry the guardrail actions through to the UI: a total extracted from
+      // a truncated or redacted document is not a total for the whole quote.
+      return aiGenerated({ ...parsed, notices: guarded.notices });
     }
 
-    return NextResponse.json(fallbackResponse);
+    return aiFallback(fallbackResponse, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback quote parsing due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_QUOTE);
+    return aiFallback(DEFAULT_FALLBACK_QUOTE, 'provider-error');
   }
 }

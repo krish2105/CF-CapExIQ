@@ -128,6 +128,28 @@ describe('every AI route is authorised', () => {
     expect(offenders.map((o) => o.name)).toEqual([]);
   });
 
+  /**
+   * A canned board memo returned with a 200 and no marker is indistinguishable
+   * from a generated one. `live-macro` is exempt — it serves declared
+   * reference data with its own `isLive: false` and provenance string, and
+   * `explain` streams `isFallback` on its SSE `done` event instead.
+   */
+  const STRUCTURED = routes.filter((r) => !['live-macro', 'explain'].includes(r.name));
+
+  it.each(STRUCTURED)('$name marks generated vs fallback responses', ({ file }) => {
+    const source = readFileSync(file, 'utf8');
+    expect(source).toMatch(/from '@\/lib\/ai\/response'/);
+    expect(source).toMatch(/aiFallback\(/);
+  });
+
+  it.each(STRUCTURED)('$name returns no unmarked payload', ({ file }) => {
+    const source = readFileSync(file, 'utf8');
+    // Every remaining bare NextResponse.json must be an error envelope
+    // (guardrail refusal / 401 / 429), never a content payload.
+    const bare = source.match(/return NextResponse\.json\((?!\s*\{\s*error)/g) ?? [];
+    expect(bare).toEqual([]);
+  });
+
   it.each(routes)('$name checks before entering its try block', ({ file }) => {
     const source = readFileSync(file, 'utf8');
     const guard = source.indexOf('if (!auth.ok) return auth.response;');

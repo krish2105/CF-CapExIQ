@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 import crypto from 'crypto';
 
-export interface BoardMemoResponse {
+export interface BoardMemoResponse extends AiResponseMeta {
   memoTitle: string;
   documentRef: string;
   date: string;
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
     const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
-      return NextResponse.json(fallbackMemo);
+      return aiFallback(fallbackMemo, 'provider-unconfigured');
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -127,12 +128,12 @@ Return ONLY a JSON object matching this schema:
     if (content) {
       const parsed = JSON.parse(content) as BoardMemoResponse;
       parsed.auditHash = auditHash; // Ensure exact cryptographic hash
-      return NextResponse.json(parsed);
+      return aiGenerated(parsed);
     }
 
-    return NextResponse.json(fallbackMemo);
+    return aiFallback(fallbackMemo, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback board memo due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_MEMO);
+    return aiFallback(DEFAULT_FALLBACK_MEMO, 'provider-error');
   }
 }

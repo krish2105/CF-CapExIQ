@@ -5,6 +5,7 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { formatAED, formatPercent } from '@/lib/utils/formatting';
 import { useHasMounted } from '@/lib/hooks/useHasMounted';
 import { NegotiatedRfpTerms } from '../api/ai/rfp-negotiator/route';
+import { FallbackNotice } from '@/components/ai/FallbackNotice';
 import {
   Handshake,
   Bot,
@@ -111,6 +112,7 @@ export default function RfpNegotiatorPage() {
 
   return (
     <div className="space-y-6">
+      <FallbackNotice isFallback={rfpData.isFallback} reason={rfpData.fallbackReason} />
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-border">
         <div>

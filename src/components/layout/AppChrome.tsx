@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { SegmentNav } from '@/components/layout/SegmentNav';
 import { CommandPalette } from '@/components/navigation/CommandPalette';
 import VoiceCopilotWidget from '@/components/ai/VoiceCopilotWidget';
+import { RoleGate } from '@/components/auth/RoleGate';
 import { AutoReveal } from '@/components/ui/AutoReveal';
 import { ScrollProgress } from '@/components/ui/ScrollProgress';
 
@@ -37,7 +38,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
       <Header />
       <CommandPalette />
-      <VoiceCopilotWidget />
+      {/*
+        The voice copilot proposes assumption changes, and `/api/ai/voice-intent`
+        requires `assumptions.edit` for that reason. Rendering the microphone
+        for a role that cannot use it offers a control that fails on press.
+      */}
+      <RoleGate require={['assumptions.edit']}>
+        <VoiceCopilotWidget />
+      </RoleGate>
       <AutoReveal />
       <ScrollProgress />
 

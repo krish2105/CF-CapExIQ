@@ -5,6 +5,7 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { ThreatRadarResponse } from '@/app/api/ai/threat-radar/route';
 import { ShieldAlert, RefreshCw, ShieldCheck, AlertTriangle, Activity } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
+import { FallbackNotice } from '@/components/ai/FallbackNotice';
 
 const INITIAL_THREAT_DATA: ThreatRadarResponse = {
   overallThreatScore: 38,
@@ -91,6 +92,7 @@ export default function AiThreatRadarPage() {
 
   return (
     <div className="space-y-6">
+      <FallbackNotice isFallback={threatData.isFallback} reason={threatData.fallbackReason} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
           <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">

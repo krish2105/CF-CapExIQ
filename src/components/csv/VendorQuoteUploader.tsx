@@ -5,15 +5,54 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { ParsedVendorQuote } from '@/app/api/ai/parse-quote/route';
 import { FileUp, Sparkles, CheckCircle2, RefreshCw, Layers } from 'lucide-react';
 
+/**
+ * 2 MB of text is far more than any real quotation and small enough that
+ * `file.text()` cannot lock the main thread.
+ */
+const MAX_UPLOAD_BYTES = 2 * 1_048_576;
+
+/**
+ * Text-bearing formats only. `.pdf` was accepted and then read with
+ * `file.text()`, which yields binary noise, not the document — the extractor
+ * was being handed garbage and answering confidently from it.
+ */
+const ACCEPTED_EXTENSIONS = ['.txt', '.csv', '.json', '.md'] as const;
+
 export default function VendorQuoteUploader() {
   const { updateAssumptions, assumptions } = useFinancialStore();
   const [loading, setLoading] = useState(false);
   const [parsedResult, setParsedResult] = useState<ParsedVendorQuote | null>(null);
   const [applied, setApplied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notices, setNotices] = useState<string[]>([]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setError(null);
+
+    // Validated here as well as server-side. The server bound exists to stop
+    // an attacker; this one exists to stop an accident — reading a 40 MB file
+    // with `file.text()` freezes the tab before any request is sent, so a
+    // server-only limit still lets a mistyped upload break the page.
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(
+        `${file.name} is ${(file.size / 1_048_576).toFixed(1)} MB. The limit is ` +
+          `${MAX_UPLOAD_BYTES / 1_048_576} MB — export the quote as text or CSV and retry.`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    if (!ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext))) {
+      setError(
+        `${file.name} is not a supported format. Upload ${ACCEPTED_EXTENSIONS.join(', ')} — ` +
+          `binary PDFs are read as raw bytes and produce nonsense figures.`
+      );
+      e.target.value = '';
+      return;
+    }
 
     setLoading(true);
     setApplied(false);
@@ -28,13 +67,31 @@ export default function VendorQuoteUploader() {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to parse quote');
+      if (res.status === 403) {
+        setError('Your role does not hold write access to the capital model.');
+        return;
+      }
+      if (res.status === 429) {
+        setError('Too many uploads in a short window. Wait a moment and retry.');
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.message ?? 'Failed to parse the quotation.');
+        return;
+      }
+
       const data: ParsedVendorQuote = await res.json();
       setParsedResult(data);
+      // Surfaced, not swallowed: a truncated or redacted document produces a
+      // confident total over partial input, and the reader has to know that.
+      setNotices(Array.isArray(data.notices) ? data.notices : []);
     } catch (err) {
       console.error(err);
+      setError('Could not reach the extraction service.');
     } finally {
       setLoading(false);
+      e.target.value = '';
     }
   };
 
@@ -70,9 +127,32 @@ export default function VendorQuoteUploader() {
               <FileUp className="h-4 w-4" /> Upload Vendor Quote
             </>
           )}
-          <input type="file" accept=".txt,.csv,.json,.pdf" className="hidden" onChange={handleFileUpload} disabled={loading} />
+          <input
+            type="file"
+            accept={ACCEPTED_EXTENSIONS.join(',')}
+            className="hidden"
+            onChange={handleFileUpload}
+            disabled={loading}
+          />
         </label>
       </div>
+
+      {error && (
+        <p
+          role="alert"
+          className="text-xs text-destructive border border-destructive/30 bg-destructive/5 rounded-card px-3 py-2"
+        >
+          {error}
+        </p>
+      )}
+
+      {notices.length > 0 && (
+        <ul className="text-[11px] text-muted-foreground border border-border rounded-card px-3 py-2 space-y-1">
+          {notices.map((notice) => (
+            <li key={notice}>· {notice}</li>
+          ))}
+        </ul>
+      )}
 
       {parsedResult && (
         <div className="bg-background/60 border border-primary/20 rounded-card p-4 space-y-4 text-xs animate-fadeIn">

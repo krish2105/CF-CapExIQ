@@ -78,6 +78,7 @@ export const Header: React.FC = () => {
     activeProfileId,
     loadProjectProfile,
     duplicateProjectProfile,
+    clearSession,
   } = useFinancialStore();
 
   const decision = getActiveScenarioResult().metrics.decisionStatus;
@@ -256,8 +257,17 @@ export const Header: React.FC = () => {
                     <button
                       type="button"
                       onClick={async () => {
-                        await fetch('/api/auth/logout', { method: 'POST' });
-                        window.location.href = '/login';
+                        // Clear local state even if the network call fails —
+                        // a user who clicks "Sign out" on a shared machine has
+                        // to end up signed out locally regardless, and leaving
+                        // the transcript behind because a fetch timed out is
+                        // the failure mode that matters here.
+                        try {
+                          await fetch('/api/auth/logout', { method: 'POST' });
+                        } finally {
+                          clearSession();
+                          window.location.href = '/login';
+                        }
                       }}
                       className="w-full rounded-pill border border-border-strong px-3 py-1.5 text-xs text-foreground hover:border-foreground hover:bg-muted transition-colors"
                     >

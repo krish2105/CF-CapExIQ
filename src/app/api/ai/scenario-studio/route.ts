@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput } from '@/lib/guardrails/aiGuardrails';
 
-export interface GeneratedScenarioStudio {
+export interface GeneratedScenarioStudio extends AiResponseMeta {
   scenarioName: string;
   narrativeDescription: string;
   multipliers: {
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
     const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
-      return NextResponse.json(fallbackScenario);
+      return aiFallback(fallbackScenario, 'provider-unconfigured');
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -184,16 +185,16 @@ Return ONLY a JSON object matching this schema:
     const content = completion.choices[0]?.message?.content;
     if (content) {
       try {
-        return NextResponse.json(normalizeScenario(JSON.parse(content), fallbackScenario));
+        return aiGenerated(normalizeScenario(JSON.parse(content), fallbackScenario));
       } catch {
         // Non-JSON body despite response_format — fall through to the fallback.
-        return NextResponse.json(fallbackScenario);
+        return aiFallback(fallbackScenario, 'parse-failed');
       }
     }
 
-    return NextResponse.json(fallbackScenario);
+    return aiFallback(fallbackScenario, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback scenario studio due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_SCENARIO);
+    return aiFallback(DEFAULT_FALLBACK_SCENARIO, 'provider-error');
   }
 }

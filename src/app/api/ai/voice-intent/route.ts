@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput, safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
-export interface VoiceIntentResponse {
+export interface VoiceIntentResponse extends AiResponseMeta {
   spokenSummary: string;
   actionTaken: string;
   proposedUpdates: {
@@ -93,11 +94,17 @@ export async function POST(req: Request) {
         }
       }
 
-      return NextResponse.json({
-        spokenSummary: actionTaken + ` Current project NPV is strong.`,
-        actionTaken,
-        proposedUpdates,
-      });
+      // Deterministic keyword parsing, not a model result. It genuinely
+      // reflects what the user said, but the caller must still be able to
+      // tell it apart from an interpreted intent.
+      return aiFallback(
+        {
+          spokenSummary: actionTaken + ` Current project NPV is strong.`,
+          actionTaken,
+          proposedUpdates,
+        },
+        'provider-unconfigured'
+      );
     }
 
     const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
@@ -143,12 +150,12 @@ Return ONLY a JSON object matching this schema:
     const content = completion.choices[0]?.message?.content;
     if (content) {
       const parsed = JSON.parse(content) as VoiceIntentResponse;
-      return NextResponse.json(parsed);
+      return aiGenerated(parsed);
     }
 
-    return NextResponse.json(fallbackResponse);
+    return aiFallback(fallbackResponse, 'provider-empty');
   } catch (error: any) {
     console.warn('Using fallback voice intent due to API key / network state:', error?.message);
-    return NextResponse.json(DEFAULT_FALLBACK_VOICE);
+    return aiFallback(DEFAULT_FALLBACK_VOICE, 'provider-error');
   }
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { BoardDebateResponse, BoardMemberStatement } from '@/app/api/ai/board-debate/route';
 import { Users, ShieldCheck, Play, RefreshCw, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react';
+import { FallbackNotice } from '@/components/ai/FallbackNotice';
 
 const INITIAL_DEBATE_DATA: BoardDebateResponse = {
   consensusDecision: 'APPROVE WITH GATES',
@@ -102,6 +103,7 @@ export default function BoardDebatePanel() {
 
   return (
     <div className="space-y-6">
+      <FallbackNotice isFallback={debateData.isFallback} reason={debateData.fallbackReason} />
       {/* Action Banner */}
       <div className="bg-card border border-border rounded-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
