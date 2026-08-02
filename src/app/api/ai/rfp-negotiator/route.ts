@@ -77,13 +77,13 @@ export async function POST(req: Request) {
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
       return NextResponse.json(fallbackResponse);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are an AI Multi-Agent Game Theory RFP Negotiator for NovaRetail GCC.
 Simulate a multi-round game-theoretic procurement negotiation between an AI Buyer Agent and a Vendor Sales AI for warehouse automation equipment.

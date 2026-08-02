@@ -102,43 +102,43 @@ export default function OperationalAnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-cyan-400" /> DataCo Operational Delivery Analytics
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-primary" /> DataCo Operational Delivery Analytics
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             Smart Supply Chain Analytics Benchmark • Genuine Sample Data Integration
           </p>
         </div>
 
-        <div className="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold flex items-center gap-1.5">
+        <div className="px-3 py-1 rounded-card bg-warning/10 border border-warning/30 text-warning text-xs font-semibold flex items-center gap-1.5">
           <AlertTriangle className="h-4 w-4" /> Operational Benchmark (Source Monetary Units)
         </div>
       </div>
 
       {/* Mandatory Non-Historical Disclosure Banner */}
-      <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
-        <div className="flex items-center gap-2 font-bold text-slate-100">
-          <Info className="h-4 w-4 text-cyan-400" /> Data Classification Notice:
+      <div className="p-4 rounded-card bg-surface/90 border border-border text-xs text-card-foreground space-y-1">
+        <div className="flex items-center gap-2 font-bold text-foreground">
+          <Info className="h-4 w-4 text-primary" /> Data Classification Notice:
         </div>
-        <p className="text-[11px] text-slate-400 leading-relaxed">
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
           The DataCo Smart Supply Chain dataset is an external operational sample used for fulfillment process modeling. Monetary values are source-dataset values and <strong>must not be described as AED</strong> or claimed to represent NovaRetail GCC&apos;s historical financial results.
         </p>
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-panel p-4 rounded-xl border border-slate-800 flex flex-wrap items-center gap-4 text-xs">
-        <div className="flex items-center gap-2 text-slate-300 font-bold">
-          <Filter className="h-4 w-4 text-cyan-400" /> Filters:
+      <div className="glass-panel p-4 flex flex-wrap items-center gap-4 text-xs">
+        <div className="flex items-center gap-2 text-card-foreground font-bold">
+          <Filter className="h-4 w-4 text-primary" /> Filters:
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-slate-400 font-medium">Market:</label>
+          <label className="text-muted-foreground font-medium">Market:</label>
           <select
             value={selectedMarket}
             onChange={(e) => setSelectedMarket(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="bg-surface border border-border rounded-card px-2.5 py-1 text-foreground focus:outline-none focus:border-primary"
           >
             <option value="ALL">All Markets</option>
             <option value="Pacific Asia">Pacific Asia</option>
@@ -148,11 +148,11 @@ export default function OperationalAnalyticsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-slate-400 font-medium">Payment Type:</label>
+          <label className="text-muted-foreground font-medium">Payment Type:</label>
           <select
             value={selectedPaymentType}
             onChange={(e) => setSelectedPaymentType(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="bg-surface border border-border rounded-card px-2.5 py-1 text-foreground focus:outline-none focus:border-primary"
           >
             <option value="ALL">All Payment Types</option>
             <option value="DEBIT">DEBIT</option>
@@ -162,60 +162,60 @@ export default function OperationalAnalyticsPage() {
           </select>
         </div>
 
-        <span className="text-[11px] text-slate-500 font-mono ml-auto">
+        <span className="text-[11px] text-muted-foreground font-mono ml-auto">
           Showing {filteredRows.length} of {DATACO_SAMPLE_ROWS.length} Orders
         </span>
       </div>
 
       {/* Operational KPI Ribbon */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="glass-panel p-3.5 rounded-xl border border-slate-800">
-          <span className="text-[11px] text-slate-400 font-medium">Total Order Sales</span>
-          <p className="text-lg font-bold text-slate-100 mt-1">{formatNumber(totalSales)}</p>
-          <span className="text-[10px] text-slate-500 font-mono">Source Monetary Units</span>
+        <div className="glass-panel p-3.5">
+          <span className="text-[11px] text-muted-foreground font-medium">Total Order Sales</span>
+          <p className="text-lg font-bold text-foreground mt-1">{formatNumber(totalSales)}</p>
+          <span className="text-[10px] text-muted-foreground font-mono">Source Monetary Units</span>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-slate-800">
-          <span className="text-[11px] text-slate-400 font-medium">Total Order Profit</span>
-          <p className={`text-lg font-bold mt-1 ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <div className="glass-panel p-3.5">
+          <span className="text-[11px] text-muted-foreground font-medium">Total Order Profit</span>
+          <p className={`text-lg font-bold mt-1 ${totalProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
             {formatNumber(totalProfit)}
           </p>
-          <span className="text-[10px] text-slate-500 font-mono">Avg Margin: {avgMargin.toFixed(1)}%</span>
+          <span className="text-[10px] text-muted-foreground font-mono">Avg Margin: {avgMargin.toFixed(1)}%</span>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-slate-800">
-          <span className="text-[11px] text-slate-400 font-medium">Late Delivery Rate</span>
-          <p className="text-lg font-bold text-amber-400 mt-1">{lateDeliveryRate.toFixed(1)}%</p>
-          <span className="text-[10px] text-amber-500/80 font-mono">{lateOrders} Delayed Orders</span>
+        <div className="glass-panel p-3.5">
+          <span className="text-[11px] text-muted-foreground font-medium">Late Delivery Rate</span>
+          <p className="text-lg font-bold text-warning mt-1">{lateDeliveryRate.toFixed(1)}%</p>
+          <span className="text-[10px] text-warning/80 font-mono">{lateOrders} Delayed Orders</span>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-slate-800">
-          <span className="text-[11px] text-slate-400 font-medium">Shipping Duration</span>
-          <p className="text-lg font-bold text-cyan-400 mt-1">{avgActualShippingDays.toFixed(1)} Days</p>
-          <span className="text-[10px] text-slate-500 font-mono">Scheduled: {avgScheduledShippingDays.toFixed(1)} Days</span>
+        <div className="glass-panel p-3.5">
+          <span className="text-[11px] text-muted-foreground font-medium">Shipping Duration</span>
+          <p className="text-lg font-bold text-primary mt-1">{avgActualShippingDays.toFixed(1)} Days</p>
+          <span className="text-[10px] text-muted-foreground font-mono">Scheduled: {avgScheduledShippingDays.toFixed(1)} Days</span>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-slate-800">
-          <span className="text-[11px] text-slate-400 font-medium">Negative Profit Orders</span>
-          <p className="text-lg font-bold text-rose-400 mt-1">{negativeProfitOrders}</p>
-          <span className="text-[10px] text-rose-500/80 font-mono">Target: Eliminate</span>
+        <div className="glass-panel p-3.5">
+          <span className="text-[11px] text-muted-foreground font-medium">Negative Profit Orders</span>
+          <p className="text-lg font-bold text-destructive mt-1">{negativeProfitOrders}</p>
+          <span className="text-[10px] text-destructive/80 font-mono">Target: Eliminate</span>
         </div>
       </div>
 
       {/* Operational Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Monthly Sales & Profit Trend */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="glass-panel p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+            <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em]">
               Monthly Operational Sales & Profit Trends
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Monthly Aggregations</span>
+            <span className="text-[11px] text-muted-foreground font-mono">Monthly Aggregations</span>
           </div>
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={MONTHLY_SUMMARY_DATA} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="2 6" vertical={false} stroke="#1e293b" />
                 <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} />
                 <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: "10px", fontSize: '12px' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 <Line type="monotone" dataKey="total_sales" name="Sales" stroke="#06b6d4" strokeWidth={2.5} dot={{ r: 4 }} />
@@ -226,23 +226,23 @@ export default function OperationalAnalyticsPage() {
         </div>
 
         {/* Chart 2: Category Sales Distribution */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="glass-panel p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+            <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em]">
               Category Sales Volume Breakdown
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Filtered Orders</span>
+            <span className="text-[11px] text-muted-foreground font-mono">Filtered Orders</span>
           </div>
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="2 6" vertical={false} stroke="#1e293b" />
                 <XAxis dataKey="category" stroke="#64748b" tick={{ fontSize: 11 }} />
                 <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: "10px", fontSize: '12px' }}
                 />
-                <Bar dataKey="sales" name="Order Volume" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sales" name="Order Volume" fill="#3b82f6" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

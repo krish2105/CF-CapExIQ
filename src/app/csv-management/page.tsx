@@ -95,7 +95,7 @@ export default function CsvManagementPage() {
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <Download className="h-6 w-6 text-primary" /> CSV Management & Data Quality Audit
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -105,7 +105,7 @@ export default function CsvManagementPage() {
 
         <Link
           href="/printable-report"
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-500/20 transition-all"
+          className="px-4 py-2 rounded-card bg-accent text-accent-foreground text-xs font-bold flex items-center gap-2 transition-all"
         >
           <Printer className="h-4 w-4" /> View Printable Report
         </Link>
@@ -117,12 +117,12 @@ export default function CsvManagementPage() {
       {/* Upload Zone & Export Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CSV Upload Zone */}
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2 flex items-center gap-2">
+        <div className="glass-panel p-5 space-y-4">
+          <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2 flex items-center gap-2">
             <Upload className="h-4 w-4 text-primary" /> User CSV Browser Upload & Audit
           </h3>
 
-          <div className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-6 text-center space-y-2 transition-colors">
+          <div className="border-2 border-dashed border-border hover:border-primary/50 rounded-card p-6 text-center space-y-2 transition-colors">
             <FileSpreadsheet className="h-8 w-8 text-primary mx-auto" />
             <p className="text-xs font-semibold text-foreground">Upload Project Assumptions or Operational CSV</p>
             <p className="text-[11px] text-muted-foreground">Supports .csv files with PapaParse schema validation</p>
@@ -135,7 +135,7 @@ export default function CsvManagementPage() {
             />
             <label
               htmlFor="csv-upload-input"
-              className="inline-block mt-2 px-4 py-2 rounded-lg bg-card hover:bg-muted text-primary text-xs font-bold cursor-pointer transition-colors border border-border"
+              className="inline-block mt-2 px-4 py-2 rounded-card bg-card hover:bg-muted text-primary text-xs font-bold cursor-pointer transition-colors border border-border"
             >
               Select File to Audit
             </label>
@@ -143,7 +143,7 @@ export default function CsvManagementPage() {
 
           {/* Audit Results */}
           {uploadReport && (
-            <div className="p-4 rounded-xl bg-card border border-border space-y-3">
+            <div className="p-4 rounded-card bg-card border border-border space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-xs font-bold text-foreground">Audit Report: {uploadReport.datasetName}</span>
                 <span className="text-[10px] text-success font-mono font-bold">
@@ -159,7 +159,7 @@ export default function CsvManagementPage() {
 
               {uploadReport.validationErrors.length > 0 && (
                 <div className="space-y-1 pt-1">
-                  <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">Row Errors Log:</p>
+                  <p className="text-[11px] font-semibold text-warning">Row Errors Log:</p>
                   <div className="max-h-32 overflow-y-auto space-y-1 text-[10px] font-mono text-destructive bg-muted p-2 rounded">
                     {uploadReport.validationErrors.map((err, idx) => (
                       <div key={idx}>
@@ -174,15 +174,15 @@ export default function CsvManagementPage() {
         </div>
 
         {/* Multi-Format Export Panel */}
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2 flex items-center gap-2">
+        <div className="glass-panel p-5 space-y-4">
+          <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2 flex items-center gap-2">
             <Download className="h-4 w-4 text-primary" /> Multi-Format CSV Exports
           </h3>
 
           <div className="space-y-3">
             <button
               onClick={exportAssumptionsCsv}
-              className="w-full p-3 rounded-xl bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center justify-between transition-colors"
+              className="w-full p-3 rounded-card bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center justify-between transition-colors"
             >
               <span className="flex items-center gap-2">
                 <FileSpreadsheet className="h-4 w-4 text-primary" /> Export Project Assumptions CSV
@@ -192,7 +192,7 @@ export default function CsvManagementPage() {
 
             <button
               onClick={exportCashFlowsCsv}
-              className="w-full p-3 rounded-xl bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center justify-between transition-colors"
+              className="w-full p-3 rounded-card bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold flex items-center justify-between transition-colors"
             >
               <span className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-success" /> Export 6-Year Cash Flow Forecast CSV

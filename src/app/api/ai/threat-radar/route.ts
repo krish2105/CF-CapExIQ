@@ -67,13 +67,13 @@ export async function POST(req: Request) {
     const fallbackResponse: ThreatRadarResponse = DEFAULT_FALLBACK_THREATS;
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
       return NextResponse.json(fallbackResponse);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are a Chief Risk Officer AI for NovaRetail GCC.
 Analyze financial model assumptions and compute a multi-axis threat radar across 6 dimensions. Scores are 0 to 100.

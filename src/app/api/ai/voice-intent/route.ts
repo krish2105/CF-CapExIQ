@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here')) {
       // Deterministic intent parsing fallback for key phrases
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are a Voice AI Financial Intent Parser for NovaRetail GCC.
 Convert natural language spoken commands into structured financial parameter updates for a Next.js financial store.

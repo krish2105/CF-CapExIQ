@@ -63,7 +63,7 @@ export default function DataSourcesPage() {
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-primary" /> Data Dictionary, Source Catalog & Methodology
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -75,12 +75,12 @@ export default function DataSourcesPage() {
       {/* Controls Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Tabs */}
-        <div className="flex items-center bg-muted p-1 rounded-xl border border-border text-xs">
+        <div className="flex items-center bg-muted p-1 rounded-card border border-border text-xs">
           <button
             onClick={() => setActiveTab('dictionary')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-card font-medium transition-all ${
               activeTab === 'dictionary'
-                ? 'bg-card text-foreground font-bold shadow-sm'
+                ? 'bg-card text-foreground font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -88,9 +88,9 @@ export default function DataSourcesPage() {
           </button>
           <button
             onClick={() => setActiveTab('sources')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-card font-medium transition-all ${
               activeTab === 'sources'
-                ? 'bg-card text-foreground font-bold shadow-sm'
+                ? 'bg-card text-foreground font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -98,9 +98,9 @@ export default function DataSourcesPage() {
           </button>
           <button
             onClick={() => setActiveTab('formulas')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-card font-medium transition-all ${
               activeTab === 'formulas'
-                ? 'bg-card text-foreground font-bold shadow-sm'
+                ? 'bg-card text-foreground font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -116,17 +116,17 @@ export default function DataSourcesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search variables or formulas..."
-            className="w-full bg-card border border-border rounded-xl pl-9 pr-4 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+            className="w-full bg-card border border-border rounded-card pl-9 pr-4 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-medium"
           />
         </div>
       </div>
 
       {/* Active Content Table */}
       {activeTab === 'dictionary' && (
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <table className="w-full text-left text-xs font-mono border-collapse">
+        <div className="glass-panel p-5 space-y-4">
+          <table className="ledger-table">
             <thead>
-              <tr className="bg-muted text-foreground text-[11px] border-b border-border">
+              <tr>
                 <th className="py-2.5 px-3">Dataset File</th>
                 <th className="py-2.5 px-3">Variable Name</th>
                 <th className="py-2.5 px-3">Definition & Purpose</th>
@@ -134,7 +134,7 @@ export default function DataSourcesPage() {
                 <th className="py-2.5 px-3">Source Ref</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-foreground">
+            <tbody>
               {dataDict
                 .filter((item) => item.variable_name.toLowerCase().includes(searchQuery.toLowerCase()) || item.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
                 .map((item, idx) => (
@@ -152,10 +152,10 @@ export default function DataSourcesPage() {
       )}
 
       {activeTab === 'sources' && (
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <table className="w-full text-left text-xs font-mono border-collapse">
+        <div className="glass-panel p-5 space-y-4">
+          <table className="ledger-table">
             <thead>
-              <tr className="bg-muted text-foreground text-[11px] border-b border-border">
+              <tr>
                 <th className="py-2.5 px-3">ID</th>
                 <th className="py-2.5 px-3">Source Organisation</th>
                 <th className="py-2.5 px-3">Dataset Title</th>
@@ -163,7 +163,7 @@ export default function DataSourcesPage() {
                 <th className="py-2.5 px-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-foreground">
+            <tbody>
               {sources
                 .filter((item) => item.organisation.toLowerCase().includes(searchQuery.toLowerCase()) || item.dataset_title.toLowerCase().includes(searchQuery.toLowerCase()))
                 .map((item, idx) => (
@@ -181,22 +181,22 @@ export default function DataSourcesPage() {
       )}
 
       {activeTab === 'formulas' && (
-        <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-          <table className="w-full text-left text-xs font-mono border-collapse">
+        <div className="glass-panel p-5 space-y-4">
+          <table className="ledger-table">
             <thead>
-              <tr className="bg-muted text-foreground text-[11px] border-b border-border">
+              <tr>
                 <th className="py-2.5 px-3">Metric Name</th>
                 <th className="py-2.5 px-3">Mathematical Formula</th>
                 <th className="py-2.5 px-3">Corporate Finance Interpretation</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-foreground">
+            <tbody>
               {formulas
                 .filter((item) => item.metric_name.toLowerCase().includes(searchQuery.toLowerCase()))
                 .map((item, idx) => (
                   <tr key={idx} className="hover:bg-muted/50">
                     <td className="py-2.5 px-3 font-bold text-primary">{item.metric_name}</td>
-                    <td className="py-2.5 px-3 font-bold text-purple-600 dark:text-purple-400">{item.formula}</td>
+                    <td className="py-2.5 px-3 font-bold text-info">{item.formula}</td>
                     <td className="py-2.5 px-3 text-muted-foreground font-sans">{item.interpretation}</td>
                   </tr>
                 ))}

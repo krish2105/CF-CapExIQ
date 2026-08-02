@@ -115,14 +115,14 @@ export default function RfpNegotiatorPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-primary/10 text-primary border border-primary/20">
+            <span className="px-2.5 py-0.5 rounded-pill text-xs font-mono font-bold bg-primary/10 text-primary border border-primary/20">
               Frontier AI Module
             </span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <span className="px-2.5 py-0.5 rounded-pill text-xs font-mono font-bold bg-info/10 text-info border border-info/20">
               Game Theory MARL
             </span>
           </div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground mt-1 flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground mt-1 flex items-center gap-2">
             <Handshake className="h-6 w-6 text-primary" /> Multi-Agent Vendor RFP Negotiator
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -133,7 +133,7 @@ export default function RfpNegotiatorPage() {
         <button
           onClick={runNegotiation}
           disabled={loading}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-500 text-primary-foreground text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all disabled:opacity-50"
+          className="btn-primary justify-center disabled:opacity-50"
         >
           {loading ? (
             <>
@@ -148,8 +148,8 @@ export default function RfpNegotiatorPage() {
       </div>
 
       {/* Controls & Parameters */}
-      <div className="glass-panel p-5 rounded-2xl space-y-4 border border-border">
-        <h2 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+      <div className="glass-panel p-5 space-y-4">
+        <h2 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] flex items-center gap-2">
           <Sliders className="h-4 w-4 text-primary" /> Negotiation Parameters & Supplier Target
         </h2>
 
@@ -159,7 +159,7 @@ export default function RfpNegotiatorPage() {
             <select
               value={vendorName}
               onChange={(e) => setVendorName(e.target.value)}
-              className="w-full mt-1.5 p-2.5 rounded-xl bg-background border border-border text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary outline-none"
+              className="w-full mt-1.5 p-2.5 rounded-card bg-background border border-border text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary outline-none"
             >
               <option value="Swisslog Logistics Automation">Swisslog Logistics Automation</option>
               <option value="Dematic Warehouse Systems">Dematic Warehouse Systems</option>
@@ -187,7 +187,7 @@ export default function RfpNegotiatorPage() {
           <div>
             <div className="flex justify-between items-center text-xs">
               <label className="font-medium text-muted-foreground">Liquid Damages Clause (% / Wk)</label>
-              <span className="font-bold text-amber-500 font-mono">{liquidDamagesPct}%</span>
+              <span className="font-bold text-warning font-mono">{liquidDamagesPct}%</span>
             </div>
             <input
               type="range"
@@ -204,7 +204,7 @@ export default function RfpNegotiatorPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-4 rounded-2xl border border-border">
+        <div className="glass-panel p-4">
           <p className="text-xs text-muted-foreground font-medium">Initial Vendor Quote</p>
           <p suppressHydrationWarning className="text-lg font-bold text-foreground mt-1">
             {formatAED(rfpData.initialQuotedCapex)}
@@ -212,7 +212,7 @@ export default function RfpNegotiatorPage() {
           <span className="text-[10px] text-muted-foreground font-mono">Unadjusted EPC Proposal</span>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-border">
+        <div className="glass-panel p-4">
           <p className="text-xs text-muted-foreground font-medium">Final Negotiated CapEx</p>
           <p suppressHydrationWarning className="text-lg font-bold text-success mt-1">
             {formatAED(rfpData.finalNegotiatedCapex)}
@@ -222,7 +222,7 @@ export default function RfpNegotiatorPage() {
           </span>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-border">
+        <div className="glass-panel p-4">
           <p className="text-xs text-muted-foreground font-medium">Net Value Savings</p>
           <p suppressHydrationWarning className="text-lg font-bold text-primary mt-1">
             {formatAED(rfpData.savingsAchievedAED)}
@@ -230,39 +230,39 @@ export default function RfpNegotiatorPage() {
           <span className="text-[10px] text-muted-foreground font-mono">Capital Cost Reduction</span>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-border">
+        <div className="glass-panel p-4">
           <p className="text-xs text-muted-foreground font-medium">Warranty & Latency SLA</p>
-          <p suppressHydrationWarning className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">
+          <p suppressHydrationWarning className="text-lg font-bold text-info mt-1">
             {rfpData.warrantyPeriodYears} Yrs / &lt; {rfpData.wcsApiLatencyGuaranteeMs}ms
           </p>
-          <span className="text-[10px] text-purple-400 font-mono">Guaranteed Performance</span>
+          <span className="text-[10px] text-info font-mono">Guaranteed Performance</span>
         </div>
       </div>
 
       {/* Nash Equilibrium Card */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-emerald-900/20 to-slate-900 border border-emerald-500/30 space-y-2">
+      <div className="p-4 rounded-card bg-surface border border-success/30 space-y-2">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-emerald-400" />
-          <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+          <ShieldCheck className="h-5 w-5 text-success" />
+          <h3 className="font-sans text-xs font-semibold text-success uppercase tracking-[0.12em]">
             Game Theory Nash Equilibrium Result
           </h3>
         </div>
-        <p suppressHydrationWarning className="text-sm font-semibold text-emerald-200">
+        <p suppressHydrationWarning className="text-sm font-semibold text-success">
           {rfpData.gameTheoryNashEquilibrium}
         </p>
-        <p suppressHydrationWarning className="text-xs text-slate-300 leading-relaxed">
+        <p suppressHydrationWarning className="text-xs text-card-foreground leading-relaxed">
           {rfpData.executiveSummary}
         </p>
 
         <div className="pt-2 flex items-center gap-3">
           <button
             onClick={applyToFinancialModel}
-            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20"
+            className="px-4 py-2 rounded-card bg-success hover:opacity-90 text-foreground font-bold text-xs flex items-center gap-2 transition-all"
           >
             <CheckCircle2 className="h-4 w-4" /> Apply Agreed Terms to Financial Model
           </button>
           {appliedStatus && (
-            <span className="text-xs font-semibold text-emerald-400 font-mono flex items-center gap-1">
+            <span className="text-xs font-semibold text-success font-mono flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5" /> {appliedStatus}
             </span>
           )}
@@ -270,7 +270,7 @@ export default function RfpNegotiatorPage() {
       </div>
 
       {/* Negotiation Rounds Timeline */}
-      <div className="glass-panel p-5 rounded-2xl space-y-4 border border-border">
+      <div className="glass-panel p-5 space-y-4">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" /> Multi-Round AI Negotiation Transcript
         </h2>
@@ -279,7 +279,7 @@ export default function RfpNegotiatorPage() {
           {rfpData.negotiationRounds.map((rnd) => (
             <div
               key={rnd.round}
-              className={`p-4 rounded-xl border transition-all ${
+              className={`p-4 rounded-card border transition-all ${
                 rnd.agentRole === 'AI Buyer Agent'
                   ? 'bg-primary/5 border-primary/30 text-foreground'
                   : 'bg-muted/40 border-border text-foreground'

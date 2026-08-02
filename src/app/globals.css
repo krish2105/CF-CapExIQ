@@ -2,173 +2,893 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* ==========================================================================
+   CapExIQ — "Midnight Vault" design system
+   Adapted from the Slash style reference (midnight canvas, gilded ledger).
+
+   Two registers:
+     .register-editorial  → marketing surfaces (landing, presentation)
+                            generous rhythm, 44–88px Playfair display type
+     .register-app        → dense data surfaces (dashboard, model, scenarios)
+                            compressed 24–48px rhythm, serif capped at 28–44px
+
+   Display serif: Playfair Display. Ivy Presto (the reference face) is a
+   commercial IvyType licence and cannot be redistributed; Playfair is the
+   substitute named in the reference itself.
+   ========================================================================== */
+
 :root {
-  /* Soft neutral blue-grey canvas for Light mode */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* ---- Slash raw palette ------------------------------------------------ */
+  --color-obsidian: #08080a;
+  --color-onyx: #040406;
+  --color-carbon: #121317;
+  --color-graphite: #1c1d22;
+  --color-slate-line: #2e3038;
+  --color-smoke: #464853;
+  --color-ash: #5e616e;
+  --color-steel: #777a88;
+  --color-fog: #9194a1;
+  --color-mist: #acafb9;
+  --color-silver: #c7c9d1;
+  --color-bone: #e2e3e9;
+  --color-paper-white: #ffffff;
+  --color-copper: #cc9166;
 
-  /* Surfaces & Cards */
-  --surface: #ffffff;
-  --surface-elevated: #ffffff;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  /* Gilded gradient — reserved for data visualisation only */
+  --gilded-start: #ae9357;
+  --gilded-mid: #fff0cc;
+  --gilded-end: #bd9d4f;
+  --gradient-gilded: linear-gradient(
+    103deg,
+    rgb(174, 147, 87),
+    rgb(255, 240, 204) 40%,
+    rgb(174, 147, 87) 70%,
+    rgba(189, 157, 79, 0)
+  );
+  /* Solid variant used by .gilded-text. Overridden per theme below — a single
+     fixed ramp cannot clear 3:1 against both the near-black and the parchment
+     canvas, so each theme gets its own stops from the same gold family. */
+  --gradient-gilded-solid: linear-gradient(
+    103deg,
+    #ae9357 0%,
+    #fff0cc 45%,
+    #d8b86a 100%
+  );
+  /* Flat fallback wherever background-clip:text is unavailable. */
+  --gilded-text-solid: #b0851f;
 
-  /* Form & Structure */
-  --border: #cbd5e1;
-  --input: #cbd5e1;
-  --ring: #0284c7;
+  /* ---- Typography ------------------------------------------------------- */
+  --font-display: var(--font-playfair), 'Playfair Display', 'Ivy Presto', Georgia, serif;
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  /* Semantic Fills */
-  --muted: #f1f5f9;
-  --muted-foreground: #475569;
+  --text-eyebrow: 13px;
+  --tracking-eyebrow: -0.26px;
+  --text-body-xs: 16px;
+  --text-body-sm: 18px;
+  --text-body: 20px;
+  --text-subheading: 24px;
+  --text-heading-sm: 44px;
+  --text-heading: 52px;
+  --text-heading-lg: 64px;
+  --text-display: 88px;
 
-  /* Brand Primary */
-  --primary: #0284c7;
-  --primary-foreground: #ffffff;
-  --secondary: #e2e8f0;
-  --secondary-foreground: #0f172a;
-  --accent: #e0f2fe;
-  --accent-foreground: #0369a1;
+  /* ---- Shape ------------------------------------------------------------ */
+  --radius-sm: 2px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
 
-  /* Financial Status Colors */
-  --success: #059669;
-  --success-foreground: #ffffff;
-  --warning: #d97706;
-  --warning-foreground: #ffffff;
-  --destructive: #e11d48;
-  --destructive-foreground: #ffffff;
-  --info: #0284c7;
-  --info-foreground: #ffffff;
+  --page-max-width: 1216px;
+  --card-padding: 24px;
 
-  /* Interactive States */
-  --disabled: #cbd5e1;
-  --disabled-foreground: #64748b;
-  --selected: #e0f2fe;
-  --selected-foreground: #0369a1;
+  /* Two-register rhythm */
+  --section-gap-editorial: 160px;
+  --section-gap-app: 40px;
 
-  /* Chart Tokens */
-  --chart-1: #0284c7;
-  --chart-2: #059669;
-  --chart-3: #d97706;
-  --chart-4: #7c3aed;
-  --chart-5: #e11d48;
-  --chart-grid: #e2e8f0;
-  --chart-axis: #64748b;
-  --chart-tooltip: #ffffff;
-  --chart-tooltip-foreground: #0f172a;
+  --ring-subtle: rgba(255, 255, 255, 0.2) 0px 0px 0px 1px;
 }
 
-.dark {
-  /* Rich Executive Dark canvas */
-  --background: #090d16;
-  --foreground: #f8fafc;
+/* ==========================================================================
+   LIGHT — "Parchment ledger"
+   Slash has no light mode. This is a warm off-white counterpart built from
+   the same logic: near-monochrome canvas, copper as the sole brand accent,
+   hairline borders instead of shadows, serif display retained.
+   ========================================================================== */
+:root,
+.light {
+  --background: #f6f4f1;
+  --foreground: #16151a;
 
-  /* Surfaces & Cards */
-  --surface: #0f172a;
-  --surface-elevated: #1e293b;
-  --card: #0f172a;
-  --card-foreground: #f8fafc;
-  --popover: #0f172a;
-  --popover-foreground: #f8fafc;
+  --surface: #fffefc;
+  --surface-elevated: #ffffff;
+  --surface-sunken: #efece7;
+  --card: #fffefc;
+  --card-foreground: #16151a;
+  --popover: #ffffff;
+  --popover-foreground: #16151a;
 
-  /* Form & Structure */
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #06b6d4;
+  --border: #e0dcd5;
+  --border-strong: #cbc5bb;
+  --input: #e0dcd5;
+  --ring: #cc9166;
 
-  /* Semantic Fills */
-  --muted: #151e2e;
-  --muted-foreground: #94a3b8;
+  --muted: #efece7;
+  --muted-foreground: #6b6862;
 
-  /* Brand Primary */
-  --primary: #06b6d4;
-  --primary-foreground: #090d16;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --accent: #164e63;
-  --accent-foreground: #67e8f9;
+  /* Copper is darkened relative to the dark theme's #cc9166: the reference
+     hue fails WCAG AA on a light canvas (3.6:1).
 
-  /* Financial Status Colors */
-  --success: #10b981;
+     The previous value (#965c28) was verified only against the page and card
+     backgrounds (4.96:1 / 5.40:1) — but its highest-traffic use is on
+     --accent (active nav row, accent badges), where it measured 4.49:1 and
+     failed AA for normal text. #8a5324 restores the margin on the surface it
+     is actually used on: 4.87:1 on --accent, 5.62:1 on page, 6.12:1 on card. */
+  --primary: #8a5324;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e4dd;
+  --secondary-foreground: #16151a;
+  --accent: #f5e7da;
+  --accent-foreground: #6d401d;
+
+  /* Semantic data colours — desaturated so they read as data encoding,
+     not as competing brand accents. Each is checked against its own -soft
+     token composited over the card, which is where these actually render:
+     the badge text sits on the tint, never on the raw card. */
+  --success: #2f6741;
   --success-foreground: #ffffff;
-  --warning: #f59e0b;
+  --success-soft: rgba(63, 125, 85, 0.12);
+  --warning: #744e12;
   --warning-foreground: #ffffff;
-  --destructive: #f43f5e;
+  --warning-soft: rgba(140, 96, 27, 0.12);
+  --destructive: #93332f;
   --destructive-foreground: #ffffff;
-  --info: #38bdf8;
+  --destructive-soft: rgba(166, 63, 58, 0.12);
+  --info: #3e4c61;
   --info-foreground: #ffffff;
+  --info-soft: rgba(74, 90, 114, 0.12);
 
-  /* Interactive States */
-  --disabled: #1e293b;
-  --disabled-foreground: #64748b;
-  --selected: #164e63;
-  --selected-foreground: #67e8f9;
+  --disabled: #e0dcd5;
+  --disabled-foreground: #9b968e;
+  --selected: #f5e7da;
+  --selected-foreground: #8a5327;
 
-  /* Chart Tokens */
-  --chart-1: #06b6d4;
-  --chart-2: #10b981;
-  --chart-3: #f59e0b;
-  --chart-4: #a855f7;
-  --chart-5: #f43f5e;
-  --chart-grid: #1e293b;
-  --chart-axis: #94a3b8;
-  --chart-tooltip: #0f172a;
-  --chart-tooltip-foreground: #f8fafc;
+  /* Charts. Graphical objects need 3:1 (WCAG 1.4.11), not 4.5:1, so these
+     stay closer to the original hues than the text tokens above. */
+  --chart-1: #8a5324;
+  --chart-2: #3f7d55;
+  --chart-3: #8c601b;
+  --chart-4: #5b5470;
+  --chart-5: #a63f3a;
+  --chart-grid: #e4e0d9;
+  --chart-axis: #6b6862;
+  --chart-tooltip: #fffefc;
+  --chart-tooltip-foreground: #16151a;
+
+  --gild-1: #8a6a2b;
+  --gild-2: #b3944a;
+
+  /* Gilded display text on parchment.
+     The dark ramp peaks at #fff0cc (relative luminance 0.88), which lands at
+     1.07:1 on this canvas — effectively invisible. These stops stay in the
+     gold family but sit inside the luminance band that clears WCAG 1.4.3
+     large-text (3:1) against BOTH canvases, so the headline reads the same
+     weight in either theme:
+       #8a5f14  L 0.136 → 5.07:1 on page, 3.49:1 on near-black
+       #b0851f  L 0.261 → 3.04:1 on page, 5.83:1 on near-black
+     .gilded-text is only ever applied to the 44px+ display face, which is
+     what makes the 3:1 large-text threshold the correct bar here. */
+  --gradient-gilded-solid: linear-gradient(
+    103deg,
+    #8a5f14 0%,
+    #b0851f 45%,
+    #8a5f14 100%
+  );
+  --gilded-text-solid: #8a5f14;
+
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   DARK — "Midnight vault" (the canonical Slash register)
+   ========================================================================== */
+.dark {
+  --background: #08080a;
+  --foreground: #ffffff;
+
+  --surface: #040406;
+  --surface-elevated: #121317;
+  --surface-sunken: #040406;
+  --card: #040406;
+  --card-foreground: #e2e3e9;
+  --popover: #121317;
+  --popover-foreground: #e2e3e9;
+
+  --border: #1c1d22;
+  --border-strong: #2e3038;
+  --input: #2e3038;
+  --ring: #cc9166;
+
+  --muted: #121317;
+  --muted-foreground: #9194a1;
+
+  --primary: #cc9166;
+  --primary-foreground: #08080a;
+  --secondary: #1c1d22;
+  --secondary-foreground: #e2e3e9;
+  --accent: #1c1d22;
+  --accent-foreground: #cc9166;
+
+  /* Desaturated sage / rust — legible on near-black without vibrating */
+  --success: #7fae8b;
+  --success-foreground: #08080a;
+  --success-soft: rgba(127, 174, 139, 0.14);
+  --warning: #d2a862;
+  --warning-foreground: #08080a;
+  --warning-soft: rgba(210, 168, 98, 0.14);
+  --destructive: #d0817a;
+  --destructive-foreground: #08080a;
+  --destructive-soft: rgba(208, 129, 122, 0.14);
+  --info: #9aa4b8;
+  --info-foreground: #08080a;
+  --info-soft: rgba(154, 164, 184, 0.14);
+
+  --disabled: #1c1d22;
+  --disabled-foreground: #5e616e;
+  --selected: #1c1d22;
+  --selected-foreground: #cc9166;
+
+  --chart-1: #cc9166;
+  --chart-2: #7fae8b;
+  --chart-3: #d2a862;
+  --chart-4: #9aa4b8;
+  --chart-5: #d0817a;
+  --chart-grid: #1c1d22;
+  --chart-axis: #777a88;
+  --chart-tooltip: #121317;
+  --chart-tooltip-foreground: #e2e3e9;
+
+  --gild-1: #ae9357;
+  --gild-2: #fff0cc;
+
+  /* Dark keeps the full-brightness ramp — every stop clears 3:1 on #08080a. */
+  --gradient-gilded-solid: linear-gradient(
+    103deg,
+    #ae9357 0%,
+    #fff0cc 45%,
+    #d8b86a 100%
+  );
+  --gilded-text-solid: #d8b86a;
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   background-color: var(--background);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.011em;
   overflow-x: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--muted);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  opacity: 0.6;
-  border-radius: 4px;
+/* Ambient copper bloom — the only "lighting" in the system.
+   Replaces drop shadows, which the reference forbids. */
+.dark body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(204, 145, 102, 0.055), transparent 62%),
+    radial-gradient(760px 420px at 92% 4%, rgba(174, 147, 87, 0.04), transparent 60%);
 }
 
-/* Reusable surface panel */
+/* --- Display type ------------------------------------------------------- */
+.font-display,
+.display-type {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--foreground);
+}
+
+/* Guardrail from the reference: serif never below 28px.
+   Anything smaller reverts to Inter automatically. */
+h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: -0.013em;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.eyebrow-muted {
+  color: var(--muted-foreground);
+}
+
+.numeral {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Brief highlight when a numeral's underlying value changes (scenario or
+   role switch) — colour breathes toward copper and back, so an updated
+   figure reads as "this just moved" without a jarring flash. */
+@keyframes numeral-pulse {
+  0%   { color: var(--primary); text-shadow: 0 0 12px rgba(204, 145, 102, 0.35); }
+  100% { color: inherit; text-shadow: none; }
+}
+.numeral-pulse {
+  animation: numeral-pulse 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ==========================================================================
+   Surfaces
+   ========================================================================== */
 .glass-panel {
+  position: relative;
   background-color: var(--card);
   color: var(--card-foreground);
   border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.28s ease, background-color 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Table light mode styling */
-.light table th,
-html:not(.dark) table th {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-  border-bottom: 2px solid #cbd5e1 !important;
+.glass-panel:hover {
+  border-color: var(--border-strong);
 }
 
-/* Print Mode styles */
+/* Hairline gilded top edge on emphasis cards */
+.panel-gilded::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--gradient-gilded);
+  opacity: 0.8;
+}
+
+.panel-lift {
+  transition: border-color 0.28s ease, background-color 0.28s ease,
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.panel-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(204, 145, 102, 0.16), 0 14px 28px -18px rgba(204, 145, 102, 0.35);
+}
+
+.hairline {
+  border-bottom: 1px solid var(--border);
+}
+
+.icon-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background-color: var(--muted);
+}
+
+/* ==========================================================================
+   Controls — pill geometry throughout
+   ========================================================================== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  background-color: var(--foreground);
+  color: var(--background);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.007em;
+  border: 1px solid transparent;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border-strong);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.btn-ghost:hover {
+  border-color: var(--foreground);
+  background-color: var(--muted);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--foreground);
+  background-color: transparent;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.pill:hover { border-color: var(--foreground); }
+
+.pill-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--accent);
+}
+
+.input-pill {
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background-color: transparent;
+  padding: 10px 10px 10px 20px;
+  color: var(--foreground);
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-pill::placeholder { color: var(--muted-foreground); }
+.input-pill:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+:where(a, button, select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   Tables — hairline dividers, never card containers
+   ========================================================================== */
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.ledger-table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  background-color: transparent;
+  white-space: nowrap;
+}
+.ledger-table tbody td {
+  font-size: 14px;
+  color: var(--card-foreground);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.ledger-table tbody tr {
+  transition: background-color 0.18s ease;
+}
+.ledger-table tbody tr:hover {
+  background-color: var(--muted);
+}
+.ledger-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Staggered row entrance. Applied only to tables under ~40 rows so long
+   financial schedules do not pay an animation cost per row. */
+@keyframes row-enter {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.ledger-table tbody tr.row-enter {
+  opacity: 0;
+  animation: row-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ==========================================================================
+   Motion — CSS baseline. framer-motion is layered on the editorial register.
+   ========================================================================== */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.98); filter: blur(3px); }
+  60%  { filter: blur(0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes reveal-scale {
+  from { opacity: 0; transform: scale(0.975); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Reveal elements start hidden only when JS is driving them */
+[data-reveal] {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+[data-reveal][data-revealed='true'] {
+  animation: reveal-up 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal='fade'][data-revealed='true'] {
+  animation-name: reveal-fade;
+}
+[data-reveal='scale'][data-revealed='true'] {
+  animation-name: reveal-scale;
+}
+
+/* Gilded shimmer for chart lines and accent rules */
+@keyframes gild-sweep {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.gilded-rule {
+  height: 1px;
+  background: linear-gradient(103deg, #ae9357, #fff0cc 40%, #ae9357 70%, rgba(189, 157, 79, 0));
+  background-size: 200% 100%;
+  animation: gild-sweep 7s linear infinite;
+}
+.gilded-text {
+  /* Painted colour first: if background-clip:text is unsupported the text
+     still renders in gold rather than disappearing. */
+  color: var(--gilded-text-solid);
+  background: var(--gradient-gilded-solid);
+  background-size: 200% 100%;
+  animation: gild-sweep 8s linear infinite;
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .gilded-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Chart line draw-on */
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+.chart-draw path.recharts-curve {
+  stroke-dasharray: 2400;
+  stroke-dashoffset: 2400;
+  animation: draw-line 1.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ==========================================================================
+   Marketing-register motion.
+
+   The app register stays restrained — a capital-budgeting surface that
+   springs and bounces reads as unserious. These are the *considered*
+   flourishes: entrance choreography, value-change feedback, and hover
+   affordances that make the product feel engineered rather than animated.
+   Every one is disabled wholesale by the reduced-motion block below.
+   ========================================================================== */
+
+/* Route entrance — the whole main column settles in as one object. */
+@keyframes page-enter {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.page-enter {
+  animation: page-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Segment pill — copper underline grows from centre on hover. */
+.segment-pill { position: relative; }
+.segment-pill::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px; bottom: 3px;
+  height: 1px;
+  background: var(--primary);
+  transform: scaleX(0);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.segment-pill:hover::after { transform: scaleX(1); }
+.segment-pill[aria-current='page']::after { display: none; }
+
+/* Mobile drawer slide-in */
+@keyframes drawer-in {
+  from { opacity: 0; transform: translate3d(-16px, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-drawer-in { animation: drawer-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Stat card sheen — a single slow gilded pass across emphasis cards. */
+@keyframes card-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  12%  { opacity: 1; }
+  60%  { opacity: 0; }
+  100% { transform: translateX(320%) skewX(-18deg); opacity: 0; }
+}
+.card-sheen { position: relative; overflow: hidden; }
+.card-sheen::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 42%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 240, 204, 0.14),
+    transparent
+  );
+  animation: card-sheen 4.8s cubic-bezier(0.4, 0, 0.2, 1) 1.1s infinite;
+}
+.light .card-sheen::after {
+  background: linear-gradient(90deg, transparent, rgba(150, 92, 40, 0.09), transparent);
+}
+
+/* Metric tile hover — copper corner brackets, an "instrument" affordance. */
+.metric-frame { position: relative; }
+.metric-frame::before,
+.metric-frame::after {
+  content: '';
+  position: absolute;
+  width: 9px; height: 9px;
+  border-color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.metric-frame::before {
+  top: 7px; left: 7px;
+  border-top: 1px solid; border-left: 1px solid;
+  transform: translate(3px, 3px);
+}
+.metric-frame::after {
+  bottom: 7px; right: 7px;
+  border-bottom: 1px solid; border-right: 1px solid;
+  transform: translate(-3px, -3px);
+}
+.metric-frame:hover::before,
+.metric-frame:hover::after { opacity: 0.75; transform: translate(0, 0); }
+
+/* Section eyebrow rule that draws itself in. */
+@keyframes rule-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.rule-draw {
+  transform-origin: left;
+  animation: rule-draw 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+/* Ticker */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: inline-flex;
+  animation: ticker-scroll 46s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
+}
+.pulse-dot { animation: pulse-dot 2.4s ease-in-out infinite; }
+
+@keyframes shimmer-sweep {
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--muted);
+  border-radius: var(--radius-lg);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: shimmer-sweep 1.6s infinite;
+}
+
+/* Underline that grows from the left — nav + editorial links */
+.link-rule {
+  position: relative;
+}
+.link-rule::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.link-rule:hover::after { transform: scaleX(1); }
+
+/* ==========================================================================
+   Register: editorial (marketing surfaces)
+   ========================================================================== */
+.register-editorial {
+  --section-gap: var(--section-gap-editorial);
+}
+.register-editorial .section-band {
+  padding-block: clamp(64px, 11vw, 160px);
+}
+/* The hero headline now spans the full 1152px content shell instead of the
+   ~560px left grid column, so the sentence sets on one horizontal line at
+   desktop widths and wraps as prose below that. 88px was tuned for a
+   hard-broken three-line headline; at full width it would overflow, so the
+   ceiling drops to 46px (≈1104px for the 50-character line). */
+.register-editorial .display-hero {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(30px, 3.7vw, 46px);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+/* Register: app (dense data surfaces) */
+.register-app {
+  --section-gap: var(--section-gap-app);
+}
+.register-app .section-band {
+  padding-block: clamp(24px, 3vw, 48px);
+}
+
+.page-shell {
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* ==========================================================================
+   Recharts theming
+   ========================================================================== */
+.recharts-cartesian-axis-tick text {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  fill: var(--chart-axis);
+  font-variant-numeric: tabular-nums;
+}
+.recharts-legend-item-text {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--muted-foreground) !important;
+}
+.recharts-cartesian-grid line {
+  stroke: var(--chart-grid);
+}
+.recharts-tooltip-wrapper:focus { outline: none; }
+.recharts-surface { overflow: visible; }
+
+/* ==========================================================================
+   Scrollbar
+   ========================================================================== */
+/* Segment bar scrolls horizontally on narrow viewports without a visible
+   track — the fade of the pills themselves is the affordance. */
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  border: 3px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+/* ==========================================================================
+   Reduced motion — hard off switch
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .chart-draw path.recharts-curve { stroke-dasharray: none; stroke-dashoffset: 0; }
+
+  /* The marketing-register flourishes are ornament, not information — remove
+     them outright rather than merely shortening them, so nothing sweeps,
+     sheens or pulses for a user who asked for stillness. */
+  .card-sheen::after { display: none !important; }
+  .metric-frame::before,
+  .metric-frame::after { display: none !important; }
+  .segment-pill::after { display: none !important; }
+  .numeral-pulse { animation: none !important; }
+  .page-enter { animation: none !important; }
+  .gilded-rule, .gilded-text { animation: none !important; }
+  .ticker-track { animation: none !important; }
+}
+
+/* ==========================================================================
+   Print — forced light ledger, regardless of active theme.
+   Board PDFs must stay legible on paper.
+   ========================================================================== */
 @media print {
+  :root, .dark, .light {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --muted: #f4f4f4;
+    --muted-foreground: #444444;
+    --border: #cccccc;
+    --border-strong: #999999;
+    --primary: #8a5327;
+    --success: #1f6b3a;
+    --warning: #8a6100;
+    --destructive: #99312b;
+  }
   body {
-    background-color: #ffffff !important;
+    background: #ffffff !important;
     color: #000000 !important;
+    font-size: 11pt;
   }
-  header, sidebar, nav, button, .no-print {
-    display: none !important;
-  }
+  .dark body::before { display: none !important; }
+  header, aside, nav, button, .no-print, .ticker-track { display: none !important; }
   .glass-panel {
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    background: #ffffff !important;
     color: #000000 !important;
+    break-inside: avoid;
   }
+  .ledger-table thead th { color: #000000 !important; border-bottom: 1.5pt solid #000000 !important; }
+  .gilded-text { -webkit-text-fill-color: #8a5327 !important; color: #8a5327 !important; background: none !important; }
+  a { text-decoration: none !important; color: #000000 !important; }
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
 }

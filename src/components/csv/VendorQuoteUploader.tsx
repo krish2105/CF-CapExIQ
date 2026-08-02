@@ -50,7 +50,7 @@ export default function VendorQuoteUploader() {
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+    <div className="bg-card border border-border rounded-card p-6 space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -60,7 +60,7 @@ export default function VendorQuoteUploader() {
             Upload supplier proposal PDFs or quotes (Swisslog, Dematic, AutoStore, Knapp) to auto-extract line-item CapEx.
           </p>
         </div>
-        <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:opacity-90 transition-opacity shrink-0">
+        <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-card bg-primary text-primary-foreground font-semibold text-xs hover:opacity-90 transition-opacity shrink-0">
           {loading ? (
             <>
               <RefreshCw className="h-4 w-4 animate-spin" /> AI Extracting...
@@ -75,7 +75,7 @@ export default function VendorQuoteUploader() {
       </div>
 
       {parsedResult && (
-        <div className="bg-background/60 border border-primary/20 rounded-lg p-4 space-y-4 text-xs animate-fadeIn">
+        <div className="bg-background/60 border border-primary/20 rounded-card p-4 space-y-4 text-xs animate-fadeIn">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
             <div>
               <span className="font-bold text-foreground text-sm">{parsedResult.vendorName}</span>
@@ -83,7 +83,7 @@ export default function VendorQuoteUploader() {
             </div>
             <div className="text-right">
               <span className="text-muted-foreground">Total Extracted CapEx</span>
-              <p className="text-lg font-black text-primary">
+              <p className="text-lg font-semibold text-primary">
                 AED {parsedResult.extractedCapEx.totalCapEx.toLocaleString()}
               </p>
             </div>
@@ -92,7 +92,7 @@ export default function VendorQuoteUploader() {
           {/* Breakdown Table */}
           <div className="space-y-1.5">
             <span className="font-semibold text-foreground uppercase tracking-wider text-[10px] text-muted-foreground">Itemized Line Items</span>
-            <div className="divide-y divide-border border border-border rounded-md overflow-hidden bg-card">
+            <div className="divide-y divide-border border border-border rounded-card overflow-hidden bg-card">
               {parsedResult.itemizedBreakdown.map((item, idx) => (
                 <div key={idx} className="p-2.5 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export default function VendorQuoteUploader() {
             <button
               onClick={applyToFinancialModel}
               disabled={applied}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shrink-0 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-card bg-success hover:opacity-90 text-success-foreground font-bold text-xs transition-colors shrink-0 disabled:opacity-50"
             >
               {applied ? (
                 <>

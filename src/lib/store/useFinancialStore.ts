@@ -5,12 +5,51 @@ import { DEFAULT_FINANCIAL_ASSUMPTIONS, DEFAULT_ASSUMPTIONS_REGISTER } from '../
 import { BASE_SCENARIO_DEFINITIONS, evaluateScenario, transformAssumptionsForScenario } from '../finance/scenarios';
 import { calculateFinancialMetrics } from '../finance/metrics';
 import { calculateCashFlowSchedule } from '../finance/cashflow';
+import type { Citation } from '../rag/types';
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   timestamp: string;
+  /**
+   * Retrieved sources backing an assistant answer.
+   *
+   * Held on the message rather than in page state so provenance survives a
+   * reload — an answer whose citations have been lost is no more checkable
+   * than one that never had them.
+   */
+  citations?: Citation[];
+  /** True when the provider was unreachable and the deterministic text ran. */
+  isFallback?: boolean;
+}
+
+/**
+ * Memo for the scenario evaluation.
+ *
+ * `getActiveScenarioResult()` runs the full cash-flow schedule *and* the
+ * metrics engine (NPV/IRR/MIRR — IRR and MIRR are iterative root-finds). It
+ * is called at 20 sites across 18 components, every one of them during
+ * render, so a single dashboard paint re-ran the whole model a dozen times
+ * over for byte-identical output.
+ *
+ * Zustand state is immutable, so identity of the three inputs is a sound
+ * cache key: any real change produces a new object reference. The cache is
+ * depth-1 — the only access pattern is "the current scenario", and a larger
+ * cache would retain assumption objects long after a profile switch.
+ */
+interface ScenarioMemo {
+  assumptions: FinancialAssumptions;
+  scenario: ScenarioType;
+  sliders: CustomScenarioSliders;
+  assumptionsResult: FinancialAssumptions;
+  result: ScenarioResult;
+}
+let scenarioMemo: ScenarioMemo | null = null;
+
+/** Invalidate on any write that can move the model. */
+function clearScenarioMemo() {
+  scenarioMemo = null;
 }
 
 export interface CustomScenarioSliders {
@@ -18,6 +57,45 @@ export interface CustomScenarioSliders {
   operatingBenefitMultiplier: number;
   operatingCostMultiplier: number;
   discountRate: number;
+}
+
+/**
+ * Admissible range for each custom-scenario parameter.
+ *
+ * Owned here rather than by the tuner UI because the sliders are not the only
+ * writer: the AI Scenario Studio pipes model-generated multipliers straight
+ * into `updateCustomScenarioSliders`, and the model happily returns values
+ * such as 1.55x that no range input can represent. Committing those produced a
+ * state the tuner could not display — the thumb pinned to max while the
+ * read-out claimed 1.55x — so the bound is enforced at the write instead.
+ */
+export const CUSTOM_SLIDER_BOUNDS = {
+  investmentMultiplier: { min: 0.75, max: 1.3, step: 0.05 },
+  operatingBenefitMultiplier: { min: 0.5, max: 1.3, step: 0.05 },
+  operatingCostMultiplier: { min: 0.75, max: 1.3, step: 0.05 },
+  discountRate: { min: 0.08, max: 0.18, step: 0.005 },
+} as const;
+
+export const DEFAULT_CUSTOM_SLIDERS: CustomScenarioSliders = {
+  investmentMultiplier: 1.0,
+  operatingBenefitMultiplier: 1.0,
+  operatingCostMultiplier: 1.0,
+  discountRate: 0.115,
+};
+
+const SLIDER_KEYS = Object.keys(CUSTOM_SLIDER_BOUNDS) as Array<keyof CustomScenarioSliders>;
+
+/** Clamp to range, dropping any non-finite value back to its default. */
+export function clampCustomSliders(sliders: CustomScenarioSliders): CustomScenarioSliders {
+  const out = { ...sliders };
+  for (const key of SLIDER_KEYS) {
+    const { min, max } = CUSTOM_SLIDER_BOUNDS[key];
+    const value = out[key];
+    out[key] = Number.isFinite(value)
+      ? Math.min(max, Math.max(min, value))
+      : DEFAULT_CUSTOM_SLIDERS[key];
+  }
+  return out;
 }
 
 export interface ProjectProfile {
@@ -66,7 +144,11 @@ interface FinancialStoreState {
   setScenario: (scenario: ScenarioType) => void;
   setRole: (role: ExecutiveRole) => void;
   updateCustomScenarioSliders: (sliders: Partial<CustomScenarioSliders>) => void;
-  addChatMessage: (role: 'user' | 'assistant', text: string) => void;
+  addChatMessage: (
+    role: 'user' | 'assistant',
+    text: string,
+    extra?: { citations?: Citation[]; isFallback?: boolean }
+  ) => void;
   clearChat: () => void;
   saveProjectProfile: (name: string, description?: string) => void;
   loadProjectProfile: (id: string) => void;
@@ -84,18 +166,14 @@ export const useFinancialStore = create<FinancialStoreState>()(
       assumptionsRegister: DEFAULT_ASSUMPTIONS_REGISTER,
       selectedScenario: 'Base',
       selectedRole: 'CFO',
-      customScenarioSliders: {
-        investmentMultiplier: 1.0,
-        operatingBenefitMultiplier: 1.0,
-        operatingCostMultiplier: 1.0,
-        discountRate: 0.115,
-      },
+      customScenarioSliders: DEFAULT_CUSTOM_SLIDERS,
       chatMessages: [],
       auditLog: [],
       projectProfiles: DEFAULT_PROJECT_PROFILES,
       activeProfileId: 'proj-dubai-mfc',
 
       updateAssumptions: (newAssumptions) => {
+        clearScenarioMemo();
         set((state) => {
           const newAuditEntries: AssumptionAuditEntry[] = Object.entries(newAssumptions).map(
             ([key, newVal]) => ({
@@ -118,22 +196,19 @@ export const useFinancialStore = create<FinancialStoreState>()(
       },
 
       resetAssumptions: () => {
+        clearScenarioMemo();
         set({
           assumptions: DEFAULT_FINANCIAL_ASSUMPTIONS,
           assumptionsRegister: DEFAULT_ASSUMPTIONS_REGISTER,
           selectedScenario: 'Base',
           selectedRole: 'CFO',
-          customScenarioSliders: {
-            investmentMultiplier: 1.0,
-            operatingBenefitMultiplier: 1.0,
-            operatingCostMultiplier: 1.0,
-            discountRate: 0.115,
-          },
+          customScenarioSliders: DEFAULT_CUSTOM_SLIDERS,
           auditLog: [],
         });
       },
 
       setScenario: (scenario) => {
+        clearScenarioMemo();
         set({ selectedScenario: scenario });
       },
 
@@ -142,17 +217,23 @@ export const useFinancialStore = create<FinancialStoreState>()(
       },
 
       updateCustomScenarioSliders: (sliders) => {
+        clearScenarioMemo();
         set((state) => ({
-          customScenarioSliders: { ...state.customScenarioSliders, ...sliders },
+          customScenarioSliders: clampCustomSliders({
+            ...state.customScenarioSliders,
+            ...sliders,
+          }),
         }));
       },
 
-      addChatMessage: (role, text) => {
+      addChatMessage: (role, text, extra) => {
         const newMessage: ChatMessage = {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
           role,
           text,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ...(extra?.citations?.length ? { citations: extra.citations } : {}),
+          ...(extra?.isFallback ? { isFallback: true } : {}),
         };
         set((state) => ({ chatMessages: [...state.chatMessages, newMessage] }));
       },
@@ -178,6 +259,7 @@ export const useFinancialStore = create<FinancialStoreState>()(
       },
 
       loadProjectProfile: (id) => {
+        clearScenarioMemo();
         set((state) => {
           const found = state.projectProfiles.find((p) => p.id === id);
           if (!found) return state;
@@ -189,6 +271,7 @@ export const useFinancialStore = create<FinancialStoreState>()(
       },
 
       duplicateProjectProfile: (id) => {
+        clearScenarioMemo();
         set((state) => {
           const target = state.projectProfiles.find((p) => p.id === id);
           if (!target) return state;
@@ -209,6 +292,16 @@ export const useFinancialStore = create<FinancialStoreState>()(
 
       getActiveAssumptions: () => {
         const { assumptions, selectedScenario, customScenarioSliders } = get();
+
+        if (
+          scenarioMemo &&
+          scenarioMemo.assumptions === assumptions &&
+          scenarioMemo.scenario === selectedScenario &&
+          scenarioMemo.sliders === customScenarioSliders
+        ) {
+          return scenarioMemo.assumptionsResult;
+        }
+
         if (selectedScenario === 'Base') return assumptions;
         if (selectedScenario === 'Custom') {
           return transformAssumptionsForScenario(assumptions, {
@@ -222,8 +315,18 @@ export const useFinancialStore = create<FinancialStoreState>()(
       },
 
       getActiveScenarioResult: () => {
+        const { assumptions, selectedScenario, customScenarioSliders } = get();
+
+        if (
+          scenarioMemo &&
+          scenarioMemo.assumptions === assumptions &&
+          scenarioMemo.scenario === selectedScenario &&
+          scenarioMemo.sliders === customScenarioSliders
+        ) {
+          return scenarioMemo.result;
+        }
+
         const activeAssumptions = get().getActiveAssumptions();
-        const { selectedScenario, customScenarioSliders } = get();
 
         const def =
           selectedScenario === 'Custom'
@@ -238,11 +341,21 @@ export const useFinancialStore = create<FinancialStoreState>()(
         const yearlyCashFlows = calculateCashFlowSchedule(activeAssumptions);
         const metrics = calculateFinancialMetrics(activeAssumptions, yearlyCashFlows);
 
-        return {
+        const result: ScenarioResult = {
           definition: def,
           metrics,
           yearlyCashFlows,
         };
+
+        scenarioMemo = {
+          assumptions,
+          scenario: selectedScenario,
+          sliders: customScenarioSliders,
+          assumptionsResult: activeAssumptions,
+          result,
+        };
+
+        return result;
       },
     }),
     {

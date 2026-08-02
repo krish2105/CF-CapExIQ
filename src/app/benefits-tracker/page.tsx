@@ -11,7 +11,7 @@ export default function BenefitsTrackerPage() {
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-primary" /> Benefits-Realization Tracker & Post-Investment Review
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -21,31 +21,31 @@ export default function BenefitsTrackerPage() {
       </div>
 
       {/* Benefits Register Table */}
-      <div className="glass-panel p-5 rounded-2xl border border-border space-y-4">
-        <h3 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-2 flex items-center gap-2">
+      <div className="glass-panel p-5 space-y-4">
+        <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em] border-b border-border pb-2 flex items-center gap-2">
           <Award className="h-4 w-4 text-primary" /> Approved vs. Actual Benefit Realization Register
         </h3>
 
-        <table className="w-full text-left text-xs font-mono border-collapse">
+        <table className="ledger-table">
           <thead>
-            <tr className="bg-muted text-foreground text-[11px] border-b border-border">
+            <tr>
               <th className="py-2.5 px-3">Benefit Category</th>
               <th className="py-2.5 px-3">Owner</th>
-              <th className="py-2.5 px-3 text-right">Approved Year 1</th>
-              <th className="py-2.5 px-3 text-right">Forecast Year 1</th>
-              <th className="py-2.5 px-3 text-right">Actual Realized</th>
-              <th className="py-2.5 px-3 text-right">Variance (AED)</th>
+              <th className="py-2.5 px-3 num">Approved Year 1</th>
+              <th className="py-2.5 px-3 num">Forecast Year 1</th>
+              <th className="py-2.5 px-3 num">Actual Realized</th>
+              <th className="py-2.5 px-3 num">Variance (AED)</th>
               <th className="py-2.5 px-3 text-center">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border text-foreground">
+          <tbody>
             {DEFAULT_BENEFITS_TRACKER.map((b) => (
               <tr key={b.id} className="hover:bg-muted/50">
                 <td className="py-2.5 px-3 font-bold text-primary">{b.category}</td>
                 <td className="py-2.5 px-3 text-muted-foreground font-sans">{b.ownerRole}</td>
-                <td className="py-2.5 px-3 text-right font-bold">{formatAED(b.approvedYear1BenefitAed)}</td>
-                <td className="py-2.5 px-3 text-right">{formatAED(b.forecastYear1BenefitAed)}</td>
-                <td className="py-2.5 px-3 text-right font-bold text-success">{formatAED(b.actualYear1BenefitAed)}</td>
+                <td className="py-2.5 px-3 num font-bold">{formatAED(b.approvedYear1BenefitAed)}</td>
+                <td className="py-2.5 px-3 num">{formatAED(b.forecastYear1BenefitAed)}</td>
+                <td className="py-2.5 px-3 num font-bold text-success">{formatAED(b.actualYear1BenefitAed)}</td>
                 <td className={`py-2.5 px-3 text-right font-bold ${b.varianceAed >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {b.varianceAed >= 0 ? `+${formatAED(b.varianceAed)}` : formatAED(b.varianceAed)}
                 </td>

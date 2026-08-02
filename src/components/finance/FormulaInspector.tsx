@@ -70,22 +70,22 @@ export const FormulaInspector: React.FC<{ metricKey: string }> = ({ metricKey })
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border text-foreground rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-obsidian/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border text-foreground rounded-card max-w-lg w-full p-6 space-y-4 animate-scale-in">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="text-sm font-bold flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-primary" /> {detail.metricName} Formula Inspector
               </h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-muted-foreground hover:text-foreground rounded-lg"
+                className="p-1 text-muted-foreground hover:text-foreground rounded-card"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-muted font-mono text-primary text-center">
+              <div className="p-3 rounded-card bg-muted font-mono text-primary text-center">
                 {detail.formulaEquation}
               </div>
 
@@ -104,7 +104,7 @@ export const FormulaInspector: React.FC<{ metricKey: string }> = ({ metricKey })
                 <p className="text-muted-foreground mt-0.5">{detail.explanation}</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-foreground">
+              <div className="p-3 rounded-card bg-primary/10 border border-primary/20 text-foreground">
                 <span className="font-bold text-primary">Corporate Finance Interpretation:</span>
                 <p className="text-muted-foreground mt-0.5 leading-relaxed">{detail.corporateFinanceInterpretation}</p>
               </div>

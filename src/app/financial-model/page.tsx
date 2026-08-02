@@ -72,7 +72,7 @@ export default function FinancialModelPage() {
       {/* Header & Export Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
             <Table className="h-6 w-6 text-primary" /> Year-by-Year Financial Model Schedule
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -82,7 +82,7 @@ export default function FinancialModelPage() {
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all self-start sm:self-auto"
+          className="px-4 py-2 rounded-card bg-accent text-accent-foreground text-xs font-bold flex items-center gap-2 transition-all self-start sm:self-auto"
         >
           <Download className="h-4 w-4" /> Export Schedule to CSV
         </button>
@@ -90,37 +90,37 @@ export default function FinancialModelPage() {
 
       {/* Summary KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="glass-panel p-3.5 rounded-xl border border-border">
+        <div className="glass-panel p-3.5">
           <span className="text-[11px] text-muted-foreground font-medium">Net Present Value (NPV)</span>
           <p className="text-lg font-bold text-success mt-0.5">{formatAED(metrics.npv)}</p>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-border">
+        <div className="glass-panel p-3.5">
           <span className="text-[11px] text-muted-foreground font-medium">Internal Rate of Return (IRR)</span>
-          <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-0.5">{formatPercent(metrics.irr)}</p>
+          <p className="text-lg font-bold text-info mt-0.5">{formatPercent(metrics.irr)}</p>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-border">
+        <div className="glass-panel p-3.5">
           <span className="text-[11px] text-muted-foreground font-medium">Modified IRR (MIRR)</span>
           <p className="text-lg font-bold text-primary mt-0.5">{formatPercent(metrics.mirr)}</p>
         </div>
-        <div className="glass-panel p-3.5 rounded-xl border border-border">
+        <div className="glass-panel p-3.5">
           <span className="text-[11px] text-muted-foreground font-medium">Discounted Payback</span>
-          <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+          <p className="text-lg font-bold text-warning mt-0.5">
             {metrics.discountedPaybackPeriodYears ? `${metrics.discountedPaybackPeriodYears.toFixed(1)} Yrs` : '> 6 Yrs'}
           </p>
         </div>
       </div>
 
       {/* Main Financial Table */}
-      <div className="glass-panel rounded-2xl border border-border overflow-hidden">
+      <div className="glass-panel overflow-hidden">
         <div className="p-4 border-b border-border flex items-center justify-between">
-          <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+          <h3 className="font-sans text-xs font-semibold text-foreground uppercase tracking-[0.12em]">
             6-Year Cash Flow Projections (AED)
           </h3>
           <span className="text-[11px] text-muted-foreground font-mono">Full Precision Math</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono border-collapse">
+          <table className="ledger-table">
             <thead>
               <tr className="bg-muted text-foreground border-b border-border text-[11px]">
                 <th className="py-3 px-4 font-bold sticky left-0 bg-muted">Line Item</th>
@@ -131,7 +131,7 @@ export default function FinancialModelPage() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-foreground">
+            <tbody>
               {/* Operating Benefits */}
               <tr className="hover:bg-muted/40">
                 <td className="py-2.5 px-4 font-semibold text-foreground sticky left-0 bg-card">
@@ -166,7 +166,7 @@ export default function FinancialModelPage() {
               <tr className="hover:bg-muted/40">
                 <td className="py-2.5 px-4 text-muted-foreground sticky left-0 bg-card">Less: Additional OpEx</td>
                 {yearlyCashFlows.map((y) => (
-                  <td key={y.year} className="py-2.5 px-4 text-right text-amber-600 dark:text-amber-400 font-bold">
+                  <td key={y.year} className="py-2.5 px-4 text-right text-warning font-bold">
                     {y.year === 0 ? '-' : `(${formatAED(y.additionalOpEx)})`}
                   </td>
                 ))}
@@ -199,7 +199,7 @@ export default function FinancialModelPage() {
               </tr>
 
               {/* Tax & NOPAT */}
-              <tr className="hover:bg-muted/40 text-amber-600 dark:text-amber-400 font-semibold">
+              <tr className="hover:bg-muted/40 text-warning font-semibold">
                 <td className="py-2.5 px-4 sticky left-0 bg-card">Less: Corporate Tax (9%)</td>
                 {yearlyCashFlows.map((y) => (
                   <td key={y.year} className="py-2.5 px-4 text-right">
@@ -230,7 +230,7 @@ export default function FinancialModelPage() {
               <tr className="hover:bg-muted/40 text-foreground">
                 <td className="py-2.5 px-4 sticky left-0 bg-card">Initial Capex & Working Capital</td>
                 {yearlyCashFlows.map((y) => (
-                  <td key={y.year} className="py-2.5 px-4 text-right text-amber-600 dark:text-amber-400 font-bold">
+                  <td key={y.year} className="py-2.5 px-4 text-right text-warning font-bold">
                     {y.year === 0 ? formatAED(y.freeCashFlow) : '-'}
                   </td>
                 ))}
@@ -248,7 +248,7 @@ export default function FinancialModelPage() {
               <tr className="bg-muted font-bold text-success text-sm border-t-2 border-border">
                 <td className="py-3 px-4 sticky left-0 bg-muted">Free Cash Flow (FCF)</td>
                 {yearlyCashFlows.map((y) => (
-                  <td key={y.year} className="py-3 px-4 text-right font-extrabold">
+                  <td key={y.year} className="py-3 px-4 text-right font-semibold">
                     {formatAED(y.freeCashFlow)}
                   </td>
                 ))}
@@ -263,7 +263,7 @@ export default function FinancialModelPage() {
                   </td>
                 ))}
               </tr>
-              <tr className="bg-purple-500/10 font-bold text-purple-700 dark:text-purple-300">
+              <tr className="bg-info/10 font-bold text-info">
                 <td className="py-2.5 px-4 sticky left-0 bg-muted">Present Value (PV)</td>
                 {yearlyCashFlows.map((y) => (
                   <td key={y.year} className="py-2.5 px-4 text-right font-bold">

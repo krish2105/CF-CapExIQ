@@ -71,13 +71,13 @@ export async function POST(req: Request) {
     const fallbackResponse: ParsedVendorQuote = DEFAULT_FALLBACK_QUOTE;
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
     if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey.includes('here') || !documentText) {
       return NextResponse.json(fallbackResponse);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey, baseURL: process.env.OPENAI_BASE_URL });
 
     const systemPrompt = `You are a Procurement and CapEx Extraction Specialist for NovaRetail GCC.
 Extract itemized CapEx figures from vendor warehouse quotation text into structured JSON.
