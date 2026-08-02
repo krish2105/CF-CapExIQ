@@ -6,7 +6,8 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { formatAED, formatPercent } from '@/lib/utils/formatting';
 import { SourceCitations } from '@/components/ai/SourceCitations';
 import type { Citation } from '@/lib/rag/types';
-import { Bot, Send, User, AlertTriangle, Trash2, Library, Square } from 'lucide-react';
+import Link from 'next/link';
+import { Bot, Send, User, AlertTriangle, Trash2, Library, Square, Cpu } from 'lucide-react';
 
 interface StreamEvent {
   type: 'sources' | 'delta' | 'done' | 'error';

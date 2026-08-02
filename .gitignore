@@ -44,3 +44,6 @@ tsconfig.tsbuildinfo
 # secret.
 .env*
 !.env.example
+
+# Local agent tooling config (machine-specific)
+.claude/

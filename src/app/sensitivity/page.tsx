@@ -6,6 +6,7 @@ import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import {
   calculateOneWaySensitivity,
   calculateTwoWaySensitivity,
+  generateTornadoChartData,
 } from '@/lib/finance/sensitivity';
 import { calculateFinancialMetrics } from '@/lib/finance/metrics';
 import { FinancialAssumptions, TwoWayMatrix } from '@/lib/types/finance';
@@ -438,7 +439,7 @@ export default function SensitivityPage() {
         <div className="glass-panel p-4">
           <span className="text-[11px] text-muted-foreground font-medium">Max Benefit Shortfall %</span>
           <p className="text-lg font-bold text-info mt-1">
-            {metrics.maxOperatingBenefitShortfallPct > 0 ? '-' : ''}{Math.abs(metrics.maxOperatingBenefitShortfallPct).toFixed(1)}%
+            {metrics.maxOperatingBenefitShortfallPct === null ? 'n/a' : `${metrics.maxOperatingBenefitShortfallPct > 0 ? '-' : ''}${Math.abs(metrics.maxOperatingBenefitShortfallPct).toFixed(1)}%`}
           </p>
           <span className="text-[10px] text-muted-foreground font-mono">Max Benefit Drop Tolerance</span>
         </div>

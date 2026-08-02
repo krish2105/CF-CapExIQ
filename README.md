@@ -1,165 +1,71 @@
-# CapExIQ — AI Capital-Budgeting Dashboard (Automated Micro-Fulfilment Centre)
+# CapExIQ
 
-![Next.js](https://img.shields.io/badge/Next.js_14.2-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript_Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Vitest](https://img.shields.io/badge/Vitest_2.1-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright_E2E-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_3.4-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)
+**An AI-Enabled Capital-Budgeting and Investment Decision Platform**
 
-**Assignment topic: Topic 9 — AI Capital-Budgeting Dashboard.**
+Postgraduate Corporate Finance · **Topic 9 — AI Capital-Budgeting Dashboard**
 
----
-
-## Executive Overview
-
-CapExIQ is a capital-budgeting and investment decision-support application for corporate finance
-users. It evaluates an **AED 24,000,000** total outlay (**AED 22.0M CapEx** + **AED 2.0M working
-capital**) over a **6-year project life** for an Automated Micro-Fulfilment Centre (MFC) in Dubai,
-UAE, operated by the hypothetical entity NovaRetail GCC.
-
-The operational case is order-fulfilment automation: compressing urban e-commerce fulfilment lead
-times, reducing direct pick cost per order, and adding contribution margin from incremental order
-capacity. Operational throughput figures shown in `/capacity-model` are illustrative engineering
-inputs, not audited operating data; the financial model runs off the assumptions register in
-`ASSUMPTIONS.md`.
+> Flagship case: **NovaRetail GCC** — an Automated Micro-Fulfilment Centre in Dubai.
+> AED 24.0M outlay over a six-year horizon at an 11.50% WACC.
+> Engine verdict: **Approve**, conditional on measured Year-1 savings.
 
 ---
 
-## Baseline Financial Results
+## Group
 
-All financial calculations are produced by a deterministic TypeScript engine in `src/lib/finance/`.
-No LLM is involved in any financial computation. The figures below are pinned by
-`tests/golden.test.ts`.
-
-| Financial Metric | Base-Case Value | Benchmark | Reading |
-| :--- | :---: | :---: | :--- |
-| Total initial outlay (CF0) | **AED 24,000,000** | CapEx 22.0M + NWC 2.0M | Time zero |
-| CapEx composition | **AED 22,000,000** | Equipment 18.0M · Installation 2.5M · Software 1.2M · Training 0.3M | — |
-| Depreciation | **AED 3,333,333 / yr** | Straight line to salvage over 6 yrs | (22.0M − 2.0M) ÷ 6 |
-| Working capital | **AED 2,000,000** | Flat, not a % of revenue | Fully recovered in Year 6 |
-| Salvage value | **AED 2,000,000** | Year 6 resale | PV = 8.61% of NPV |
-| Discount rate (WACC) | **11.50%** | Derived, see below | Hurdle rate |
-| Net present value | **AED 12,083,628** | > 0 | Creates value |
-| Internal rate of return | **26.30%** | > 11.50% | +14.80 pts over hurdle |
-| Modified IRR | **19.34%** | > 11.50% | Reinvestment at WACC |
-| Profitability index | **1.5035x** | > 1.00x | PV inflows AED 36,083,628 |
-| Payback period | **3.10 years** | < 6 yrs | Undiscounted |
-| Discounted payback | **3.98 years** | < 6 yrs | At 11.5% |
-| Accounting ROI | **123.3%** | — | Over project life |
-| Engine decision status | **`Approve`** | — | See recommendation below |
-
-**Free cash flow stream (AED):**
-`−24,000,000 · 7,398,000 · 7,724,690 · 8,066,186 · 8,423,154 · 8,796,293 · 13,186,330`
+| Member |
+|---|
+| Krishna Mathur |
+| Neel Kapadia |
+| Yash Petkar |
+| Atharva Soundankar |
+| Tanishk Verma |
+| Nihal Pusthe |
+| Karan Baid |
 
 ---
 
-## Discount Rate: How 11.50% Is Derived
+## What this is
 
-The hurdle rate is **derived, not assumed**. See `FINANCIAL_METHODOLOGY.md` for the full workings
-and `/external-data` for the live calculator.
+A decision-support platform for evaluating capital investments. It is built on one
+principle: **the arithmetic is deterministic and the AI never touches it.**
 
-**Cost of equity (adjusted CAPM / build-up):**
+Every financial figure is produced by a strictly-typed TypeScript engine covering NPV,
+IRR (Newton–Raphson with bisection fallback), MIRR, profitability index, and simple and
+discounted payback. Artificial intelligence explains, challenges, retrieves and drafts —
+it is architecturally prevented from computing a number that reaches a decision. Remove
+the API key entirely and the financial results are byte-identical.
 
-```
-4.20% risk-free
-+ (1.15 beta x 6.00% mature-market ERP)   = 6.90%
-+ 0.75% UAE country risk premium
-+ 3.50% project execution premium
-------------------------------------------------
-= 15.35% cost of equity
-```
+## Baseline result
 
-**Cost of debt:**
+| Metric | Result | Benchmark | Verdict |
+|---|---:|---:|---|
+| Net present value @ 11.50% | AED 12,083,628 | > 0 | Creates value |
+| Internal rate of return | 26.30% | 11.50% | Pass (+14.80 pp) |
+| Modified IRR | 19.34% | 11.50% | Pass (+7.84 pp) |
+| Profitability index | 1.5035x | 1.00x | Pass |
+| Payback | 3.10 years | 4.00 years | Pass |
+| Discounted payback | 3.98 years | 4.50 years | Pass |
 
-```
-3.79% 3-month EIBOR (live rate; the previously documented 4.85% was stale)
-+ 2.50% credit spread
-= 6.29% pre-tax  ->  6.29% x (1 - 9%) = 5.72% after tax
-```
+These figures are pinned by `tests/golden.test.ts`. If that suite fails, the model has
+drifted and every published document is stale — treat it as a build break, not a warning.
 
-**WACC at a 60/40 equity–debt target structure:**
-
-```
-(0.60 x 15.35%) + (0.40 x 5.72%) = 9.21% + 2.29% = 11.50%
-```
-
----
-
-## Scenario Analysis
-
-| Scenario | Weight | NPV (AED) | IRR | PI | Engine decision |
-| :--- | :---: | ---: | ---: | ---: | :--- |
-| Optimistic (capex −5%, benefits +10%, opex −5%, r = 10.5%) | 25% | 19,013,977 | 33.59% | 1.830 | Approve |
-| **Base** (management baseline, r = 11.5%) | 50% | **12,083,628** | **26.30%** | **1.504** | **Approve** |
-| Pessimistic (capex +15%, benefits −25%, opex +15%, r = 14.5%) | 25% | **−4,940,625** | 8.23% | 0.819 | **Reject** |
-
-**Probability-weighted expected NPV (50/25/25): AED 9,560,152.**
-
-## Sensitivity
-
-Every driver is flexed by an identical ±20% so the swings are directly comparable.
-
-| Rank | Driver | NPV swing (AED) |
-| :---: | :--- | ---: |
-| 1 | **Operating benefits (savings + contribution margin)** | **16.67M** |
-| 2 | Project life | 8.39M |
-| 3 | Initial capital expenditure | 8.25M |
-| 4 | Discount rate (WACC) | 5.17M |
-| 5 | Additional OpEx | 3.57M |
-| 6 | Savings growth rate | 1.10M |
-| 7 | Salvage value | 0.37M |
-
-**Break-even points:** operating benefits can fall **29.0%** before NPV = 0; total outlay can rise
-**50.4%** (to AED 36.08M) before NPV = 0; NPV = 0 at a discount rate of **26.30%** (which is the IRR).
+**The hurdle rate is derived, not assumed.** Cost of equity = 4.20% risk-free +
+(1.15 × 6.00% ERP) + 0.75% UAE country risk + 3.50% project execution = 15.35%. Cost of
+debt = 3.79% EIBOR + 2.50% spread = 6.29% pre-tax, 5.72% after tax. At 60/40 equity–debt:
+(0.60 × 15.35%) + (0.40 × 5.72%) = **11.50%**.
 
 ---
 
-## Recommendation
+## Capabilities
 
-**Approve.**
+### Eight investment archetypes
 
-The base case creates AED 12.08M of value, the IRR clears the 11.50% hurdle by 14.80 points, and the
-probability-weighted expected NPV is positive at AED 9.56M. The engine returns a decision status of
-`Approve` on the base case.
-
-The material caveat is the downside: under the pessimistic scenario the project destroys value
-(NPV −AED 4.94M, PI 0.819) and the engine returns `Reject`. Operating benefits are the single largest
-driver of the outcome, and the benefit forecast has only a 29.0% cushion before the project breaks
-even. Approval is therefore recommended subject to two conditions:
-
-1. **Release capital against measured Year-1 savings** — stage the drawdown so that continued funding
-   depends on the realised savings run-rate tracked in `/benefits-tracker`, not on the forecast.
-2. **Require a vendor performance guarantee and buyback** — contractually protect the throughput
-   assumption and the AED 2.0M residual value that underpins the terminal-year cash flow.
-
----
-
-## Presentation Roles and Ownership
-
-The board presentation (`CapExIQ_Executive_Board_Presentation.pptx`, 15 slides) is delivered by a
-six-member committee rotation. The written report (Submission A) is an individual piece of work.
-
-| Member | Role | Coverage |
-| :---: | :--- | :--- |
-| 1 | CFO and project lead | Executive summary, strategic rationale, financial recommendation, board decision, risk synthesis |
-| 2 | FP&A director | Financial model, the **6-year** FCF schedule, CapEx breakdown, NPV, IRR, MIRR, payback |
-| 3 | Treasury and risk director | WACC derivation, scenario stress tests, tornado sensitivity |
-| 4 | Operations director | Fulfilment SLA compression, labour savings, robotics throughput |
-| 5 | Strategy and governance director | Management options, real-options framework, deployment roadmap |
-| 6 | Financial controller and benefits lead | Assumptions register, benefits realisation, decision-rights RACI |
-
-Slide-by-slide timings are in `deliverables/02_presentation_deck_structure.md`.
-
----
-
-## Investment Archetypes
-
-CapExIQ is template-driven, not hard-wired to one project. Eight archetypes cover the full range
-of capital decisions in the brief. An archetype config builds the annual benefit line; the audited
-engine — unforked — evaluates it. Defaults are calibrated to plausible mid-market UAE/GCC figures.
+The brief names eight kinds of capital decision. CapExIQ evaluates all of them on one
+audited engine — an archetype config produces an annual benefit profile, and the same
+tested mathematics evaluates it. The core engine is never forked.
 
 | Archetype | Outlay | NPV | IRR | Verdict |
-| :--- | ---: | ---: | ---: | :--- |
+|---|---:|---:|---:|---|
 | Installing automation technology *(flagship)* | AED 24.0M | +12.08M | 26.3% | Approve |
 | Expanding a production facility | AED 26.7M | +7.28M | 16.4% | Phased |
 | Purchasing new machinery | AED 5.21M | +1.57M | 18.9% | Approve |
@@ -169,139 +75,161 @@ engine — unforked — evaluates it. Defaults are calibrated to plausible mid-m
 | Launching an online service | AED 6.90M | (1.49M) | 14.0% | Reject |
 | Entering a new market | AED 10.9M | (2.21M) | 10.7% | Reject |
 
-Five of eight fail deliberately — a pack where every archetype is comfortably profitable would
-demonstrate optimistic defaults rather than a working engine. The flagship case reproduces its
-figures to the dirham after the refactor, proven by `tests/golden.test.ts` and `tests/archetypes.test.ts`.
+Five of eight defaults fail deliberately. A template pack where every archetype is
+comfortably profitable would demonstrate optimistic defaults, not a working engine.
 
-Browse them at `/archetypes`.
+### Role-based access control
 
-## AI Capabilities
+Authority comes from a signed `httpOnly` session cookie, verified in Edge middleware
+**before the requested page renders**. Six executive roles map to twenty named
+permissions; modules outside a role are unreachable by URL, not merely hidden from
+navigation. Unknown routes fail closed to "signed-in users only".
 
-Ten server-side routes under `src/app/api/ai/`. Every one accepts an `archetype`, validates its body
-with Zod, caps free text at 2,000 characters, bounds tokens and timeout, delimits user text against
-prompt injection, and **returns 200 with a deterministic fallback when no API key is configured** —
-so the app is fully demonstrable with no credentials, and the financial results are identical either way.
+Passwords are PBKDF2-SHA256 (210k iterations). Sessions are HMAC-SHA256 over a compact
+payload, built on Web Crypto so the same verify path runs at the edge. The app refuses to
+sign sessions in production without `AUTH_SECRET`.
 
-| Route | Purpose |
-| :--- | :--- |
-| `explain` | Natural-language Q&A over the live model |
-| `recommend` | Structured board recommendation (schema-constrained JSON) |
-| `threat-radar` | Risk axes ranked for the specific archetype, with mitigations |
-| `board-debate` | CFO, COO, Risk Officer and a sceptical NED argue the case, then synthesis |
-| `board-memo` | Full board memorandum draft in structured sections |
-| `scenario-studio` | Proposes named scenarios beyond the standard three — assumptions only, never results |
-| `esg-impact` | Green-financing commentary, or an explicit `notApplicable` flag where ESG is meaningless |
-| `parse-quote` | Extracts structured capex lines from pasted vendor quotations, with confidence scoring |
-| `live-macro` | Macro briefing over supplied data — asserts no live market access |
-| `voice-intent` | Maps a spoken command to a typed app intent, or returns `unknown` |
+Demo accounts and the full permission matrix: [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md).
 
-No route computes a financial figure. Each receives pre-computed values and is instructed never to
-recalculate. Exercise them at `/ai-studio`.
+### Retrieval-grounded AI assistant
 
-## Platform Modules
+The assistant retrieves the project documentation bearing on a question before answering,
+so every claim carries a numbered citation you can expand to its source extract.
 
-* **Executive dashboard (`/dashboard`)** — six KPI cards, annual and cumulative cash-flow charts,
-  scenario comparison chart, rule-based risk alert panel, and an AI advisory recommendation panel.
-* **Financial model (`/financial-model`)** — the full year-by-year FCF schedule with CSV export.
-* **Scenarios (`/scenarios`)** — optimistic / base / pessimistic / custom, with the probability-weighted
-  expected-NPV banner.
-* **Sensitivity (`/sensitivity`)** — tornado chart plus 2-D heatmaps (WACC vs benefits, capex vs
-  benefits) with the NPV = 0 break-even frontier.
-* **Monte Carlo (`/monte-carlo`)** — 5,000-iteration seeded Mulberry32 simulation with histogram and
-  cumulative S-curve.
-* **AI assistant (`/ai-assistant`)** — six sample prompts and a deterministic fallback narrative when
-  the advisory service is unavailable.
-* **Portfolio optimiser (`/portfolio`)** — exact 0-1 dynamic-programming knapsack under capital
-  rationing (see `CAPITAL_PORTFOLIO.md`).
-* **Funding (`/funding`)** — debt/equity mix and CFADS-based debt service coverage ratio.
-* **Real options (`/real-options`)**, **approvals (`/approvals`)**, **implementation plan**,
-  **benefits tracker**, **assumptions register**, **printable board report**, **presentation mode**.
+- **Corpus** — 112 passages built from the methodology, assumption register, scenario
+  definitions and deliverables (`pnpm build:kb`)
+- **Retrieval** — BM25 with domain synonym expansion ∪ dense vectors, fused by
+  Reciprocal Rank Fusion. RRF rather than a weighted blend because the two score scales
+  are incomparable and normalising them needs per-corpus tuning that rots silently
+- **Streaming** — SSE, first token in ~0.6s
+- **Degradation** — falls back to lexical-only retrieval if embeddings are unreachable
+
+### Guardrails
+
+- **No scraping, structurally.** All outbound requests pass a single chokepoint with an
+  allowlist containing only the configured model provider, failing closed.
+  `tests/guardrails.test.ts` walks `src/` and fails the build if a scraping library or a
+  literal external fetch is reintroduced. Legal basis:
+  [`docs/DATA_COLLECTION_POLICY.md`](docs/DATA_COLLECTION_POLICY.md)
+- **Input screening.** Instruction-override detection, scraping-request refusal, and PII
+  redaction (email, UAE mobile, Emirates ID, IBAN, card numbers) before any text reaches
+  the provider
+- **Security headers.** Full CSP, `frame-ancestors 'none'`, Permissions-Policy, and
+  `no-store` on every `/api/*` response
+
+### Eleven AI route handlers
+
+`explain` · `recommend` · `threat-radar` · `board-debate` · `board-memo` ·
+`scenario-studio` · `esg-impact` · `parse-quote` · `live-macro` · `voice-intent` ·
+`rfp-negotiator`
+
+Every route returns `200 OK` with a deterministic fallback when no API key is configured,
+so the platform is fully functional offline.
+
+> **A note on `live-macro`.** An earlier build prompted the model to act as a "real-time
+> macroeconomic data ingestion agent" and published the result as observed market data.
+> Nothing was ever fetched — every rate, tariff and lease price shown had been generated.
+> The generation step was removed. The route now serves hand-transcribed values with
+> per-figure source and `asOf`, and reports `isLive: false`. It is documented here because
+> it is the clearest illustration of this project's central ethical risk: not that a model
+> states something false, but that a well-designed interface can make a generated figure
+> look exactly like a measured one.
 
 ---
 
-## Tech Stack
-
-* **Framework:** Next.js 14.2.15 (App Router, React 18)
-* **Language:** TypeScript, strict mode
-* **Styling:** Tailwind CSS 3.4 plus a CSS-variable design system (`src/app/globals.css`)
-* **State:** Zustand, persisted to localStorage
-* **Charts:** Recharts; icons from Lucide
-* **Testing:** Vitest 2.1 (unit) and Playwright (E2E)
-
----
-
-## Quick Start
+## Quick start
 
 ```bash
-git clone https://github.com/krish2105/CF-CapExIQ.git
-cd CF-CapExIQ
 pnpm install
+cp .env.example .env.local     # optional — the app runs fully without an API key
+pnpm dev                       # http://localhost:3000
 ```
 
-```bash
-# development
-pnpm dev
+Sign in with any demo account, e.g. `cfo@novaretail.example` / `cfo-capex-2026`.
+The login page lists all six.
 
-# production
+```bash
+pnpm build && pnpm start       # production
+```
+
+### Environment
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `AUTH_SECRET` | **production only** | Session signing key (≥16 chars). The app refuses to start without it in production |
+| `OPENAI_API_KEY` | no | Enables live model responses; without it every route serves its deterministic fallback |
+| `OPENAI_BASE_URL` | no | For OpenAI-compatible providers |
+| `OPENAI_MODEL` | no | Defaults to `gpt-4o` |
+| `OPENAI_EMBEDDING_MODEL` | no | Dense retrieval stage; lexical-only without it |
+| `CAPEXIQ_USERS` | no | Replaces the seeded directory wholesale — required for any real deployment |
+
+---
+
+## Quality gates
+
+```bash
+pnpm typecheck     # tsc --noEmit, strict
+pnpm test          # Vitest — 18 suites
+pnpm test:e2e      # Playwright
 pnpm build
-pnpm start
 ```
 
-Then open `http://localhost:3000`.
+`tests/golden.test.ts` is the gate that matters. It pins the exact base-case figures
+above, so a silent change to the engine fails the build rather than quietly invalidating
+the report and the deck. `tests/auth.test.ts` additionally fails if any navigable route
+is missing a permission mapping, keeping the nav taxonomy and the middleware table from
+drifting apart.
+
+## Tech stack
+
+Next.js 14.2.24 (App Router) · TypeScript 5.6 strict · Tailwind CSS · Zustand (persisted,
+versioned, with migration) · Recharts · Framer Motion · Vitest · Playwright · Web Worker
+for Monte Carlo
 
 ---
 
-## Quality Gates
+## Submissions
 
-```bash
-pnpm typecheck   # tsc --noEmit, TypeScript strict mode
-pnpm lint        # next lint
-pnpm test        # Vitest unit suites, including tests/golden.test.ts
-pnpm build       # production compile
-pnpm test:e2e    # Playwright smoke tests (see TESTING.md on server startup)
-```
+Course deliverables live in [`submissions/`](submissions/):
 
-`tests/golden.test.ts` pins the exact published figures (NPV, IRR, MIRR, PI, payback, the full FCF
-stream and the three scenario outcomes). If it fails, the engine has moved and every published
-document must be re-checked — do not simply update the expected values.
+| File | Requirement |
+|---|---|
+| `CapExIQ_Individual_Report.docx` | Submission A — individual report, 1,645 words, all ten required sections |
+| `CapExIQ_Executive_Presentation.pptx` | Submission C — 14 slides, ~10 minutes, speaker notes throughout |
+| `README.md` | Requirement-to-artefact mapping for all five main questions |
 
-Continuous integration runs on every push and pull request to `main` via
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml): typecheck, lint, unit tests, production build.
+Submission B is this application.
 
----
+## Documentation
 
-## Deliverables
-
-Course submissions live in [`submissions/`](submissions/):
-
-| Deliverable | File | Status |
-| :--- | :--- | :--- |
-| **A** Individual report | `submissions/CapExIQ_Individual_Report.docx` | 1,445 words · 10 sections · all 5 main questions |
-| **B** Dashboard / app | this repository | 26 page routes · 10 AI routes · 8 archetypes |
-| **C** Presentation | `submissions/CapExIQ_Executive_Presentation.pptx` | 14 slides · ~9.5 min · speaker notes throughout |
-
-See [`submissions/README.md`](submissions/README.md) for the requirement-by-requirement mapping.
-
-## Documentation Index
-
-| Document | Contents |
-| :--- | :--- |
-| `ASSUMPTIONS.md` | Assumptions register with data classification |
-| `FINANCIAL_METHODOLOGY.md` | Formulas and the WACC derivation |
-| `MODEL_RECONCILIATION.md` | Engine vs `NovaRetail_MFC_Financial_Model_Base.csv` |
-| `MODEL_LIMITATIONS.md` | What the model does not do |
-| `DATA_SOURCES.md` | The ten CSV datasets and their provenance |
-| `RUBRIC_MAPPING.md` | Assignment brief coverage |
-| `ARCHITECTURE.md` · `TESTING.md` · `SECURITY.md` · `DEPLOYMENT.md` | Engineering |
-| `AI_GOVERNANCE.md` · `ACCESSIBILITY.md` | Governance and accessibility |
-| `USER_GUIDE.md` · `DEMO_SCRIPT.md` · `CAPITAL_PORTFOLIO.md` | Usage |
-| `AUDIT_FINDINGS.md` | Internal audit of the repository |
+| Document | Covers |
+|---|---|
+| [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md) | Roles, permissions, session design, demo accounts |
+| [`docs/DATA_COLLECTION_POLICY.md`](docs/DATA_COLLECTION_POLICY.md) | Why the platform does not scrape, and the legal basis |
+| [`docs/FINANCIAL_METHODOLOGY.md`](docs/FINANCIAL_METHODOLOGY.md) | Formulas, WACC derivation, engine design |
+| [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Every input, classified by provenance |
+| [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | External data and its citations |
+| [`docs/MODEL_LIMITATIONS.md`](docs/MODEL_LIMITATIONS.md) | What this model does not do |
+| [`docs/AI_GOVERNANCE.md`](docs/AI_GOVERNANCE.md) | The boundary between engine and model |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Module layout and data flow |
+| [`docs/TESTING.md`](docs/TESTING.md) | Suite structure and the golden-value gate |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Headers, egress policy, input handling |
+| [`docs/FRONTEND_DESIGN_SYSTEM.md`](docs/FRONTEND_DESIGN_SYSTEM.md) | The Midnight Vault design system |
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | Walkthrough of every module |
 
 ---
 
-## Licence and Attribution
+## Academic integrity
 
-Built for an academic corporate finance assignment. **NovaRetail GCC is a hypothetical entity** and
-the project assumptions are academic estimates, not company data. See `LICENSE`.
+**NovaRetail GCC is hypothetical**, which the brief expressly permits, and is labelled as
+such throughout. External reference data — UAE corporate tax, DEWA tariffs, EIBOR — is
+transcribed by hand from published sources and cited. Operational benchmarking uses the
+DataCo Smart Supply Chain dataset (Mendeley Data `8gx2fvg2k6`, CC BY 4.0), which is
+genuine and never presented as NovaRetail's own financial statements.
 
-**Repository:** [https://github.com/krish2105/CF-CapExIQ](https://github.com/krish2105/CF-CapExIQ)
+Final responsibility for the investment decision rests with the Chief Financial Officer
+and the Capital Expenditure Committee — not with the AI system.
+
+## Licence
+
+MIT. See [`LICENSE`](LICENSE).

@@ -2,7 +2,7 @@ import {
   Home, LayoutDashboard, FileSpreadsheet, Table, GitCompare, TrendingUp, Dices,
   PieChart, Target, Cpu, BarChart3, Zap, Truck, ShieldCheck, GitBranch, Landmark,
   Award, Calendar, BookOpen, Download, Bot, Sliders, Monitor, ShieldAlert, Box,
-  Leaf, Wand2, Users, FileText, Gauge, Database,
+  Leaf, Wand2, Users, FileText, Gauge, Database, LayoutGrid, Sparkles,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Permission } from '@/lib/auth/permissions';
@@ -64,6 +64,7 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: Table,
     blurb: 'The deterministic engine: assumptions, cash flows, capacity and funding.',
     segments: [
+      { href: '/archetypes', label: 'Archetype Library', desc: 'Eight investment templates on one engine', icon: LayoutGrid, permissions: ['assumptions.view'] },
       { href: '/financial-model', label: 'Financial Model', desc: 'Year-by-year cash-flow schedule', icon: Table, permissions: ['financials.schedule'] },
       { href: '/assumptions', label: 'Assumptions Register', desc: 'Governed inputs and audit trail', icon: FileSpreadsheet, permissions: ['assumptions.view'] },
       { href: '/capacity-model', label: 'Capacity Model', desc: 'Throughput and automation sizing', icon: Cpu, permissions: ['operations.view'] },
@@ -112,6 +113,7 @@ export const NAV_SECTIONS: NavSection[] = [
     blurb: 'AI advisory, the facility twin, data lineage and platform settings.',
     segments: [
       { href: '/ai-assistant', label: 'Finance Assistant', desc: 'Conversational finance copilot', icon: Bot, permissions: ['ai.advisory'] },
+      { href: '/ai-studio', label: 'AI Studio', desc: 'All AI capabilities with provenance badges', icon: Sparkles, permissions: ['ai.advisory'] },
       { href: '/3d-digital-twin', label: '3D Digital Twin', desc: 'Facility layout simulation', icon: Box, permissions: ['operations.view'] },
       { href: '/data-sources', label: 'Data & Methodology', desc: 'Provenance and calculation basis', icon: BookOpen, permissions: [] },
       { href: '/csv-management', label: 'CSV Import & Audit', desc: 'Vendor quote ingestion and lineage', icon: Download, permissions: ['audit.view'] },

@@ -7,6 +7,15 @@ import { BASE_SCENARIO_DEFINITIONS, evaluateScenario, transformAssumptionsForSce
 import { calculateFinancialMetrics } from '../finance/metrics';
 import { calculateCashFlowSchedule } from '../finance/cashflow';
 import type { Citation } from '../rag/types';
+import { ARCHETYPE_CONFIGS } from '../archetypes/configs';
+import { buildAnnualFCF } from '../archetypes/buildAnnualFCF';
+import { DEFAULT_ARCHETYPE } from '../archetypes/types';
+import type {
+  ArchetypeDriverPatch,
+  ArchetypeDrivers,
+  CommonInputs,
+  ProjectArchetype,
+} from '../archetypes/types';
 
 export interface ChatMessage {
   id: string;

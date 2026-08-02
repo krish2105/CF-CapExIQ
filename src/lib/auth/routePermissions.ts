@@ -20,6 +20,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
   '/board-debate': ['board.materials'],
   '/presentation': ['board.materials'],
 
+  '/archetypes': ['assumptions.view'],
   '/financial-model': ['financials.schedule'],
   '/assumptions': ['assumptions.view'],
   '/capacity-model': ['operations.view'],
@@ -44,6 +45,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
   '/esg-sustainability': ['esg.view'],
 
   '/ai-assistant': ['ai.advisory'],
+  '/ai-studio': ['ai.advisory'],
   '/3d-digital-twin': ['operations.view'],
   '/data-sources': [],
   '/csv-management': ['audit.view'],

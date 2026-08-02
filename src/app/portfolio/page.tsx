@@ -54,9 +54,9 @@ export default function PortfolioPage() {
         </div>
 
         <div className="glass-panel p-4">
-          <span className="text-[11px] text-muted-foreground font-medium">Weighted Portfolio IRR</span>
-          <p className="text-lg font-bold text-info mt-1">{formatPercent(result.weightedPortfolioIrr)}</p>
-          <span className="text-[10px] text-muted-foreground font-mono">Capital-Weighted Return</span>
+          <span className="text-[11px] text-muted-foreground font-medium">Weighted Avg IRR (approx.)</span>
+          <p className="text-lg font-bold text-info mt-1">{formatPercent(result.investmentWeightedAverageIrrApprox)}</p>
+          <span className="text-[10px] text-muted-foreground font-mono">Investment-weighted mean — not a true portfolio IRR</span>
         </div>
 
         <div className="glass-panel p-4">
