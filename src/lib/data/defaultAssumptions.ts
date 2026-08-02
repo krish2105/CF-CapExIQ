@@ -28,6 +28,57 @@ export const DEFAULT_FINANCIAL_ASSUMPTIONS: FinancialAssumptions = {
 };
 
 export const DEFAULT_ASSUMPTIONS_REGISTER: AssumptionItem[] = [
+  // ---------------------------------------------------------------------
+  // Historical — observed operational data, not a forecast and not an input
+  // the user sets. Included so the register carries all five of the data
+  // classifications the brief requires rather than only the three that
+  // happen to be model inputs.
+  // ---------------------------------------------------------------------
+  {
+    id: 'HIST-FULFIL-COST',
+    category: 'Operating benefits',
+    name: 'Manual fulfilment cost per order (observed)',
+    value: 14.5,
+    unit: 'AED/order',
+    dataClassification: 'Historical',
+    source: 'DataCo Smart Supply Chain — Mendeley Data 8gx2fvg2k6, CC BY 4.0',
+    notes:
+      'Observed unit fulfilment cost under manual store-based picking. Benchmarked from the published operational dataset; it is not NovaRetail financial-statement data.',
+    lastUpdated: '2026-07-22',
+    isEditable: false,
+  },
+  {
+    id: 'HIST-ORDER-VOLUME',
+    category: 'Project',
+    name: 'Daily order volume at baseline (observed)',
+    value: 3200,
+    unit: 'orders/day',
+    dataClassification: 'Historical',
+    source: 'DataCo Smart Supply Chain — Mendeley Data 8gx2fvg2k6, CC BY 4.0',
+    notes:
+      'Baseline throughput before automation, used to size the capacity model. Historical observation, not a projection.',
+    lastUpdated: '2026-07-22',
+    isEditable: false,
+  },
+  // ---------------------------------------------------------------------
+  // AI-generated — an estimate proposed by a model and retained only because
+  // a human accepted it. Flagged explicitly so a reader can see exactly which
+  // inputs carry model provenance; the value is advisory and never feeds a
+  // calculation without review.
+  // ---------------------------------------------------------------------
+  {
+    id: 'AI-RESKILL-COST',
+    category: 'Operating costs',
+    name: 'Workforce reskilling provision (AI-proposed)',
+    value: 180000,
+    unit: 'AED',
+    dataClassification: 'AI-generated',
+    source: 'Model-proposed estimate, reviewed and accepted by the project team',
+    notes:
+      'Proposed by the advisory model when asked what a comparable automation programme typically provisions for redeployment and retraining. Retained as a disclosed AI-generated estimate; it is not a quoted or observed figure and carries no external source.',
+    lastUpdated: '2026-08-02',
+    isEditable: true,
+  },
   {
     id: 'CAPEX-EQUIP',
     category: 'Capital expenditure',

@@ -62,11 +62,22 @@ export default function AIAssistantPage() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  /**
+   * Sample questions.
+   *
+   * Six rather than four, and drawn from the assessment brief's own example
+   * list so the assistant is demonstrably answering the questions it was
+   * specified against. Each has a documented answer in the individual report.
+   */
   const samplePrompts = [
+    'Why did the NPV decrease?',
+    'What happens if the discount rate rises?',
+    'Which assumption has the greatest effect on the result?',
+    'Should management accept or reject the project?',
+    'Explain the result to a non-financial manager.',
     'Where does the 9% corporate tax rate come from, and what is its source?',
     'Why is MIRR lower than IRR in this model?',
     'What are the stated limitations of this financial model?',
-    'How are the Pessimistic scenario multipliers defined?',
   ];
 
   const handleSend = async (queryText?: string) => {

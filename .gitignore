@@ -47,3 +47,6 @@ tsconfig.tsbuildinfo
 
 # Local agent tooling config (machine-specific)
 .claude/
+
+# Playwright signed-in storage state (generated)
+e2e/.auth/

@@ -79,21 +79,139 @@ export default function DashboardPage() {
     [activeAssumptions, metrics, allScenarios]
   );
 
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  // ---------------------------------------------------------------
+  // Executive advisory — served by /api/ai/recommend.
+  //
+  // This panel previously interpolated a fixed sentence that asserted the
+  // project "delivers a strong financial return" regardless of the numbers,
+  // while being badged as AI output. Under the Pessimistic scenario that
+  // claim was false on screen. The recommendation is now produced by the
+  // advisory route, and when that route is unreachable the fallback below
+  // derives its wording from the actual metrics rather than assuming a
+  // favourable outcome.
+  // ---------------------------------------------------------------
+  const [advisory, setAdvisory] = useState<StructedAIResponse | null>(null);
+  const [advisorySource, setAdvisorySource] = useState<'loading' | 'model' | 'deterministic'>('loading');
+
+  const deterministicAdvisory = React.useCallback((): StructedAIResponse => {
+    const createsValue = metrics.npv > 0;
+    const clearsHurdle = metrics.irr !== null && metrics.irr > activeAssumptions.discountRate;
+    const payback = metrics.paybackPeriodYears
+      ? `${metrics.paybackPeriodYears.toFixed(2)} years`
+      : 'not achieved within the project life';
+
+    let decision: StructedAIResponse['decision'];
+    let executiveSummary: string;
+
+    if (createsValue && clearsHurdle) {
+      decision = 'Approve';
+      executiveSummary = `Under the ${selectedScenario} scenario the proposal creates value: net present value of ${formatAED(
+        metrics.npv,
+      )} is positive and the internal rate of return of ${formatPercent(
+        metrics.irr,
+      )} clears the ${formatPercent(
+        activeAssumptions.discountRate,
+      )} cost of capital. Profitability index is ${metrics.profitabilityIndex.toFixed(
+        4,
+      )} with payback of ${payback}. Commitment remains subject to the controls below and to board approval.`;
+    } else if (!createsValue && !clearsHurdle) {
+      decision = 'Reject';
+      executiveSummary = `Under the ${selectedScenario} scenario both value tests fail. Net present value is ${formatAED(
+        metrics.npv,
+      )} — a shortfall of ${formatAED(
+        Math.abs(metrics.npv),
+      )} against breakeven — and the internal rate of return of ${formatPercent(
+        metrics.irr,
+      )} does not clear the ${formatPercent(
+        activeAssumptions.discountRate,
+      )} hurdle. As modelled the proposal destroys shareholder value and should not proceed without a materially stronger benefit case.`;
+    } else if (!createsValue) {
+      decision = 'Reject';
+      executiveSummary = `Under the ${selectedScenario} scenario net present value is negative at ${formatAED(
+        metrics.npv,
+      )}, so the proposal destroys value even though the internal rate of return of ${formatPercent(
+        metrics.irr,
+      )} sits above the ${formatPercent(
+        activeAssumptions.discountRate,
+      )} cost of capital. Treat the net present value shortfall as the binding constraint.`;
+    } else {
+      decision = 'Delay Pending Evidence';
+      executiveSummary = `Under the ${selectedScenario} scenario the return test is not met. The internal rate of return of ${formatPercent(
+        metrics.irr,
+      )} does not clear the ${formatPercent(
+        activeAssumptions.discountRate,
+      )} cost of capital despite a net present value of ${formatAED(
+        metrics.npv,
+      )}. Re-test the benefit assumptions before committing capital.`;
+    }
+
+    return {
+      decision,
+      executiveSummary,
+      keyValueDrivers: createsValue
+        ? [
+            `Year-1 operating savings of ${formatAED(activeAssumptions.year1OperatingSavings)}`,
+            `Incremental contribution margin of ${formatAED(activeAssumptions.year1ContributionMargin)}`,
+            `Profitability index of ${metrics.profitabilityIndex.toFixed(4)} against a 1.00 threshold`,
+          ]
+        : ['No driver is currently sufficient to offset the modelled outlay'],
+      principalRisks: riskAlerts.slice(0, 3).map((a) => a.title),
+      managementControls: [
+        'Release capital against measured Year-1 savings rather than against the calendar',
+        'Require a vendor performance guarantee and a secondary-market buyback clause',
+        'Re-run this evaluation at each stage gate before drawing the next tranche',
+      ],
+      confidence: createsValue && clearsHurdle ? 'High' : 'Low',
+      disclaimer:
+        'Deterministic advisory output. No language model was reached; wording is derived from the computed metrics.',
+    };
+  }, [metrics, activeAssumptions, selectedScenario, riskAlerts]);
 
   useEffect(() => {
-    setAiSummary(
-      `Based on a deterministic net present value of ${formatAED(metrics.npv)} and an internal rate of return of ${formatPercent(
-        metrics.irr
-      )} — exceeding the ${formatPercent(
-        activeAssumptions.discountRate
-      )} WACC hurdle — the automated micro-fulfilment centre delivers a strong financial return. A profitability index of ${metrics.profitabilityIndex.toFixed(
-        2
-      )} and a payback period of ${metrics.paybackPeriodYears?.toFixed(
-        1
-      )} years justify capital commitment under the ${selectedScenario} scenario. Management controls must mandate vendor SLA penalty clauses and a 15% maximum CapEx overrun ceiling.`
-    );
-  }, [metrics, activeAssumptions, selectedScenario]);
+    let cancelled = false;
+    setAdvisorySource('loading');
+
+    (async () => {
+      try {
+        const res = await fetch('/api/ai/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metrics,
+            assumptions: activeAssumptions,
+            scenarioResults: (['Optimistic', 'Base', 'Pessimistic'] as const).map((s) => ({
+              scenario: s,
+              npv: allScenarios[s].metrics.npv,
+              irr: allScenarios[s].metrics.irr,
+              decisionStatus: allScenarios[s].metrics.decisionStatus,
+            })),
+            riskAlerts: riskAlerts.slice(0, 10).map((a) => ({
+              id: a.id,
+              severity: a.severity,
+              title: a.title,
+            })),
+          }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const json = await res.json();
+        if (cancelled) return;
+        if (json?.executiveSummary) {
+          setAdvisory(json as StructedAIResponse);
+          setAdvisorySource(json.isFallback ? 'deterministic' : 'model');
+          return;
+        }
+        throw new Error('unexpected shape');
+      } catch {
+        if (cancelled) return;
+        setAdvisory(deterministicAdvisory());
+        setAdvisorySource('deterministic');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [metrics, activeAssumptions, allScenarios, riskAlerts, deterministicAdvisory]);
 
   const annualChartData = yearlyCashFlows.map((item) => ({
     year: `Year ${item.year}`,
@@ -380,12 +498,69 @@ export default function DashboardPage() {
               <h4 className="text-[15px] font-medium text-foreground flex items-center gap-2 tracking-tight">
                 <Bot className="h-4 w-4 text-primary" /> Executive advisory
               </h4>
-              <Badge tone="accent">Structured governance output</Badge>
+              <Badge tone={advisorySource === 'model' ? 'accent' : 'neutral'}>
+                {advisorySource === 'loading'
+                  ? 'Requesting advisory…'
+                  : advisorySource === 'model'
+                    ? 'Model response'
+                    : 'Deterministic fallback'}
+              </Badge>
             </div>
 
-            <p className="px-5 py-4 text-sm text-card-foreground leading-relaxed flex-1">
-              {aiSummary}
-            </p>
+            <div className="px-5 py-4 flex-1 space-y-3">
+              {advisory ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2.5 py-1 rounded-card border text-[11px] font-semibold ${getDecisionBadgeColor(
+                        advisory.decision,
+                      )}`}
+                    >
+                      {advisory.decision}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-mono">
+                      Confidence: {advisory.confidence}
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-card-foreground leading-relaxed">
+                    {advisory.executiveSummary}
+                  </p>
+
+                  {advisory.principalRisks.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                        Principal risks
+                      </p>
+                      <ul className="space-y-0.5">
+                        {advisory.principalRisks.slice(0, 3).map((r, i) => (
+                          <li key={i} className="text-[12px] text-card-foreground leading-snug">
+                            · {r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {advisory.managementControls.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                        Management controls
+                      </p>
+                      <ul className="space-y-0.5">
+                        {advisory.managementControls.slice(0, 3).map((c, i) => (
+                          <li key={i} className="text-[12px] text-card-foreground leading-snug">
+                            · {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Generating executive advisory…</p>
+              )}
+            </div>
 
             <div className="mx-5 mb-5 flex items-start gap-2.5 rounded-card border border-warning/30 bg-warning-soft p-3">
               <Info className="h-4 w-4 shrink-0 text-warning mt-0.5" />

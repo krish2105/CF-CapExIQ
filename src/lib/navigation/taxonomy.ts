@@ -2,7 +2,7 @@ import {
   Home, LayoutDashboard, FileSpreadsheet, Table, GitCompare, TrendingUp, Dices,
   PieChart, Target, Cpu, BarChart3, Zap, Truck, ShieldCheck, GitBranch, Landmark,
   Award, Calendar, BookOpen, Download, Bot, Sliders, Monitor, ShieldAlert, Box,
-  Leaf, Wand2, Users, FileText, Gauge, Database, LayoutGrid, Sparkles,
+  Leaf, Wand2, Users, FileText, Gauge, Database, LayoutGrid, Sparkles, Brain,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Permission } from '@/lib/auth/permissions';
@@ -82,10 +82,11 @@ export const NAV_SECTIONS: NavSection[] = [
     segments: [
       { href: '/scenarios', label: 'Scenario Engine', desc: 'Base, optimistic and pessimistic cases', icon: GitCompare, permissions: ['scenario.switch'] },
       { href: '/sensitivity', label: 'Sensitivity Matrix', desc: 'Two-way driver sensitivity', icon: TrendingUp, permissions: ['metrics.advanced'] },
+      { href: '/decision-intelligence', label: 'Decision Intelligence', desc: 'Driver attribution, fitted forecast, input screening', icon: Brain, permissions: ['metrics.advanced'] },
       { href: '/monte-carlo', label: 'Monte Carlo', desc: 'Probabilistic NPV distribution', icon: Dices, permissions: ['metrics.advanced'] },
       { href: '/ai-scenario-studio', label: 'Scenario Studio', desc: 'Generative macro scenarios', icon: Wand2, permissions: ['scenario.author'] },
       { href: '/ai-threat-radar', label: 'Threat Radar', desc: '6-axis risk analysis', icon: ShieldAlert, permissions: ['risk.view'] },
-      { href: '/real-options', label: 'Real Options Staging', desc: 'Stage-gate option value', icon: GitBranch, permissions: ['metrics.advanced'] },
+      { href: '/real-options', label: 'Phased Investment Staging', desc: 'Stage-gate capital release paths', icon: GitBranch, permissions: ['metrics.advanced'] },
     ],
   },
   {

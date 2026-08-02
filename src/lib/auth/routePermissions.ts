@@ -30,6 +30,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 
   '/scenarios': ['scenario.switch'],
   '/sensitivity': ['metrics.advanced'],
+  '/decision-intelligence': ['metrics.advanced'],
   '/monte-carlo': ['metrics.advanced'],
   '/ai-scenario-studio': ['scenario.author'],
   '/ai-threat-radar': ['risk.view'],

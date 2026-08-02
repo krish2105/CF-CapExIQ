@@ -4,7 +4,7 @@ import React from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { evaluatePhasedInvestmentPaths } from '@/lib/finance/realOptions';
 import { formatAED } from '@/lib/utils/formatting';
-import { GitBranch, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Info, GitBranch, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function RealOptionsPage() {
   const { getActiveScenarioResult } = useFinancialStore();
@@ -20,12 +20,23 @@ export default function RealOptionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
           <h1 className="font-display text-[clamp(24px,2.6vw,32px)] leading-tight font-normal text-foreground flex items-center gap-2">
-            <GitBranch className="h-6 w-6 text-primary" /> Real Options & Phased Investment Decision Analysis
+            <GitBranch className="h-6 w-6 text-primary" /> Phased Investment Staging Analysis
           </h1>
           <p className="text-xs text-muted-foreground">
-            NovaRetail GCC • Staged Decision Trees, Downside Capital Risk Protection & Expansion Options
+            NovaRetail GCC • Stage-gate capital release paths and downside exposure at each gate
           </p>
         </div>
+      </div>
+
+      <div className="glass-panel p-4 border-l-0 flex items-start gap-2.5">
+        <Info className="h-4 w-4 shrink-0 text-warning mt-0.5" />
+        <p className="text-[11px] text-foreground/85 leading-relaxed">
+          <strong className="font-medium">Scope.</strong> This module compares staged capital-release
+          paths and the downside exposure carried at each gate. It is not a real-options valuation:
+          it does not price the option to defer, expand or abandon, which would require a volatility
+          input and a binomial or Black&ndash;Scholes lattice. Treat the figures below as a comparison
+          of commitment profiles, not as option value.
+        </p>
       </div>
 
       {/* Decision Path Cards Grid */}

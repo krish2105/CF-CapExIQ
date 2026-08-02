@@ -1,3 +1,17 @@
+/**
+ * Vendor total-cost-of-ownership comparison set.
+ *
+ * ILLUSTRATIVE PRICING — NOT QUOTATIONS.
+ * Dematic, Swisslog, Knapp and AutoStore are real suppliers, but no quotation
+ * was requested from or issued by any of them. Every figure below is an
+ * academic estimate constructed to exercise the TCO comparison, and must not
+ * be read as market pricing or relied on for procurement. A live evaluation
+ * would replace this table wholesale with quotations obtained under an RFP.
+ *
+ * This banner exists because naming a real supplier next to a specific number
+ * implies a source the project does not have; the disclosure is the source.
+ */
+
 import { VendorRecord } from '../types/finance';
 
 export const DEFAULT_VENDOR_CATALOG: VendorRecord[] = [

@@ -16,7 +16,7 @@ test.describe('CapExIQ Application End-to-End Tests', () => {
 
   test('3. Theme toggle button is rendered in top-right header', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    const themeBtn = page.locator('button[aria-label="Select color theme"]').first();
+    const themeBtn = page.locator('button[aria-label="Select colour theme"]').first();
     await expect(themeBtn).toBeVisible({ timeout: 15000 });
   });
 

@@ -3,7 +3,7 @@
 import React from 'react';
 import { DEFAULT_VENDOR_CATALOG } from '@/lib/finance/vendors';
 import { formatAED } from '@/lib/utils/formatting';
-import { Truck, ShieldCheck, Award, ExternalLink } from 'lucide-react';
+import { Info, Truck, ShieldCheck, Award, ExternalLink } from 'lucide-react';
 
 export default function VendorAnalysisPage() {
   return (
@@ -15,9 +15,20 @@ export default function VendorAnalysisPage() {
             <Truck className="h-6 w-6 text-primary" /> Vendor & Procurement TCO Matrix
           </h1>
           <p className="text-xs text-muted-foreground">
-            NovaRetail GCC • Automated Warehouse System Supplier Comparison & 6-Year Lifecycle Cost Analysis
+            NovaRetail GCC • Supplier comparison and 6-year lifecycle cost analysis — illustrative pricing
           </p>
         </div>
+      </div>
+
+      <div className="glass-panel p-4 flex items-start gap-2.5">
+        <Info className="h-4 w-4 shrink-0 text-warning mt-0.5" />
+        <p className="text-[11px] text-foreground/85 leading-relaxed">
+          <strong className="font-medium">Illustrative pricing — not quotations.</strong> The suppliers
+          named below are real companies, but no quotation was requested from or issued by any of them.
+          The figures are academic estimates constructed to exercise the total-cost-of-ownership
+          comparison, and they must not be read as market pricing or used for procurement. A live
+          evaluation would replace them with quotations obtained under a request-for-proposal process.
+        </p>
       </div>
 
       {/* Vendor Table */}

@@ -96,7 +96,7 @@ Demo accounts and the full permission matrix: [`docs/AUTHENTICATION.md`](docs/AU
 The assistant retrieves the project documentation bearing on a question before answering,
 so every claim carries a numbered citation you can expand to its source extract.
 
-- **Corpus** — 112 passages built from the methodology, assumption register, scenario
+- **Corpus** — 90 passages built from the methodology, assumption register, scenario
   definitions and deliverables (`pnpm build:kb`)
 - **Retrieval** — BM25 with domain synonym expansion ∪ dense vectors, fused by
   Reciprocal Rank Fusion. RRF rather than a weighted blend because the two score scales
