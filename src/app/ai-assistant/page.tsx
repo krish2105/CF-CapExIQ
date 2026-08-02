@@ -7,6 +7,7 @@ import { formatAED, formatPercent } from '@/lib/utils/formatting';
 import { SourceCitations } from '@/components/ai/SourceCitations';
 import type { Citation } from '@/lib/rag/types';
 import { Bot, Send, User, AlertTriangle, Trash2, Library, Square } from 'lucide-react';
+import { useRole } from '@/components/auth/RoleProvider';
 
 interface StreamEvent {
   type: 'sources' | 'delta' | 'done' | 'error';
@@ -25,16 +26,15 @@ interface StreamEvent {
  * message is committed.
  */
 export default function AIAssistantPage() {
-  const { chatMessages, addChatMessage, clearChat, selectedScenario, selectedRole } =
-    useFinancialStore(
-      useShallow((s) => ({
-        chatMessages: s.chatMessages,
-        addChatMessage: s.addChatMessage,
-        clearChat: s.clearChat,
-        selectedScenario: s.selectedScenario,
-        selectedRole: s.selectedRole,
-      }))
-    );
+  const { chatMessages, addChatMessage, clearChat, selectedScenario } = useFinancialStore(
+    useShallow((s) => ({
+      chatMessages: s.chatMessages,
+      addChatMessage: s.addChatMessage,
+      clearChat: s.clearChat,
+      selectedScenario: s.selectedScenario,
+    }))
+  );
+  const selectedRole = useRole();
 
   const [inputQuery, setInputQuery] = useState('');
   const [phase, setPhase] = useState<'idle' | 'retrieving' | 'streaming'>('idle');

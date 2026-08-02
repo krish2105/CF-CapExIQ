@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { ALL_SEGMENTS } from '@/lib/navigation/taxonomy';
 import { canAny, roleLabel } from '@/lib/auth/permissions';
 import { Search, Printer, Sun, Moon, X, Lock, CornerDownLeft } from 'lucide-react';
+import { useRole } from '@/components/auth/RoleProvider';
 
 /**
  * Command palette.
@@ -36,7 +37,7 @@ export const CommandPalette: React.FC = () => {
   const [cursor, setCursor] = useState(0);
   const router = useRouter();
   const setTheme = useTheme().setTheme;
-  const selectedRole = useFinancialStore((s) => s.selectedRole);
+  const selectedRole = useRole();
   const listRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => {

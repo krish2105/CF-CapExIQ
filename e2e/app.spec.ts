@@ -44,13 +44,19 @@ test.describe('CapExIQ — authenticated application', () => {
     await expect(page.locator('button[aria-label="Select colour theme"]').first()).toBeVisible();
   });
 
-  test('the persisted store is populated while signed in', async ({ page }) => {
+  test('the persisted store carries no role', async ({ page }) => {
     await page.goto('/dashboard');
+
+    // The inverse of what this asserted before item 9. The store used to hold
+    // `selectedRole`, seeded at sign-in and read by every RoleGate — which is
+    // exactly what made the lens forgeable from devtools. The lens now comes
+    // from the signed session, so the absence of a role here is the guarantee.
     const stored = await page.evaluate(() =>
       localStorage.getItem('capexiq-financial-store')
     );
-    expect(stored).not.toBeNull();
-    // The role mirrored at sign-in is what every RoleGate reads.
-    expect(stored).toContain('CFO');
+    if (stored !== null) expect(stored).not.toContain('selectedRole');
+
+    // And the lens itself still renders correctly from the session.
+    await expect(page.getByText('Profitability Index').first()).toBeVisible();
   });
 });

@@ -131,7 +131,6 @@ interface FinancialStoreState {
   assumptions: FinancialAssumptions;
   assumptionsRegister: AssumptionItem[];
   selectedScenario: ScenarioType;
-  selectedRole: ExecutiveRole;
   customScenarioSliders: CustomScenarioSliders;
   chatMessages: ChatMessage[];
   auditLog: AssumptionAuditEntry[];
@@ -139,10 +138,9 @@ interface FinancialStoreState {
   activeProfileId: string;
 
   // Computed / Action helpers
-  updateAssumptions: (newAssumptions: Partial<FinancialAssumptions>) => void;
+  updateAssumptions: (newAssumptions: Partial<FinancialAssumptions>, actor?: string) => void;
   resetAssumptions: () => void;
   setScenario: (scenario: ScenarioType) => void;
-  setRole: (role: ExecutiveRole) => void;
   /** Discard all persisted user state. Called on sign-out. */
   clearSession: () => void;
   updateCustomScenarioSliders: (sliders: Partial<CustomScenarioSliders>) => void;
@@ -167,14 +165,13 @@ export const useFinancialStore = create<FinancialStoreState>()(
       assumptions: DEFAULT_FINANCIAL_ASSUMPTIONS,
       assumptionsRegister: DEFAULT_ASSUMPTIONS_REGISTER,
       selectedScenario: 'Base',
-      selectedRole: 'CFO',
       customScenarioSliders: DEFAULT_CUSTOM_SLIDERS,
       chatMessages: [],
       auditLog: [],
       projectProfiles: DEFAULT_PROJECT_PROFILES,
       activeProfileId: 'proj-dubai-mfc',
 
-      updateAssumptions: (newAssumptions) => {
+      updateAssumptions: (newAssumptions, actor) => {
         clearScenarioMemo();
         set((state) => {
           const newAuditEntries: AssumptionAuditEntry[] = Object.entries(newAssumptions).map(
@@ -186,7 +183,15 @@ export const useFinancialStore = create<FinancialStoreState>()(
               previousValue: (state.assumptions as any)[key] ?? '',
               newValue: typeof newVal === 'object' ? JSON.stringify(newVal) : newVal ?? '',
               scenario: state.selectedScenario,
-              userLabel: state.selectedRole,
+              // Supplied by the caller from the verified session, because the
+              // store no longer holds a role to attribute this to.
+              //
+              // Worth stating plainly: this is a client-side change log, not
+              // an audit trail. It lives in localStorage, the actor label is
+              // whatever the calling component passed, and both are erased on
+              // sign-out. A real audit record has to be written server-side
+              // against the session — see the database work still outstanding.
+              userLabel: actor ?? 'Unattributed',
             })
           );
 
@@ -203,7 +208,6 @@ export const useFinancialStore = create<FinancialStoreState>()(
           assumptions: DEFAULT_FINANCIAL_ASSUMPTIONS,
           assumptionsRegister: DEFAULT_ASSUMPTIONS_REGISTER,
           selectedScenario: 'Base',
-          selectedRole: 'CFO',
           customScenarioSliders: DEFAULT_CUSTOM_SLIDERS,
           auditLog: [],
         });
@@ -212,10 +216,6 @@ export const useFinancialStore = create<FinancialStoreState>()(
       setScenario: (scenario) => {
         clearScenarioMemo();
         set({ selectedScenario: scenario });
-      },
-
-      setRole: (role) => {
-        set({ selectedRole: role });
       },
 
       /**
@@ -402,7 +402,6 @@ export const useFinancialStore = create<FinancialStoreState>()(
       partialize: (state) => ({
         assumptions: state.assumptions,
         selectedScenario: state.selectedScenario,
-        selectedRole: state.selectedRole,
         customScenarioSliders: state.customScenarioSliders,
         chatMessages: state.chatMessages,
         auditLog: state.auditLog,

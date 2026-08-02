@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { formatAED, formatPercent, getDecisionBadgeColor } from '@/lib/utils/formatting';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useRole } from '@/components/auth/RoleProvider';
 import {
   Building2,
   ChevronLeft,
@@ -17,7 +18,8 @@ import {
 } from 'lucide-react';
 
 export default function PresentationPage() {
-  const { getActiveScenarioResult, selectedScenario, selectedRole } = useFinancialStore();
+  const { getActiveScenarioResult, selectedScenario } = useFinancialStore();
+  const selectedRole = useRole();
   const scenarioResult = getActiveScenarioResult();
   const metrics = scenarioResult.metrics;
   const cashFlows = scenarioResult.yearlyCashFlows;

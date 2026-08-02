@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { formatAED } from '@/lib/utils/formatting';
 import { ShieldCheck, FileCheck, CheckCircle2, AlertTriangle, Lock, UserCheck } from 'lucide-react';
+import { useRole } from '@/components/auth/RoleProvider';
 
 export default function ApprovalsPage() {
-  const { getActiveScenarioResult, selectedRole } = useFinancialStore();
+  const { getActiveScenarioResult } = useFinancialStore();
+  const selectedRole = useRole();
   const scenarioResult = getActiveScenarioResult();
   const metrics = scenarioResult.metrics;
 

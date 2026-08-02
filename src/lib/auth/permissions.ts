@@ -186,29 +186,49 @@ export const ROLE_DEFINITIONS: Record<ExecutiveRole, RoleDefinition> = {
 
 export const ALL_ROLES = Object.keys(ROLE_DEFINITIONS) as ExecutiveRole[];
 
+/**
+ * A null role means "no session".
+ *
+ * These accept it explicitly and hold nothing, rather than forcing every call
+ * site to invent a placeholder. The lens now comes from the verified session
+ * (see `RoleProvider`), which is genuinely absent before sign-in — and the
+ * previous arrangement defaulted to CFO, so an unauthenticated tree rendered
+ * the fullest lens in the matrix.
+ */
+export type MaybeRole = ExecutiveRole | null | undefined;
+
 /** Does `role` hold `permission`? */
-export function can(role: ExecutiveRole, permission: Permission): boolean {
+export function can(role: MaybeRole, permission: Permission): boolean {
+  if (!role) return false;
   return ROLE_DEFINITIONS[role]?.permissions.has(permission) ?? false;
 }
 
 /** Does `role` hold every one of `permissions`? Empty list = unrestricted. */
-export function canAll(role: ExecutiveRole, permissions: readonly Permission[]): boolean {
+export function canAll(role: MaybeRole, permissions: readonly Permission[]): boolean {
   return permissions.every((p) => can(role, p));
 }
 
-/** Does `role` hold at least one of `permissions`? Empty list = unrestricted. */
-export function canAny(role: ExecutiveRole, permissions: readonly Permission[]): boolean {
+/**
+ * Does `role` hold at least one of `permissions`?
+ *
+ * An empty list stays unrestricted even for a null role: those are the routes
+ * that require only a session, and authentication is enforced by middleware
+ * rather than here.
+ */
+export function canAny(role: MaybeRole, permissions: readonly Permission[]): boolean {
   return permissions.length === 0 || permissions.some((p) => can(role, p));
 }
 
-export function roleSummary(role: ExecutiveRole): string {
-  return ROLE_DEFINITIONS[role]?.summary ?? '';
+export function roleSummary(role: MaybeRole): string {
+  return role ? ROLE_DEFINITIONS[role]?.summary ?? '' : '';
 }
 
-export function roleLabel(role: ExecutiveRole): string {
+export function roleLabel(role: MaybeRole): string {
+  if (!role) return 'Signed out';
   return ROLE_DEFINITIONS[role]?.label ?? role;
 }
 
-export function permissionCount(role: ExecutiveRole): number {
+export function permissionCount(role: MaybeRole): number {
+  if (!role) return 0;
   return ROLE_DEFINITIONS[role]?.permissions.size ?? 0;
 }

@@ -31,7 +31,6 @@ function demoPasswordFor(role: ExecutiveRole) {
 
 export function LoginForm({ next }: { next: string }) {
   const router = useRouter();
-  const setRole = useFinancialStore((s) => s.setRole);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,11 +57,10 @@ export function LoginForm({ next }: { next: string }) {
         return;
       }
 
-      // Mirror the authoritative role into the client store so existing
-      // RoleGate call sites read the signed-in identity. The cookie remains
-      // the source of truth — this copy is a render convenience, and the
-      // middleware re-checks it on every navigation regardless.
-      setRole(data.user.role as ExecutiveRole);
+      // No client-side role copy any more. The root layout reads the verified
+      // session cookie and supplies the lens through RoleProvider, so
+      // `router.refresh()` is what publishes the new identity to the tree —
+      // mirroring it into the store was what made the lens forgeable.
       router.replace(next);
       router.refresh();
     } catch {

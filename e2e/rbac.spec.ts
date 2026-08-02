@@ -62,6 +62,46 @@ test.describe('CEO lens restrictions', () => {
     expect(res.status()).toBe(200);
   });
 
+  /**
+   * The regression that item 9 exists for.
+   *
+   * `selectedRole` used to live in the persisted store, so writing one
+   * localStorage key promoted the lens and every gated widget rendered. The
+   * value now comes from the signed session via RoleProvider and the store
+   * does not carry a role at all, so the same tampering is inert.
+   */
+  test('promoting the lens via localStorage does not unlock gated content', async ({ page }) => {
+    await page.goto('/dashboard');
+    await expect(page.getByText('Profitability Index')).toHaveCount(0);
+
+    await page.evaluate(() => {
+      const raw = localStorage.getItem('capexiq-financial-store');
+      const parsed = raw ? JSON.parse(raw) : { state: {}, version: 0 };
+      parsed.state = { ...parsed.state, selectedRole: 'CFO' };
+      localStorage.setItem('capexiq-financial-store', JSON.stringify(parsed));
+    });
+
+    await page.reload();
+
+    // Still the CEO lens: the injected role is not read by anything.
+    await expect(page.getByText('Baseline NPV').first()).toBeVisible();
+    await expect(page.getByText('Profitability Index')).toHaveCount(0);
+  });
+
+  test('a tampered lens cannot reach a restricted route either', async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'capexiq-financial-store',
+        JSON.stringify({ state: { selectedRole: 'CFO' }, version: 0 })
+      );
+    }).catch(() => {
+      /* no page loaded yet on a fresh context — the goto below covers it */
+    });
+
+    await page.goto('/funding');
+    await expect(page.getByText(/restricted|not hold|forbidden/i).first()).toBeVisible();
+  });
+
   test('the voice copilot is not rendered for a lens that cannot use it', async ({ page }) => {
     await page.goto('/dashboard');
     await expect(page.getByRole('button', { name: /voice/i })).toHaveCount(0);

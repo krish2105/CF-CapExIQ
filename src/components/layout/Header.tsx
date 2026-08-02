@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useFinancialStore } from '@/lib/store/useFinancialStore';
+import { useRole } from '@/components/auth/RoleProvider';
 import { ScenarioType } from '@/lib/types/finance';
 import { getDecisionBadgeColor } from '@/lib/utils/formatting';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -71,7 +72,6 @@ export const Header: React.FC = () => {
   const {
     selectedScenario,
     setScenario,
-    selectedRole,
     resetAssumptions,
     getActiveScenarioResult,
     projectProfiles,
@@ -80,6 +80,7 @@ export const Header: React.FC = () => {
     duplicateProjectProfile,
     clearSession,
   } = useFinancialStore();
+  const selectedRole = useRole();
 
   const decision = getActiveScenarioResult().metrics.decisionStatus;
 

@@ -4,6 +4,9 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppChrome } from '@/components/layout/AppChrome';
 import { ChartGradients } from '@/components/ui/charts';
+import { cookies } from 'next/headers';
+import { verifySession, SESSION_COOKIE } from '@/lib/auth/session';
+import { RoleProvider } from '@/components/auth/RoleProvider';
 
 /**
  * Type system — serif/sans collision.
@@ -41,11 +44,24 @@ export const metadata: Metadata = {
     'AI-Assisted Capital Expenditure Decision Platform for Micro-Fulfilment Centre evaluation by NovaRetail GCC.',
 };
 
-export default function RootLayout({
+/**
+ * Reading the session here opts the whole tree into dynamic rendering — the
+ * pages that were `○ (Static)` become `ƒ (Dynamic)`.
+ *
+ * That is the deliberate cost of deriving the lens server-side. The previous
+ * arrangement prerendered pages and then decided what to show from a
+ * localStorage value, which is fast and forgeable. Since every page behind
+ * middleware is already per-request authorised, static prerendering was
+ * buying very little: the HTML shell was cacheable but the request still had
+ * to be checked at the edge before it was served.
+ */
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await verifySession(cookies().get(SESSION_COOKIE)?.value);
+
   return (
     <html
       lang="en"
@@ -63,7 +79,9 @@ export default function RootLayout({
           <ChartGradients />
         </svg>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <AppChrome>{children}</AppChrome>
+          <RoleProvider role={session?.role ?? null}>
+            <AppChrome>{children}</AppChrome>
+          </RoleProvider>
         </ThemeProvider>
       </body>
     </html>

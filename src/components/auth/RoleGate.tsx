@@ -2,27 +2,34 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useFinancialStore } from '@/lib/store/useFinancialStore';
 import { can, canAny, roleLabel, type Permission } from '@/lib/auth/permissions';
 import { Lock } from 'lucide-react';
 
 /**
- * Reads the active Executive Lens. Subscribes to exactly one slice so a
- * chat message or an audit-log append cannot re-render every gated widget
- * in the tree.
+ * The active Executive Lens, from the verified session.
+ *
+ * Re-exported here so the many existing `useRole()` call sites keep working;
+ * the value now comes from `RoleProvider` (server-supplied) rather than from
+ * the persisted store, where it was editable from devtools.
  */
-export function useRole() {
-  return useFinancialStore((s) => s.selectedRole);
-}
+import { useRole } from './RoleProvider';
+export { useRole };
 
-/** `can(permission)` bound to the active lens. */
+/**
+ * `can(permission)` bound to the active lens.
+ *
+ * A null role — no session — holds nothing. Previously the store defaulted to
+ * CFO, so a tree rendered without a session showed the fullest lens in the
+ * matrix.
+ */
 export function usePermission(permission: Permission): boolean {
   const role = useRole();
-  return can(role, permission);
+  return role ? can(role, permission) : false;
 }
 
 export function usePermissions(permissions: readonly Permission[]): boolean {
   const role = useRole();
+  if (!role) return false;
   return canAny(role, permissions);
 }
 
@@ -73,11 +80,15 @@ export function RoleGate({
       </span>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-foreground">
-          {label ?? 'This module'} is outside the {roleLabel(role)} lens
+          {label ?? 'This module'} is outside
+          {role ? ` the ${roleLabel(role)} lens` : ' your access'}
         </p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          Switch the Executive Lens in the header to a role that holds this
-          permission — or ask the Capital Committee for elevated access.
+          {/* The lens is no longer switchable — it is the signed-in identity,
+              not a dropdown — so the old "switch the Executive Lens" copy
+              described a control that does not exist. */}
+          Your signed-in role does not hold the permission this module requires.
+          Ask the Capital Committee if you need it added.
         </p>
       </div>
     </div>
@@ -112,9 +123,15 @@ export function RouteGuard({
           {title} is restricted
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          The <strong className="text-foreground font-medium">{roleLabel(role)}</strong>{' '}
-          lens does not hold the permission required to view this module. This is a
-          governance boundary, not an error.
+          {role ? (
+            <>
+              The <strong className="text-foreground font-medium">{roleLabel(role)}</strong> lens
+              does not hold the permission required to view this module.
+            </>
+          ) : (
+            <>This module requires a signed-in role that holds the relevant permission.</>
+          )}{' '}
+          This is a governance boundary, not an error.
         </p>
       </div>
       <Link href="/dashboard" className="btn-primary inline-flex">
