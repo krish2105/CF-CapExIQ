@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelOutput, ParsedQuoteSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardDocument, sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 
@@ -155,7 +156,15 @@ Return ONLY a JSON object matching this schema:
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as ParsedVendorQuote;
+      const outcome = parseModelOutput(ParsedQuoteSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('parse-quote: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackResponse, 'parse-failed');
+      }
+      const parsed = outcome.data;
       // Carry the guardrail actions through to the UI: a total extracted from
       // a truncated or redacted document is not a total for the whole quote.
       return aiGenerated({ ...parsed, notices: guarded.notices });

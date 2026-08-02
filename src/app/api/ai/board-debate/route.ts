@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelContext } from '@/lib/ai/schemas';
+import { parseModelOutput, BoardDebateSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { assumptions, metrics, selectedScenario } = body;
+    const { assumptions, metrics, selectedScenario } = parseModelContext(body);
 
     const npv = metrics?.npv ? `AED ${(metrics.npv / 1000000).toFixed(2)}M` : 'AED 12.08M';
     const irr = metrics?.irr ? `${(metrics.irr * 100).toFixed(1)}%` : '26.3%';
@@ -161,7 +163,15 @@ Simulate the executive board debate and output structured JSON.`;
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as BoardDebateResponse;
+      const outcome = parseModelOutput(BoardDebateSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('board-debate: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackResponse, 'parse-failed');
+      }
+      const parsed = outcome.data;
       return aiGenerated(parsed);
     }
 

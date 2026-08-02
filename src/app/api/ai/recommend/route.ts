@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback } from '@/lib/ai/response';
+import { parseModelContext } from '@/lib/ai/schemas';
+import { parseModelOutput, RecommendSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { StructedAIResponse } from '@/lib/types/finance';
 
@@ -35,11 +37,26 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { assumptions, metrics } = body;
+    const { assumptions, metrics } = parseModelContext(body);
+
+    // `decisionStatus` arrives from the client and was assigned straight into
+    // this union. `body` was `any`, so nothing checked it, and an arbitrary
+    // string reached a field the UI branches on. Typing the request surfaced
+    // it; this narrows to the values the contract actually allows.
+    const DECISIONS = [
+      'Approve',
+      'Phased Implementation',
+      'Delay Pending Evidence',
+      'Reject',
+    ] as const;
+    const claimed = metrics?.decisionStatus;
+    const decision = (DECISIONS as readonly string[]).includes(claimed ?? '')
+      ? (claimed as StructedAIResponse['decision'])
+      : 'Approve';
 
     const fallbackResponse: StructedAIResponse = {
       ...DEFAULT_FALLBACK_RECOMMEND,
-      decision: metrics?.decisionStatus || 'Approve',
+      decision,
       executiveSummary: `Projected net present value of AED ${metrics?.npv ? (metrics.npv / 1000000).toFixed(2) + 'M' : '12.08M'} and an IRR of ${metrics?.irr ? (metrics.irr * 100).toFixed(1) + '%' : '26.3%'} support capital allocation for NovaRetail GCC's automated micro-fulfilment centre.`,
     };
 
@@ -86,7 +103,15 @@ Formulate an executive board recommendation.`;
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as StructedAIResponse;
+      const outcome = parseModelOutput(RecommendSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('recommend: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackResponse, 'parse-failed');
+      }
+      const parsed = outcome.data;
       return aiGenerated(parsed);
     }
 

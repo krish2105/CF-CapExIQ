@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelOutput, RfpNegotiatorSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput } from '@/lib/guardrails/aiGuardrails';
 
@@ -147,7 +148,15 @@ Return ONLY a JSON object matching this schema:
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as NegotiatedRfpTerms;
+      const outcome = parseModelOutput(RfpNegotiatorSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('rfp-negotiator: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackResponse, 'parse-failed');
+      }
+      const parsed = outcome.data;
       return aiGenerated(parsed);
     }
 

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelContext } from '@/lib/ai/schemas';
+import { parseModelOutput, ThreatRadarSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { assumptions, metrics } = body;
+    const { assumptions, metrics } = parseModelContext(body);
 
     const fallbackResponse: ThreatRadarResponse = DEFAULT_FALLBACK_THREATS;
 
@@ -116,7 +118,15 @@ Return ONLY a JSON object matching this schema:
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as ThreatRadarResponse;
+      const outcome = parseModelOutput(ThreatRadarSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('threat-radar: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackResponse, 'parse-failed');
+      }
+      const parsed = outcome.data;
       return aiGenerated(parsed);
     }
 

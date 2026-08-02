@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelOutput, VoiceIntentSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput, safeContextJson } from '@/lib/guardrails/aiGuardrails';
 
@@ -149,7 +150,15 @@ Return ONLY a JSON object matching this schema:
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as VoiceIntentResponse;
+      const outcome = parseModelOutput(VoiceIntentSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('voice-intent: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackResponse, 'parse-failed');
+      }
+      const parsed = outcome.data;
       return aiGenerated(parsed);
     }
 

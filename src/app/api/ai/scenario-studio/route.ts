@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelOutput, ScenarioStudioSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { guardInput } from '@/lib/guardrails/aiGuardrails';
 
@@ -184,12 +185,18 @@ Return ONLY a JSON object matching this schema:
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      try {
-        return aiGenerated(normalizeScenario(JSON.parse(content), fallbackScenario));
-      } catch {
-        // Non-JSON body despite response_format — fall through to the fallback.
+      // Schema first, then `normalizeScenario`. The two do different jobs:
+      // the schema rejects a response that is not this shape at all, while
+      // normalizeScenario clamps a well-formed response into the tuner's
+      // slider range. Clamping alone silently accepted a completion missing
+      // every field, substituting the fallback field by field and presenting
+      // the result as generated.
+      const outcome = parseModelOutput(ScenarioStudioSchema, content);
+      if (!outcome.ok) {
+        console.warn('scenario-studio: rejected completion - ' + outcome.issue);
         return aiFallback(fallbackScenario, 'parse-failed');
       }
+      return aiGenerated(normalizeScenario(outcome.data, fallbackScenario));
     }
 
     return aiFallback(fallbackScenario, 'provider-empty');

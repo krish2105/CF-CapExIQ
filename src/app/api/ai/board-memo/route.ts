@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
+import { parseModelContext } from '@/lib/ai/schemas';
+import { parseModelOutput, BoardMemoSchema } from '@/lib/ai/schemas';
 import { requirePermission, rateLimited } from '@/lib/auth/apiAuth';
 import { sanitizeContext } from '@/lib/guardrails/aiGuardrails';
 import crypto from 'crypto';
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { assumptions, metrics, selectedScenario } = body;
+    const { assumptions, metrics, selectedScenario } = parseModelContext(body);
 
     // Generate SHA-256 audit hash derived from model state
     const modelPayload = JSON.stringify({
@@ -126,7 +128,15 @@ Return ONLY a JSON object matching this schema:
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
-      const parsed = JSON.parse(content) as BoardMemoResponse;
+      const outcome = parseModelOutput(BoardMemoSchema, content);
+      if (!outcome.ok) {
+        // Logged with the reason: "the model omitted voteCount.reject" and
+        // "the provider is down" are different problems that used to produce
+        // identical output.
+        console.warn('board-memo: rejected completion - ' + outcome.issue);
+        return aiFallback(fallbackMemo, 'parse-failed');
+      }
+      const parsed = outcome.data;
       parsed.auditHash = auditHash; // Ensure exact cryptographic hash
       return aiGenerated(parsed);
     }
