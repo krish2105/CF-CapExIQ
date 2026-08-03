@@ -56,3 +56,7 @@ playwright-report/
 # Database snapshots contain password hashes and the full audit trail
 .data/backups/
 *.pre-restore-*
+
+# Transient rag-eval artefacts
+.rag-eval-output.json
+eval-report.txt

@@ -16,7 +16,8 @@
     "db:backups": "node scripts/db-backup.mjs --list",
     "db:verify": "node scripts/db-backup.mjs --verify",
     "db:restore": "node scripts/db-backup.mjs --restore",
-    "db:backup:offbox": "node scripts/db-backup.mjs --keep 30"
+    "db:backup:offbox": "node scripts/db-backup.mjs --keep 30",
+    "rag:eval": "node scripts/rag-eval.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
