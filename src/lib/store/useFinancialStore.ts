@@ -6,6 +6,11 @@ import { BASE_SCENARIO_DEFINITIONS, evaluateScenario, transformAssumptionsForSce
 import { calculateFinancialMetrics } from '../finance/metrics';
 import { calculateCashFlowSchedule } from '../finance/cashflow';
 import type { Citation } from '../rag/types';
+import {
+  queueAssumptionChange,
+  type SyncStatus,
+  type ServerSnapshot,
+} from './modelSync';
 
 export interface ChatMessage {
   id: string;
@@ -154,6 +159,18 @@ interface FinancialStoreState {
   loadProjectProfile: (id: string) => void;
   duplicateProjectProfile: (id: string) => void;
 
+  /**
+   * Server synchronisation.
+   *
+   * The shape above is unchanged so the 24 pages reading `assumptions` and
+   * `getActiveScenarioResult()` keep working untouched. These fields describe
+   * where that data now comes from.
+   */
+  syncStatus: SyncStatus;
+  /** Replace local state with the server's, on mount or after a conflict. */
+  applyServerSnapshot: (snapshot: ServerSnapshot) => void;
+  setSyncStatus: (status: SyncStatus) => void;
+
   // Helper getters
   getActiveAssumptions: () => FinancialAssumptions;
   getActiveScenarioResult: () => ScenarioResult;
@@ -170,9 +187,54 @@ export const useFinancialStore = create<FinancialStoreState>()(
       auditLog: [],
       projectProfiles: DEFAULT_PROJECT_PROFILES,
       activeProfileId: 'proj-dubai-mfc',
+      // 'loading' until the first snapshot arrives, so the UI can distinguish
+      // "the shared model has not loaded yet" from "these are the defaults".
+      syncStatus: { state: 'loading' } as SyncStatus,
+
+      applyServerSnapshot: (snapshot) => {
+        clearScenarioMemo();
+        set((state) => {
+          const profiles = snapshot.profiles.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            updatedAt: p.updatedAt,
+            assumptions: p.assumptions as unknown as FinancialAssumptions,
+          }));
+
+          const activeId = snapshot.workspace.activeProfileId ?? profiles[0]?.id ?? state.activeProfileId;
+          const active = snapshot.profiles.find((p) => p.id === activeId);
+
+          return {
+            projectProfiles: profiles.length ? profiles : state.projectProfiles,
+            activeProfileId: activeId,
+            // Merged over the defaults rather than replacing them: a profile
+            // saved before the model grew a field would otherwise leave that
+            // field undefined, and the finance engine would produce NaN.
+            assumptions: active
+              ? { ...DEFAULT_FINANCIAL_ASSUMPTIONS, ...(active.assumptions as object) }
+              : state.assumptions,
+            selectedScenario: (snapshot.workspace.selectedScenario as ScenarioType) ?? state.selectedScenario,
+            syncStatus: {
+              state: 'idle',
+              version: active?.version,
+              lastSyncedAt: new Date().toISOString(),
+            } as SyncStatus,
+          };
+        });
+      },
+
+      setSyncStatus: (status) => set({ syncStatus: status }),
 
       updateAssumptions: (newAssumptions, actor) => {
         clearScenarioMemo();
+
+        // Optimistic: applied locally below, queued for the server here.
+        // Debounced and batched by ModelSync, so a slider drag produces one
+        // PATCH rather than one per frame. A no-op when no provider is
+        // mounted, which is what keeps the store's unit tests unchanged.
+        queueAssumptionChange(newAssumptions);
+
         set((state) => {
           const newAuditEntries: AssumptionAuditEntry[] = Object.entries(newAssumptions).map(
             ([key, newVal]) => ({
@@ -399,9 +461,22 @@ export const useFinancialStore = create<FinancialStoreState>()(
     {
       name: 'capexiq-financial-store',
       storage: createJSONStorage(() => localStorage),
+      /**
+       * Only what the server does not own.
+       *
+       * `assumptions`, `selectedScenario` and the profiles used to be
+       * persisted here, which made localStorage the authority — on load it
+       * rehydrated over whatever the shared model said, so a stale tab
+       * silently reintroduced its own numbers and then wrote them back. The
+       * server is the authority now, and this cache must not be able to
+       * out-rank it.
+       *
+       * What remains is genuinely local: the chat transcript and the custom
+       * slider positions are this person's working context, not the committee's
+       * model. `auditLog` is retained only for the legacy in-page view — the
+       * durable trail is `audit_events`, queried through /api/audit.
+       */
       partialize: (state) => ({
-        assumptions: state.assumptions,
-        selectedScenario: state.selectedScenario,
         customScenarioSliders: state.customScenarioSliders,
         chatMessages: state.chatMessages,
         auditLog: state.auditLog,

@@ -8,6 +8,7 @@ import { SegmentNav } from '@/components/layout/SegmentNav';
 import { CommandPalette } from '@/components/navigation/CommandPalette';
 import VoiceCopilotWidget from '@/components/ai/VoiceCopilotWidget';
 import { RoleGate } from '@/components/auth/RoleGate';
+import { ModelSyncProvider } from '@/components/model/ModelSyncProvider';
 import { AutoReveal } from '@/components/ui/AutoReveal';
 import { ScrollProgress } from '@/components/ui/ScrollProgress';
 
@@ -28,7 +29,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <ModelSyncProvider>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] btn-primary"
@@ -61,6 +62,6 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
-    </>
+    </ModelSyncProvider>
   );
 }
