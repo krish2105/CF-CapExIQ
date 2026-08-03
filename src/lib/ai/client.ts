@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { checkEgress, EgressBlockedError } from '@/lib/guardrails/egress';
+import { AI_TIMEOUT_MS, AI_MAX_RETRIES } from './limits';
 
 /**
  * The only sanctioned way to construct a model client.
@@ -65,5 +66,12 @@ export function createModelClient(apiKey: string): OpenAI {
     apiKey,
     baseURL: process.env.OPENAI_BASE_URL,
     fetch: guardedTransport as unknown as typeof fetch,
+
+    // Set here rather than per call so no route can omit them. The SDK has no
+    // timeout by default, so a provider that stalled mid-response held a
+    // server connection open indefinitely; and its default of 2 retries turns
+    // one stalled request into 90s of wall clock at triple the token spend.
+    timeout: AI_TIMEOUT_MS,
+    maxRetries: AI_MAX_RETRIES,
   });
 }

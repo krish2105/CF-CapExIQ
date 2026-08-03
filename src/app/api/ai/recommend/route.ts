@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
+import { AI_MAX_TOKENS } from '@/lib/ai/limits';
 import { aiGenerated, aiFallback } from '@/lib/ai/response';
 import { parseModelContext } from '@/lib/ai/schemas';
 import { parseModelOutput, RecommendSchema } from '@/lib/ai/schemas';
@@ -99,6 +100,7 @@ Formulate an executive board recommendation.`;
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
+      max_tokens: AI_MAX_TOKENS,
     });
 
     const content = completion.choices[0]?.message?.content;

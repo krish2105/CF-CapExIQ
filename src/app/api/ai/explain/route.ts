@@ -1,4 +1,5 @@
 import { createModelClient } from '@/lib/ai/client';
+import { AI_MAX_TOKENS_LONG, AI_TIMEOUT_MS } from '@/lib/ai/limits';
 import { retrieve, buildContextBlock, toCitations, knowledgeBaseStats } from '@/lib/rag/retrieve';
 import type { Citation } from '@/lib/rag/types';
 import { guardInput, sanitizeContext } from '@/lib/guardrails/aiGuardrails';
@@ -202,14 +203,27 @@ QUESTION FROM THE ${String(role ?? 'CFO').toUpperCase()}: ${userQuestion}`;
           model,
           stream: true,
           temperature: 0.3,
+          max_tokens: AI_MAX_TOKENS_LONG,
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user', content: userPrompt },
           ],
         });
 
+        // The client `timeout` bounds time-to-first-token, not the stream
+        // itself: once the provider has responded, a generation that stalls
+        // half way through would hold this connection open indefinitely. The
+        // deadline covers the whole stream, and `max_tokens` caps the spend
+        // regardless of how long it runs.
+        const deadline = Date.now() + AI_TIMEOUT_MS;
+
         let emitted = false;
         for await (const part of completion) {
+          if (Date.now() > deadline) {
+            console.warn('explain: stream exceeded the deadline; closing early');
+            break;
+          }
+
           const delta = part.choices[0]?.delta?.content;
           if (delta) {
             emitted = true;

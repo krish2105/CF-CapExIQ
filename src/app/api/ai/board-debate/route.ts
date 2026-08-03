@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
+import { AI_MAX_TOKENS_LONG } from '@/lib/ai/limits';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { parseModelContext } from '@/lib/ai/schemas';
 import { parseModelOutput, BoardDebateSchema } from '@/lib/ai/schemas';
@@ -159,6 +160,7 @@ Simulate the executive board debate and output structured JSON.`;
       ],
       response_format: { type: 'json_object' },
       temperature: 0.3,
+      max_tokens: AI_MAX_TOKENS_LONG,
     });
 
     const content = completion.choices[0]?.message?.content;

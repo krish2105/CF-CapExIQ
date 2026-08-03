@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createModelClient } from '@/lib/ai/client';
+import { AI_MAX_TOKENS } from '@/lib/ai/limits';
 import { aiGenerated, aiFallback, type AiResponseMeta } from '@/lib/ai/response';
 import { parseModelContext } from '@/lib/ai/schemas';
 import { parseModelOutput, EsgImpactSchema } from '@/lib/ai/schemas';
@@ -82,6 +83,7 @@ Return ONLY a JSON object matching this schema:
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
+      max_tokens: AI_MAX_TOKENS,
     });
 
     const content = completion.choices[0]?.message?.content;
