@@ -3,39 +3,16 @@
 const isDev = process.env.NODE_ENV === 'development';
 
 /**
- * Content-Security-Policy.
+ * The Content-Security-Policy is NOT here.
  *
- * The app previously shipped X-Frame-Options / nosniff / Referrer-Policy but
- * no CSP at all, which leaves the highest-value client-side control unset.
+ * It moved to `src/middleware.ts` because `script-src` now carries a
+ * per-request nonce, and this function is evaluated once at build time — it
+ * can only emit a constant. Leaving a second, static CSP here would not merge
+ * with the per-request one; the browser would enforce BOTH, and the stricter
+ * union would block the very scripts the nonce exists to permit.
  *
- * 'unsafe-inline' for styles is required: the design system sets CSS custom
- * properties inline (--reveal-delay, chart geometry) and next/font injects an
- * inline <style>. Scripts additionally need 'unsafe-eval' in development only
- * — that is the webpack HMR runtime, and it must never reach production.
- *
- * next-themes writes the theme class before first paint via an inline script,
- * so script-src carries 'unsafe-inline'. Removing it requires migrating that
- * bootstrap to a nonce, which Next cannot yet supply to a client component in
- * the App Router without opting the whole tree into dynamic rendering.
+ * The headers below are genuinely constant and stay.
  */
-const csp = [
-  "default-src 'self'",
-  isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  // Route handlers proxy the model provider server-side, so the browser only
-  // ever talks to this origin. Dev additionally needs the HMR websocket.
-  isDev ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  'upgrade-insecure-requests',
-].join('; ');
-
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -44,7 +21,6 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          { key: 'Content-Security-Policy', value: csp },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

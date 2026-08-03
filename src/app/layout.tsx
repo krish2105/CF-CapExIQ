@@ -4,7 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppChrome } from '@/components/layout/AppChrome';
 import { ChartGradients } from '@/components/ui/charts';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { verifySession, SESSION_COOKIE } from '@/lib/auth/session';
 import { isSessionActive } from '@/lib/db/repositories/sessions';
 import { RoleProvider } from '@/components/auth/RoleProvider';
@@ -61,6 +61,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Set by middleware, which owns the CSP. next-themes writes the theme class
+  // before first paint via an inline script — the one script in the tree that
+  // is genuinely ours — so it needs the nonce or it is blocked and the page
+  // flashes the wrong theme on every load.
+  const nonce = headers().get('x-nonce') ?? undefined;
+
   const session = await verifySession(cookies().get(SESSION_COOKIE)?.value);
 
   // A revoked session resolves to no lens. Middleware verified the signature
@@ -85,7 +91,7 @@ export default async function RootLayout({
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
           <ChartGradients />
         </svg>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem nonce={nonce}>
           <RoleProvider role={role}>
             <AppChrome>{children}</AppChrome>
           </RoleProvider>
