@@ -61,7 +61,15 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
  * in. Logout is public too — a caller with an expired cookie still needs to
  * be able to clear it.
  */
-export const PUBLIC_ROUTES = new Set(['/login', '/api/auth/login', '/api/auth/logout']);
+export const PUBLIC_ROUTES = new Set([
+  '/login',
+  '/api/auth/login',
+  '/api/auth/logout',
+  // The second-factor step runs between password and session, so by
+  // definition the caller has no session yet. It is not unauthenticated: it
+  // requires the signed challenge that only a correct password produces.
+  '/api/auth/mfa',
+]);
 
 /**
  * Permissions required for a pathname.

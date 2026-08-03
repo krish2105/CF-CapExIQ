@@ -38,6 +38,12 @@ export interface SessionPayload {
    * `isSessionActive` then fails it closed, which is the intended outcome.
    */
   jti?: string;
+  /**
+   * Token purpose. Absent or 'session' means a real session; 'mfa' is the
+   * short-lived challenge issued after a correct password and before a
+   * correct code. `verifySession` rejects anything that is not a session.
+   */
+  typ?: 'session' | 'mfa';
   /** Issued-at, epoch seconds. */
   iat: number;
   /** Expiry, epoch seconds. */
@@ -117,6 +123,71 @@ export async function verifySession(token: string | undefined): Promise<SessionP
     if (!timingSafeEqual(expected, base64UrlDecode(providedSig))) return null;
 
     const payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(body))) as SessionPayload;
+    if (typeof payload.exp !== 'number' || payload.exp * 1000 < Date.now()) return null;
+    if (!payload.sub || !payload.role) return null;
+
+    // Domain separation. The MFA challenge issued between password and code is
+    // signed with the same key, so without this check a caller could present
+    // that half-authenticated token as a session cookie and skip the second
+    // factor entirely — which would make the whole feature decorative.
+    if (payload.typ !== undefined && payload.typ !== 'session') return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The half-authenticated token issued between password and second factor.
+ *
+ * Deliberately short-lived and deliberately NOT a session: `verifySession`
+ * rejects it on the `typ` field, so it cannot be presented as a cookie to
+ * reach anything. Its only use is to prove, to the endpoint that checks the
+ * code, that the password step already succeeded — without holding the
+ * password in the browser or trusting the client to say so.
+ */
+export const MFA_CHALLENGE_TTL_SECONDS = 5 * 60;
+
+export interface MfaChallenge {
+  sub: string;
+  role: ExecutiveRole;
+  name: string;
+  typ: 'mfa';
+  iat: number;
+  exp: number;
+}
+
+export async function signMfaChallenge(
+  payload: Omit<MfaChallenge, 'typ' | 'iat' | 'exp'>
+): Promise<string> {
+  const iat = Math.floor(Date.now() / 1000);
+  const full: MfaChallenge = {
+    ...payload,
+    typ: 'mfa',
+    iat,
+    exp: iat + MFA_CHALLENGE_TTL_SECONDS,
+  };
+  const body = base64UrlEncode(encoder.encode(JSON.stringify(full)));
+  const sig = await crypto.subtle.sign('HMAC', await key(), encoder.encode(body));
+  return `${body}.${base64UrlEncode(new Uint8Array(sig))}`;
+}
+
+/** Verify a challenge. Returns null unless it is a live, well-formed `mfa` token. */
+export async function verifyMfaChallenge(token: string | undefined): Promise<MfaChallenge | null> {
+  if (!token) return null;
+  const dot = token.lastIndexOf('.');
+  if (dot <= 0) return null;
+
+  const body = token.slice(0, dot);
+  try {
+    const expected = new Uint8Array(
+      await crypto.subtle.sign('HMAC', await key(), encoder.encode(body))
+    );
+    if (!timingSafeEqual(expected, base64UrlDecode(token.slice(dot + 1)))) return null;
+
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(body))) as MfaChallenge;
+    if (payload.typ !== 'mfa') return null;
     if (typeof payload.exp !== 'number' || payload.exp * 1000 < Date.now()) return null;
     if (!payload.sub || !payload.role) return null;
     return payload;

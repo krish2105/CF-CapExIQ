@@ -37,6 +37,16 @@ export function LoginForm({ next }: { next: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * Second-factor step.
+   *
+   * A challenge, not a session: the password was correct but the account is
+   * not reachable until a code is checked. Held in component state only —
+   * persisting it would leave a half-authenticated token on disk.
+   */
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
@@ -57,10 +67,52 @@ export function LoginForm({ next }: { next: string }) {
         return;
       }
 
+      if (data?.mfaRequired) {
+        // No session was issued. Move to the code step rather than navigating.
+        setChallenge(data.challenge);
+        setBusy(false);
+        return;
+      }
+
       // No client-side role copy any more. The root layout reads the verified
       // session cookie and supplies the lens through RoleProvider, so
       // `router.refresh()` is what publishes the new identity to the tree —
       // mirroring it into the store was what made the lens forgeable.
+      router.replace(next);
+      router.refresh();
+    } catch {
+      setError('Could not reach the sign-in service.');
+      setBusy(false);
+    }
+  };
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy || !challenge) return;
+    setBusy(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/auth/mfa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge, code }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data?.error ?? 'That code is not valid.');
+        // An expired challenge cannot be retried — the password step has to
+        // happen again, so send the user back rather than leaving them on a
+        // form that will never succeed.
+        if (res.status === 401 && /expired/i.test(data?.error ?? '')) {
+          setChallenge(null);
+          setCode('');
+        }
+        setBusy(false);
+        return;
+      }
+
       router.replace(next);
       router.refresh();
     } catch {
@@ -132,6 +184,71 @@ export function LoginForm({ next }: { next: string }) {
             </p>
           </div>
 
+          {challenge ? (
+            <form onSubmit={submitCode} className="space-y-4">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="mfa-code"
+                  className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Authentication code
+                </label>
+                <input
+                  id="mfa-code"
+                  name="code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="123456"
+                  className="w-full bg-card border border-border rounded-card px-3.5 py-2.5 text-sm tracking-[0.3em] text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <p className="text-[11px] text-muted-foreground leading-relaxed pt-1">
+                  Enter the six-digit code from your authenticator app, or one of your
+                  recovery codes if you no longer have the device.
+                </p>
+              </div>
+
+              {error && (
+                <p
+                  role="alert"
+                  className="flex items-start gap-2 rounded-card border border-destructive/40 bg-destructive-soft px-3 py-2 text-xs text-destructive"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
+                  {error}
+                </p>
+              )}
+
+              <button type="submit" disabled={busy} className="btn-primary w-full justify-center">
+                {busy ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Verifying…
+                  </>
+                ) : (
+                  <>
+                    Verify <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  // Discards the challenge rather than hiding the form: a
+                  // half-authenticated token left in memory serves no purpose.
+                  setChallenge(null);
+                  setCode('');
+                  setError(null);
+                }}
+                className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Use a different account
+              </button>
+            </form>
+          ) : (
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="email" className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -191,6 +308,7 @@ export function LoginForm({ next }: { next: string }) {
               )}
             </button>
           </form>
+          )}
 
           {/* ---- Demo personas ---- */}
           <div className="space-y-2.5 pt-1">

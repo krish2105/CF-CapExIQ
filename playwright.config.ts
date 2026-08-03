@@ -33,7 +33,12 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: path.join(STATE_DIR, 'cfo.json') },
       dependencies: ['setup'],
-      testIgnore: [/auth\.setup\.ts/, /access-control\.spec\.ts/, /rbac\.spec\.ts/],
+      testIgnore: [
+        /auth\.setup\.ts/,
+        /access-control\.spec\.ts/,
+        /rbac\.spec\.ts/,
+        /mfa\.spec\.ts/,
+      ],
     },
 
     {
@@ -49,7 +54,10 @@ export default defineConfig({
       // behaviour, so inheriting a session would silently invert them.
       name: 'chromium-anonymous',
       use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
-      testMatch: /access-control\.spec\.ts/,
+      // MFA joins these: it signs in itself, and enrolling a second factor
+      // on an account the setup project uses would leave the whole suite
+      // unable to authenticate if a run aborted mid-way.
+      testMatch: /(access-control|mfa)\.spec\.ts/,
     },
   ],
 

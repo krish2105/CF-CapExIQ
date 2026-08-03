@@ -173,4 +173,43 @@ export const MIGRATIONS: Migration[] = [
       ) STRICT;
     `,
   },
+
+  {
+    version: 3,
+    name: 'multi-factor authentication',
+    up: `
+      -- One enrolment per user.
+      CREATE TABLE user_mfa (
+        user_id           TEXT PRIMARY KEY REFERENCES users (id),
+        -- AES-256-GCM, keyed from AUTH_SECRET. Not plaintext: this database is
+        -- now shipped off-box by the backup job, and a plaintext TOTP secret
+        -- in a snapshot is equivalent to no second factor at all for anyone
+        -- holding that snapshot.
+        secret_encrypted  TEXT NOT NULL,
+        created_at        TEXT NOT NULL,
+        -- NULL until the user proves they can generate a code. An enrolment
+        -- that is enabled before it is confirmed locks the user out of their
+        -- own account if the secret never reached their phone.
+        confirmed_at      TEXT,
+        -- Highest counter accepted so far. A code cannot be presented twice,
+        -- even while it remains inside its validity window.
+        last_used_counter INTEGER,
+        disabled_at       TEXT
+      ) STRICT;
+
+      -- Recovery codes, hashed. A second factor with no recovery path turns a
+      -- lost phone into a permanently locked account, and the usual remedy --
+      -- an administrator who disables MFA on request -- is a social
+      -- engineering bypass of the control itself.
+      CREATE TABLE mfa_recovery_codes (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id    TEXT NOT NULL REFERENCES users (id),
+        code_hash  TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        used_at    TEXT
+      ) STRICT;
+
+      CREATE INDEX idx_recovery_user ON mfa_recovery_codes (user_id);
+    `,
+  },
 ];
