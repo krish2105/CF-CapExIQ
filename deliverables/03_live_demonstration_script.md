@@ -12,7 +12,7 @@
 
 ## Step 2: Executive Dashboard (0:45 – 1:45)
 - Navigate to `/dashboard`.
-- Show top KPI cards: **NPV (AED 9.18M)**, **IRR (23.1%)**, **MIRR (16.5%)**, **PI (1.38x)**, **Payback (3.2 Years)**.
+- Show top KPI cards: **NPV (AED 12.08M)**, **IRR (26.3%)**, **MIRR (19.3%)**, **PI (1.50x)**, **Payback (3.1 Years)**.
 - Demonstrate interactive Recharts cash flow schedule and cumulative payback line chart crossing year 3.
 - Highlight the **AI Executive Advisory Panel** with human review disclaimer.
 

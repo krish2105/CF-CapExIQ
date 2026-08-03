@@ -24,16 +24,16 @@
 - **OpEx & Tax:** AED 2.2M OpEx (3% growth); 9% UAE Corporate Tax rate; 11.5% WACC hurdle rate.
 
 ## Slide 4: Baseline Financial Results
-- **Net Present Value (NPV):** AED 9.18 Million (Positive value creation).
-- **Internal Rate of Return (IRR):** 23.1% (Exceeds 11.5% WACC hurdle rate).
-- **Modified IRR (MIRR):** 16.5% (Realistic WACC reinvestment rate).
+- **Net Present Value (NPV):** AED 12.08 Million (Positive value creation).
+- **Internal Rate of Return (IRR):** 26.3% (Exceeds 11.5% WACC hurdle rate).
+- **Modified IRR (MIRR):** 19.3% (Realistic WACC reinvestment rate).
 - **Profitability Index (PI):** 1.38x (AED 1.38 value per AED 1.00 capital).
 - **Payback Period:** 3.2 Years (Discounted payback: 4.8 Years).
 
 ## Slide 5: Scenario & Stress-Test Comparisons
-- **Optimistic Scenario:** NPV = AED 15.42M | IRR = 31.4% (Capex -5%, Benefits +10%, WACC 10.5%).
-- **Base Case:** NPV = AED 9.18M | IRR = 23.1% (Management baseline).
-- **Stress-Test Pessimistic:** NPV = -AED 2.14M | IRR = 9.8% (Capex +15%, Benefits -25%, WACC 14.5%).
+- **Optimistic Scenario:** NPV = AED 19.01M | IRR = 33.6% (Capex -5%, Benefits +10%, WACC 10.5%).
+- **Base Case:** NPV = AED 12.08M | IRR = 26.3% (Management baseline).
+- **Stress-Test Pessimistic:** NPV = -AED 4.94M | IRR = 8.2% (Capex +15%, Benefits -25%, WACC 14.5%).
 - **Takeaway:** Downside exposure under extreme stress requires risk mitigation controls.
 
 ## Slide 6: Sensitivity Analysis & Value Drivers

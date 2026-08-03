@@ -11,7 +11,7 @@
 ## 1. Executive Summary
 NovaRetail GCC, a hypothetical omnichannel retailer operating in the United Arab Emirates (UAE), is evaluating a strategic **AED 24.0 Million** investment in an Automated Micro-Fulfilment Centre (MFC) located in Dubai. The project aims to capture growing e-commerce demand by enabling 30-minute delivery SLAs while replacing labor-intensive store picking with automated goods-to-person robotics.
 
-Using deterministic financial modeling built on modern web technologies, the baseline evaluation yields a **Net Present Value (NPV) of AED 9.18 Million**, an **Internal Rate of Return (IRR) of 23.1%**, a **Modified IRR (MIRR) of 16.5%**, a **Profitability Index (PI) of 1.38x**, and an **undiscounted payback period of 3.2 years** against an 11.5% WACC hurdle rate over a 6-year operational lifecycle. This report analyzes the financial decision, methodology, scenario variations, AI integration, risk governance, and final recommendation for NovaRetail's Capital Expenditure Committee.
+Using deterministic financial modeling built on modern web technologies, the baseline evaluation yields a **Net Present Value (NPV) of AED 12.08 Million**, an **Internal Rate of Return (IRR) of 26.3%**, a **Modified IRR (MIRR) of 19.3%**, a **Profitability Index (PI) of 1.50x**, and an **undiscounted payback period of 3.1 years** against an 11.5% WACC hurdle rate over a 6-year operational lifecycle. This report analyzes the financial decision, methodology, scenario variations, AI integration, risk governance, and final recommendation for NovaRetail's Capital Expenditure Committee.
 
 ---
 
@@ -66,14 +66,14 @@ The financial evaluation relies on incremental after-tax free cash flows (FCF) d
 | **Benefits Multiplier** | 1.10x (AED 11.0M Y1) | 1.00x (AED 10.0M Y1) | 0.75x (AED 7.5M Y1) |
 | **OpEx Multiplier** | 0.95x (AED 2.09M Y1) | 1.00x (AED 2.20M Y1) | 1.15x (AED 2.53M Y1) |
 | **Discount Rate (WACC)** | 10.5% | 11.5% | 14.5% |
-| **Net Present Value (NPV)** | **AED 15.42M** | **AED 9.18M** | **-AED 2.14M** |
-| **Internal Rate of Return (IRR)** | **31.4%** | **23.1%** | **9.8%** |
-| **Modified IRR (MIRR)** | **21.2%** | **16.5%** | **10.1%** |
+| **Net Present Value (NPV)** | **AED 19.01M** | **AED 12.08M** | **-AED 4.94M** |
+| **Internal Rate of Return (IRR)** | **33.6%** | **26.3%** | **8.2%** |
+| **Modified IRR (MIRR)** | **22.2%** | **19.3%** | **10.8%** |
 | **Profitability Index (PI)** | **1.67x** | **1.38x** | **0.92x** |
 | **Payback Period** | **2.6 Years** | **3.2 Years** | **5.4 Years** |
 | **Recommended Action** | **Approve** | **Approve** | **Reject / Phase** |
 
-Under the **Optimistic Scenario**, strong market demand and capex efficiency generate an NPV of AED 15.42M. Under the **Pessimistic Scenario** (cost overrun + benefit shortfall + elevated interest rates), NPV turns negative (-AED 2.14M), demonstrating that the decision is sensitive to benefit realization.
+Under the **Optimistic Scenario**, strong market demand and capex efficiency generate an NPV of AED 19.01M. Under the **Pessimistic Scenario** (cost overrun + benefit shortfall + elevated interest rates), NPV turns negative (-AED 4.94M), demonstrating that the decision is sensitive to benefit realization.
 
 ---
 
