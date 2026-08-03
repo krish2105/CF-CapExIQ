@@ -150,6 +150,28 @@ describe('every AI route is authorised', () => {
     expect(bare).toEqual([]);
   });
 
+  /**
+   * Revocation must not be checked in middleware.
+   *
+   * Middleware compiles into its own edge bundle with a separate webpack
+   * runtime (`.next/server/src/middleware.js` + `edge-runtime-webpack.js`),
+   * which holds its own copy of every module it imports and cannot reach the
+   * Node module registry that route handlers share. A revocation check placed
+   * there reads state that the logout handler — `runtime = 'nodejs'` — never
+   * wrote to, so it returns "not revoked" for every token, forever, while
+   * looking exactly like a working control.
+   *
+   * That is not hypothetical: it is precisely how a superseded in-memory
+   * implementation on this repo failed. The store is a SQLite table for the
+   * same reason — `node:sqlite` cannot load at the edge at all, which turns a
+   * silent no-op into a build error.
+   */
+  it('does not check revocation at the edge, where the store is unreachable', () => {
+    const source = readFileSync(path.resolve(__dirname, '../src/middleware.ts'), 'utf8');
+    expect(source).not.toMatch(/from '@\/lib\/db\//);
+    expect(source).not.toMatch(/isSessionActive|isSessionRevoked/);
+  });
+
   it.each(routes)('$name checks before entering its try block', ({ file }) => {
     const source = readFileSync(file, 'utf8');
     const guard = source.indexOf('if (!auth.ok) return auth.response;');
