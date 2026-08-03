@@ -117,12 +117,11 @@ export function SectionHeading({
         )}
         <Heading
           className={cn(
-            'font-display text-foreground',
+            'font-display text-foreground tracking-section',
             isEditorial
               ? 'text-[clamp(32px,5vw,64px)] leading-[1.08]'
               : 'text-[clamp(24px,2.4vw,32px)] leading-[1.15]'
           )}
-          style={{ letterSpacing: '0.01em' }}
         >
           {title}
         </Heading>

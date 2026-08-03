@@ -44,12 +44,21 @@ const ALWAYS_ALLOWED = new Set(['/login', '/forbidden']);
  * 'strict-dynamic' is present; it is kept for older ones that ignore
  * 'strict-dynamic' instead, so neither is left without a rule.
  *
- * `style-src` keeps 'unsafe-inline' and that is not an oversight. A nonce
- * applies to `<style>` elements, not to inline `style=""` attributes, and the
- * design system sets CSS custom properties per element (--reveal-delay, chart
- * geometry) across the component library. Inline styles cannot execute
- * script, so this is a materially smaller exposure than the script-src hole
- * it sat next to — but it is still a gap, not a clean bill of health.
+ * `style-src` no longer carries 'unsafe-inline' either. It could not while
+ * the component library set CSS custom properties through `style=""`
+ * attributes — a nonce covers `<style>` ELEMENTS, not attributes, and CSP3
+ * ignores 'unsafe-inline' entirely once a nonce is present, so the two cannot
+ * coexist. Those ten attributes are now classes (see globals.css), which is
+ * what made the directive tightenable.
+ *
+ * What remains is a hash allowance for one third-party string — see
+ * ALLOWED_STYLE_HASHES below — rather than a blanket 'unsafe-inline'.
+ *
+ * The residual exposure this closes is CSS injection: not script execution,
+ * which inline styles have not permitted since IE's expression(), but data
+ * exfiltration through attribute selectors and UI redressing. Much of that
+ * channel was already shut by `img-src 'self'` and `connect-src 'self'`;
+ * this closes the rest.
  */
 function buildCsp(nonce: string, isDev: boolean): string {
   return [
@@ -58,7 +67,7 @@ function buildCsp(nonce: string, isDev: boolean): string {
     isDev
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
       : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    "style-src 'self' 'unsafe-inline'",
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-hashes' ${ALLOWED_STYLE_HASHES.join(' ')}`,
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     isDev ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
@@ -69,6 +78,29 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'upgrade-insecure-requests',
   ].join('; ');
 }
+
+/**
+ * Inline style attributes permitted by exact hash.
+ *
+ * Recharts' ResponsiveContainer server-renders `style="width:100%;height:100%
+ * ;min-width:0"` on every chart wrapper. It is third-party markup this code
+ * does not author and cannot move to a class without replacing the container
+ * in every chart.
+ *
+ * `'unsafe-hashes'` is what makes a hash apply to a style ATTRIBUTE rather
+ * than only to a `<style>` element — the name is alarming and the effect is
+ * narrow: it permits exactly the strings listed here and nothing else. That is
+ * a categorically smaller grant than 'unsafe-inline', which permits any inline
+ * style an injection can produce.
+ *
+ * If Recharts changes the string, charts lose their sizing and
+ * `e2e/csp.spec.ts` fails on the violation — which is the right failure, since
+ * the alternative is a policy quietly widened to keep them working.
+ */
+const ALLOWED_STYLE_HASHES = [
+  // sha256 of: width:100%;height:100%;min-width:0
+  "'sha256-R0edqj818Q2GSChz9Bmf7NmpeMlCeetyXy/3cImG5wo='",
+] as const;
 
 /** 128 bits, base64. Regenerated per response — a reused nonce is no nonce. */
 function generateNonce(): string {

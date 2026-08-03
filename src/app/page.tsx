@@ -159,11 +159,8 @@ export default function OverviewPage() {
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden border-b border-border">
         <div
-          className="absolute inset-0 pointer-events-none opacity-70"
-          style={{
-            background:
-              'radial-gradient(720px 380px at 8% 0%, rgba(204,145,102,0.10), transparent 65%)',
-          }}
+          className="brand-wash-lg absolute inset-0 pointer-events-none opacity-70"
+
           aria-hidden="true"
         />
 

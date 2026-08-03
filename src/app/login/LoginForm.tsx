@@ -132,11 +132,7 @@ export function LoginForm({ next }: { next: string }) {
       {/* ---- Brand / context panel ---- */}
       <div className="relative hidden lg:flex flex-col justify-between border-r border-border p-10 xl:p-14 overflow-hidden">
         <div
-          className="absolute inset-0 pointer-events-none opacity-70"
-          style={{
-            background:
-              'radial-gradient(680px 360px at 10% 0%, rgba(204,145,102,0.10), transparent 65%)',
-          }}
+          className="brand-wash absolute inset-0 pointer-events-none opacity-70"
           aria-hidden="true"
         />
         <div className="relative">

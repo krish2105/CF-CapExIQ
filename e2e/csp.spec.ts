@@ -54,6 +54,48 @@ test.describe('CSP', () => {
     expect(refused.headers()['content-security-policy']).toBeTruthy();
   });
 
+  test('style-src carries no unsafe-inline either', async ({ request }) => {
+    const csp = (await request.get('/login')).headers()['content-security-policy'];
+    const styleSrc = csp.match(/style-src[^;]*/)?.[0] ?? '';
+
+    // CSP3 ignores 'unsafe-inline' once a nonce is present, so these cannot
+    // coexist: the ten inline style attributes had to become classes first.
+    expect(styleSrc).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
+    expect(styleSrc).not.toContain("'unsafe-inline'");
+  });
+
+  test('the styling still applies under the strict policy', async ({ page }) => {
+    const violations: string[] = [];
+    page.on('console', (m) => {
+      if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) {
+        violations.push(m.text());
+      }
+    });
+
+    await page.goto('/dashboard');
+    await expect(page.getByText('Baseline NPV').first()).toBeVisible();
+
+    // The replacement classes must actually resolve, not merely be absent
+    // from the markup — a blocked style and a missing class look identical
+    // in a screenshot but only one is a CSP problem.
+    const chartHeight = await page.evaluate(() => {
+      const el = document.querySelector('[class*=chart-body-]');
+      return el ? getComputedStyle(el).height : null;
+    });
+    expect(chartHeight).toMatch(/^\d+px$/);
+
+    // Hovering renders the one remaining inline style, which lives in a
+    // client-only tooltip. React applies it through CSSOM, which CSP does not
+    // intercept — asserted here rather than assumed.
+    const chart = page.locator('.recharts-surface').first();
+    if (await chart.count()) {
+      await chart.hover({ force: true });
+      await page.waitForTimeout(600);
+    }
+
+    expect(violations).toEqual([]);
+  });
+
   test('locks down the remaining directives', async ({ request }) => {
     const csp = (await request.get('/login')).headers()['content-security-policy'];
     expect(csp).toContain("object-src 'none'");

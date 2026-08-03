@@ -44,6 +44,24 @@ interface RevealProps {
   threshold?: number;
 }
 
+/**
+ * Reveal delay as a class rather than an inline custom property.
+ *
+ * Setting `--reveal-delay` through `style={{}}` renders a `style=""` attribute
+ * into the server HTML, which CSP `style-src` governs and a nonce cannot cover.
+ * The call sites use a small, fixed set of delays, so the value fits in a class
+ * — which is what allows 'unsafe-inline' to come off style-src.
+ *
+ * An unrecognised delay falls back to no stagger rather than losing the reveal
+ * altogether, and `tests/cspStyles.test.ts` fails when a call site asks for one
+ * that has no class.
+ */
+export const REVEAL_DELAYS = [80, 140, 500] as const;
+
+export function revealDelayClass(delay: number): string {
+  return (REVEAL_DELAYS as readonly number[]).includes(delay) ? `reveal-delay-${delay}` : '';
+}
+
 export function Reveal({
   children,
   delay = 0,
@@ -86,8 +104,7 @@ export function Reveal({
       ref={ref as never}
       data-reveal={variant === 'up' ? '' : variant}
       data-revealed={revealed ? 'true' : 'false'}
-      style={{ ['--reveal-delay' as string]: `${delay}ms` }}
-      className={className}
+      className={[revealDelayClass(delay), className].filter(Boolean).join(' ')}
     >
       {children}
     </Tag>

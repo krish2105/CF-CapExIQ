@@ -892,3 +892,72 @@ h4, h5, h6 {
   a { text-decoration: none !important; color: #000000 !important; }
   [data-reveal] { opacity: 1 !important; transform: none !important; }
 }
+
+/* ------------------------------------------------------------------
+ * Replacements for inline style attributes.
+ *
+ * `style=""` in server-rendered markup is governed by CSP `style-src`, and a
+ * nonce cannot cover it — a nonce applies to <style> ELEMENTS, not attributes.
+ * Since CSP3 ignores 'unsafe-inline' whenever a nonce is present, the two
+ * cannot coexist: removing the inline attributes is the only way to drop
+ * 'unsafe-inline' from style-src.
+ *
+ * Note this constrains SERVER-RENDERED markup only. React applies styles on
+ * the client through CSSOM (`node.style.setProperty`), which CSP does not
+ * intercept — so genuinely client-only surfaces, like a chart tooltip that
+ * exists once a pointer is over it, are unaffected.
+ * ------------------------------------------------------------------ */
+
+/* Off-screen SVG holding the chart gradient defs. */
+.svg-defs-host {
+  position: absolute;
+}
+
+/* Brand wash behind the sign-in and landing panels. */
+.brand-wash {
+  background: radial-gradient(680px 360px at 10% 0%, rgba(204, 145, 102, 0.1), transparent 65%);
+}
+.brand-wash-lg {
+  background: radial-gradient(720px 380px at 8% 0%, rgba(204, 145, 102, 0.1), transparent 65%);
+}
+
+/* Section heading tracking. */
+.tracking-section {
+  letter-spacing: 0.01em;
+}
+
+/* Sparkline draw-on animation. */
+.sparkline-draw {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: draw-line 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Scroll indicator resting state, before the ref drives it via CSSOM. */
+.scroll-progress-bar {
+  transform: scaleX(0);
+}
+
+/*
+ * Reveal delays.
+ *
+ * A discrete set rather than an arbitrary number, so the value can live in a
+ * class instead of an attribute. `tests/cspStyles.test.ts` fails if a call
+ * site asks for a delay with no matching class, which is what stops this
+ * silently degrading back into inline styles.
+ */
+.reveal-delay-80 { --reveal-delay: 80ms; }
+.reveal-delay-140 { --reveal-delay: 140ms; }
+.reveal-delay-500 { --reveal-delay: 500ms; }
+
+/* Chart body heights. Same bounded-set reasoning as the reveal delays. */
+.chart-body-232 { height: 232px; }
+.chart-body-272 { height: 272px; }
+.chart-body-280 { height: 280px; }
+
+/* Voice level bars: staggered by position rather than by an index prop. */
+.voice-bar:nth-child(1) { animation-delay: 0ms; }
+.voice-bar:nth-child(2) { animation-delay: 100ms; }
+.voice-bar:nth-child(3) { animation-delay: 200ms; }
+.voice-bar:nth-child(4) { animation-delay: 300ms; }
+.voice-bar:nth-child(5) { animation-delay: 400ms; }

@@ -88,7 +88,7 @@ export default async function RootLayout({
             once here, in a plain (non-Recharts) SVG, makes every gradient
             resolvable by every chart via its #id — url() references work
             across sibling <svg> elements in the same document. */}
-        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+        <svg width="0" height="0" className="svg-defs-host" aria-hidden="true" focusable="false">
           <ChartGradients />
         </svg>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem nonce={nonce}>

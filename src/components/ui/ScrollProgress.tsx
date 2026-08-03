@@ -51,8 +51,7 @@ export function ScrollProgress() {
     >
       <div
         ref={barRef}
-        className="h-full w-full origin-left bg-gilded-solid opacity-0 transition-opacity duration-300"
-        style={{ transform: 'scaleX(0)' }}
+        className="scroll-progress-bar h-full w-full origin-left bg-gilded-solid opacity-0 transition-opacity duration-300"
       />
     </div>
   );

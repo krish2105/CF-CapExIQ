@@ -143,12 +143,34 @@ export const animProps = {
    ChartCard — consistent frame for every visualisation in the app.
    -------------------------------------------------------------------------- */
 
+/**
+ * Chart body height as a class rather than an inline style.
+ *
+ * `style={{ height }}` renders a `style=""` attribute into the server HTML,
+ * which CSP `style-src` governs and a nonce cannot cover — a nonce applies to
+ * <style> elements, not attributes. Expressing the height as one of a bounded
+ * set of classes is what allows 'unsafe-inline' to come off style-src.
+ *
+ * An unmapped height falls back to the default rather than rendering
+ * unstyled, and `tests/cspStyles.test.ts` fails when a call site asks for one
+ * that has no class — so the constraint is enforced at build time instead of
+ * discovered as a squashed chart.
+ */
+export const CHART_BODY_HEIGHTS = [232, 272, 280] as const;
+
+export function chartBodyClass(height: number): string {
+  return (CHART_BODY_HEIGHTS as readonly number[]).includes(height)
+    ? `chart-body-${height}`
+    : 'chart-body-280';
+}
+
 interface ChartCardProps {
   title: string;
   subtitle?: React.ReactNode;
   actions?: React.ReactNode;
   footnote?: React.ReactNode;
   children: React.ReactNode;
+
   /** Chart body height in px. */
   height?: number;
   gilded?: boolean;
@@ -180,7 +202,7 @@ export function ChartCard({
           {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
         </div>
 
-        <div className="px-2 pb-2" style={{ height }}>
+        <div className={`px-2 pb-2 ${chartBodyClass(height)}`}>
           {children}
         </div>
 
@@ -229,6 +251,21 @@ export function LedgerTooltip({
         {payload.map((entry, i) => (
           <div key={i} className="flex items-center justify-between gap-4 text-xs">
             <span className="flex items-center gap-1.5 text-muted-foreground">
+              {/*
+                The one inline style left, and deliberately so.
+                
+                This tooltip is rendered by Recharts only while a pointer is
+                over the chart, so it never appears in server-rendered markup.
+                React applies styles on the client through CSSOM
+                (`node.style.setProperty`), which CSP does not intercept — only
+                a `style` attribute parsed from HTML is governed by style-src.
+                
+                The colour comes from Recharts' own series resolution rather
+                than a palette this code owns, so a class map would have to
+                mirror an upstream decision and would silently mis-colour a
+                swatch whenever that changed. Verified against the strict
+                policy in e2e/csp.spec.ts by hovering a real chart.
+              */}
               <span
                 className="h-1.5 w-1.5 rounded-pill shrink-0"
                 style={{ backgroundColor: entry.color }}
@@ -302,11 +339,7 @@ export function Sparkline({
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{
-          strokeDasharray: 600,
-          strokeDashoffset: 600,
-          animation: 'draw-line 1.6s cubic-bezier(0.22,1,0.36,1) forwards',
-        }}
+className="sparkline-draw"
       />
     </svg>
   );

@@ -116,10 +116,9 @@ export default function VoiceCopilotWidget() {
               {[...Array(7)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-1.5 rounded-pill bg-primary transition-all duration-300 ${
+                  className={`voice-bar w-1.5 rounded-pill bg-primary transition-all duration-300 ${
                     isListening ? 'animate-pulse bg-info h-6' : 'h-3 opacity-40'
                   }`}
-                  style={{ animationDelay: `${i * 100}ms` }}
                 />
               ))}
             </div>
