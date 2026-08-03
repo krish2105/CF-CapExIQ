@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getDb, transaction, migrate } from '@/lib/db/client';
+import { resetDatabase } from '@/test/db';
 import { MIGRATIONS } from '@/lib/db/migrations';
 import { recordAudit, listAudit, countAudit } from '@/lib/db/repositories/audit';
 import { signApproval, listApprovals, verifyApproval, snapshotHash } from '@/lib/db/repositories/approvals';
@@ -7,24 +8,7 @@ import { createSession, isSessionActive, revokeSession, revokeAllForUser } from 
 import { seedUsers, findByEmail, findById, countUsers } from '@/lib/db/repositories/users';
 import { issueTestSession } from '@/test/session';
 
-function reset() {
-  const db = getDb();
-  // Triggers block DELETE on the append-only tables, so they are dropped and
-  // recreated rather than truncated. That is itself a check that the triggers
-  // are actually installed.
-  db.exec('PRAGMA foreign_keys = OFF');
-  for (const t of ['audit_events', 'approvals', 'sessions', 'users', 'schema_migrations']) {
-    db.exec(`DROP TABLE IF EXISTS ${t}`);
-  }
-  db.exec('DROP TRIGGER IF EXISTS audit_events_no_update');
-  db.exec('DROP TRIGGER IF EXISTS audit_events_no_delete');
-  db.exec('DROP TRIGGER IF EXISTS approvals_no_update');
-  db.exec('DROP TRIGGER IF EXISTS approvals_no_delete');
-  db.exec('PRAGMA foreign_keys = ON');
-  migrate(db);
-}
-
-beforeEach(reset);
+beforeEach(resetDatabase);
 
 describe('migrations', () => {
   it('applies every migration and records the version', () => {

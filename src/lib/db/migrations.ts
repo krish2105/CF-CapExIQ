@@ -130,4 +130,47 @@ export const MIGRATIONS: Migration[] = [
         BEGIN SELECT RAISE(ABORT, 'approvals are immutable once signed'); END;
     `,
   },
+
+  {
+    version: 2,
+    name: 'project profiles and shared working model',
+    up: `
+      -- The capital model itself, which until now lived in localStorage.
+      --
+      -- That made it per-browser: two members of the same capital committee
+      -- opened the same project and saw different numbers, an approval could
+      -- be signed against figures nobody else had, and clearing site data
+      -- discarded the model. A committee reviewing one investment has to be
+      -- looking at one model.
+      CREATE TABLE project_profiles (
+        id              TEXT PRIMARY KEY,
+        name            TEXT NOT NULL,
+        description     TEXT NOT NULL DEFAULT '',
+        assumptions_json TEXT NOT NULL,
+        created_by      TEXT REFERENCES users (id),
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        updated_by      TEXT REFERENCES users (id),
+        -- Optimistic concurrency. Two analysts editing the same profile from
+        -- different tabs would otherwise silently overwrite each other, and
+        -- the loser would never know their change was gone.
+        version         INTEGER NOT NULL DEFAULT 1,
+        archived_at     TEXT
+      ) STRICT;
+
+      CREATE INDEX idx_profiles_updated ON project_profiles (updated_at DESC);
+
+      -- Which profile the application is currently working against.
+      --
+      -- Single row by construction: the CHECK pins the primary key, so a
+      -- second "current" cannot exist even if a bug tries to insert one.
+      CREATE TABLE workspace_state (
+        id                  INTEGER PRIMARY KEY CHECK (id = 1),
+        active_profile_id   TEXT REFERENCES project_profiles (id),
+        selected_scenario   TEXT NOT NULL DEFAULT 'Base',
+        updated_at          TEXT NOT NULL,
+        updated_by          TEXT REFERENCES users (id)
+      ) STRICT;
+    `,
+  },
 ];
