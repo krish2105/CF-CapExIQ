@@ -98,7 +98,7 @@ export async function POST(req: Request) {
   // Keyed by session rather than by IP: `clientKey()` buckets an entire
   // office behind one NAT into a shared budget, and lets an authenticated
   // abuser reset their own by changing address.
-  const limited = rateLimited('explain', auth.session);
+  const limited = await rateLimited('explain', auth.session);
   if (limited) return limited;
 
   const guarded = guardInput(rawQuestion);

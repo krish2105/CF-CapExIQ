@@ -79,7 +79,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('assumptions.edit');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('parse-quote', auth.session);
+  const limited = await rateLimited('parse-quote', auth.session);
   if (limited) return limited;
 
   const rawBody = await req.json().catch(() => ({}));

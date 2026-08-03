@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('vendor.negotiate');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('rfp-negotiator', auth.session);
+  const limited = await rateLimited('rfp-negotiator', auth.session);
   if (limited) return limited;
 
   const rawBody = await req.json().catch(() => ({}));

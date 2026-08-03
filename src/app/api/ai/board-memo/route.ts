@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('board.materials');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('board-memo', auth.session);
+  const limited = await rateLimited('board-memo', auth.session);
   if (limited) return limited;
 
   try {

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('esg.view');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('esg-impact', auth.session);
+  const limited = await rateLimited('esg-impact', auth.session);
   if (limited) return limited;
 
   try {

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { SESSION_COOKIE, verifySession, type SessionPayload } from '@/lib/auth/session';
 import { can, type Permission } from '@/lib/auth/permissions';
 import { checkRateLimit } from '@/lib/guardrails/aiGuardrails';
+import { ensureRateLimitBackend } from '@/lib/guardrails/initRateLimit';
 import { isSessionActive } from '@/lib/db/repositories/sessions';
 
 /**
@@ -128,7 +129,7 @@ export function requireSession(): Promise<AuthResult> {
 /**
  * Per-user, per-route rate limit. Returns a 429 to return, or null to proceed.
  *
- *   const limited = rateLimited('esg-impact', auth.session);
+ *   const limited = await rateLimited('esg-impact', auth.session);
  *   if (limited) return limited;
  *
  * Keyed by session subject rather than by IP. `clientKey()` buckets everyone
@@ -145,8 +146,14 @@ export function requireSession(): Promise<AuthResult> {
  * `checkRateLimit` — a shared store is a prerequisite for running more than
  * one instance.
  */
-export function rateLimited(routeName: string, session: SessionPayload): NextResponse | null {
-  const limit = checkRateLimit(`${routeName}:${session.sub}`);
+export async function rateLimited(
+  routeName: string,
+  session: SessionPayload
+): Promise<NextResponse | null> {
+  // Installs the shared backend on first use; a no-op thereafter.
+  ensureRateLimitBackend();
+
+  const limit = await checkRateLimit(`${routeName}:${session.sub}`);
   if (limit.allowed) return null;
 
   return NextResponse.json(

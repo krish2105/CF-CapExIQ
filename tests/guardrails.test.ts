@@ -8,6 +8,8 @@ import {
   sanitizeContext,
   checkRateLimit,
   __resetRateLimits,
+  setRateLimitBackend,
+  rateLimitBackendName,
   MAX_INPUT_CHARS,
   guardDocument,
   safeContextJson,
@@ -311,23 +313,55 @@ describe('retrieved-context sanitisation', () => {
 describe('rate limiting', () => {
   beforeEach(() => __resetRateLimits());
 
-  it('allows a normal burst then blocks', () => {
-    for (let i = 0; i < 20; i++) expect(checkRateLimit('ip-a').allowed).toBe(true);
-    const blocked = checkRateLimit('ip-a');
+  it('allows a normal burst then blocks', async () => {
+    for (let i = 0; i < 20; i++) expect((await checkRateLimit('ip-a')).allowed).toBe(true);
+    const blocked = await checkRateLimit('ip-a');
     expect(blocked.allowed).toBe(false);
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
   });
 
-  it('isolates callers from one another', () => {
-    for (let i = 0; i < 20; i++) checkRateLimit('ip-a');
-    expect(checkRateLimit('ip-b').allowed).toBe(true);
+  it('isolates callers from one another', async () => {
+    for (let i = 0; i < 20; i++) await checkRateLimit('ip-a');
+    expect((await checkRateLimit('ip-b')).allowed).toBe(true);
   });
 
-  it('recovers after the window elapses', () => {
+  it('recovers after the window elapses', async () => {
     const t0 = 1_000_000;
-    for (let i = 0; i < 20; i++) checkRateLimit('ip-c', t0);
-    expect(checkRateLimit('ip-c', t0).allowed).toBe(false);
-    expect(checkRateLimit('ip-c', t0 + 60_001).allowed).toBe(true);
+    for (let i = 0; i < 20; i++) await checkRateLimit('ip-c', t0);
+    expect((await checkRateLimit('ip-c', t0)).allowed).toBe(false);
+    expect((await checkRateLimit('ip-c', t0 + 60_001)).allowed).toBe(true);
+  });
+
+  it('uses a shared backend when one is installed', async () => {
+    const seen: string[] = [];
+    setRateLimitBackend({
+      hit(key, _windowMs, _max, now) {
+        seen.push(key);
+        return { count: seen.length, resetAt: now + 60_000 };
+      },
+    });
+
+    await checkRateLimit('shared-a');
+    await checkRateLimit('shared-a');
+    expect(seen).toEqual(['shared-a', 'shared-a']);
+    expect(rateLimitBackendName()).toBe('shared');
+
+    setRateLimitBackend(null);
+    expect(rateLimitBackendName()).toBe('memory');
+  });
+
+  it('fails OPEN when the shared backend is unreachable', async () => {
+    // A rate limiter bounds cost; it is not an access control, and
+    // authorisation has already run by this point. Refusing every request
+    // because Redis is down turns a spend control into an outage.
+    setRateLimitBackend({
+      hit() {
+        throw new Error('ECONNREFUSED');
+      },
+    });
+
+    expect((await checkRateLimit('down')).allowed).toBe(true);
+    setRateLimitBackend(null);
   });
 });
 

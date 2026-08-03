@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('assumptions.edit');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('profiles', auth.session);
+  const limited = await rateLimited('profiles', auth.session);
   if (limited) return limited;
 
   ensureProfilesSeeded();

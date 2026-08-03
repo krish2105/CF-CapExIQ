@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('risk.view');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('threat-radar', auth.session);
+  const limited = await rateLimited('threat-radar', auth.session);
   if (limited) return limited;
 
   try {

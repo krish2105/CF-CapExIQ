@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('approval.sign');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('approvals', auth.session);
+  const limited = await rateLimited('approvals', auth.session);
   if (limited) return limited;
 
   const body = await req.json().catch(() => ({}));

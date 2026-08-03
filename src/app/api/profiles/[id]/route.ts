@@ -64,7 +64,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const auth = await requirePermission('assumptions.edit');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('profile-update', auth.session);
+  const limited = await rateLimited('profile-update', auth.session);
   if (limited) return limited;
 
   ensureProfilesSeeded();

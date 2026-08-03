@@ -23,7 +23,7 @@ export const runtime = 'nodejs';
  *    faster and reintroduces the same oracle through timing.
  */
 export async function POST(req: Request) {
-  const limit = checkRateLimit(`login:${clientKey(req)}`);
+  const limit = await checkRateLimit(`login:${clientKey(req)}`);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: 'Too many sign-in attempts. Try again shortly.' },

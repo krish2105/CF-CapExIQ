@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   const auth = await requirePermission('scenario.author');
   if (!auth.ok) return auth.response;
 
-  const limited = rateLimited('scenario-studio', auth.session);
+  const limited = await rateLimited('scenario-studio', auth.session);
   if (limited) return limited;
 
   const rawBody = await req.json().catch(() => ({}));

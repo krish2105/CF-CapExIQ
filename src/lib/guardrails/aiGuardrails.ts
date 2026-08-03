@@ -241,30 +241,99 @@ export interface RateLimitResult {
   retryAfterSeconds: number;
 }
 
-export function checkRateLimit(key: string, now = Date.now()): RateLimitResult {
-  const bucket = buckets.get(key);
+export interface RateLimitHit {
+  count: number;
+  resetAt: number;
+}
 
-  if (!bucket || now >= bucket.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    // Opportunistic sweep so abandoned keys cannot grow the map unbounded.
-    if (buckets.size > 5000) {
-      for (const [k, v] of buckets) if (now >= v.resetAt) buckets.delete(k);
+/**
+ * Pluggable counter.
+ *
+ * This interface is adopted from the parallel implementation on `main`
+ * (`d40bbfe`, "make rate limiting pluggable"), which arrived at a better shape
+ * than the version here did — one method, and `now` passed in by the caller
+ * rather than read from the clock inside the backend, so a virtual clock can
+ * assert that a window actually expires. A backend calling `Date.now()` itself
+ * makes window-expiry untestable.
+ *
+ * Keeping their signature rather than inventing a competing one also means the
+ * two lineages can be reconciled by deleting one file instead of rewriting
+ * every call site.
+ */
+export interface RateLimitBackend {
+  hit(key: string, windowMs: number, max: number, now: number): RateLimitHit | Promise<RateLimitHit>;
+}
+
+/**
+ * Per-process backend. Correct on one instance, ineffective across many.
+ *
+ * DEPLOYMENT BOUNDARY. On serverless or multi-instance hosting this limits
+ * nothing meaningful: each instance keeps its own counters and a cold start
+ * resets them, so the effective allowance is (instances x window) rather than
+ * the number configured here. Install the Redis backend before running
+ * anywhere that autoscales — see `src/lib/guardrails/redisRateLimit.ts`.
+ */
+const memoryBackend: RateLimitBackend = {
+  hit(key, windowMs, _max, now) {
+    const bucket = buckets.get(key);
+
+    if (!bucket || now >= bucket.resetAt) {
+      const fresh = { count: 1, resetAt: now + windowMs };
+      buckets.set(key, fresh);
+      // Opportunistic sweep so abandoned keys cannot grow the map unbounded.
+      if (buckets.size > 5000) {
+        for (const [k, v] of buckets) if (now >= v.resetAt) buckets.delete(k);
+      }
+      return fresh;
     }
-    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, retryAfterSeconds: 0 };
+
+    bucket.count += 1;
+    return { count: bucket.count, resetAt: bucket.resetAt };
+  },
+};
+
+let backend: RateLimitBackend = memoryBackend;
+
+export function setRateLimitBackend(next: RateLimitBackend | null): void {
+  backend = next ?? memoryBackend;
+}
+
+export function rateLimitBackendName(): string {
+  return backend === memoryBackend ? 'memory' : 'shared';
+}
+
+/**
+ * Record a request and decide whether it may proceed.
+ *
+ * Async because a shared backend is a network call. Every caller awaits it;
+ * `tests/apiAuth.test.ts` fails if a route stops doing so, since a forgotten
+ * await yields a truthy Promise and would reject every request as limited.
+ */
+export async function checkRateLimit(key: string, now = Date.now()): Promise<RateLimitResult> {
+  let hit: RateLimitHit;
+
+  try {
+    hit = await backend.hit(key, WINDOW_MS, MAX_REQUESTS_PER_WINDOW, now);
+  } catch (err) {
+    // Fail OPEN, deliberately. A rate limiter exists to bound cost, not to
+    // guard access — the authorisation check has already run by this point.
+    // Refusing every request because Redis is unreachable converts a spend
+    // control into an outage, which is the worse failure of the two.
+    console.error('[rate-limit] backend unavailable, allowing request:', (err as Error).message);
+    return { allowed: true, remaining: 0, retryAfterSeconds: 0 };
   }
 
-  if (bucket.count >= MAX_REQUESTS_PER_WINDOW) {
+  if (hit.count > MAX_REQUESTS_PER_WINDOW) {
     return {
       allowed: false,
       remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+      retryAfterSeconds: Math.max(1, Math.ceil((hit.resetAt - now) / 1000)),
     };
   }
 
-  bucket.count += 1;
   return {
     allowed: true,
-    remaining: MAX_REQUESTS_PER_WINDOW - bucket.count,
+    remaining: Math.max(0, MAX_REQUESTS_PER_WINDOW - hit.count),
     retryAfterSeconds: 0,
   };
 }
