@@ -57,6 +57,19 @@ const DOCS = [
   'deliverables/03_live_demonstration_script.md',
   'deliverables/04_financial_model_reconciliation.md',
   'deliverables/CapExIQ_Complete_Project_Guide_and_QnA.md',
+
+  /*
+   * The generators, which were the blind spot.
+   *
+   * `scripts/generate-pdf.js` used to hold its own copy of the guide's prose
+   * — 29 superseded figures — and rendered that instead of reading the
+   * markdown. Correcting the .md therefore did nothing to the PDF, and
+   * regenerating would have reintroduced every figure this suite exists to
+   * remove. A third copy of the numbers is exactly the drift the guard is
+   * for, and it was not looking at scripts/ at all.
+   */
+  'scripts/generate-pdf.js',
+  'scripts/generate-board-report.js',
 ].filter((f) => !EXEMPT.some((re) => re.test(f)));
 
 /** Base-case NPV in millions, to two decimals, as the documents write it. */
